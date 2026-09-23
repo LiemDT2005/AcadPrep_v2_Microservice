@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "Exam.API": {
+      "commandName": "Project",
+      "applicationUrl": "http://localhost:5003",
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "environmentVariables": { "ASPNETCORE_ENVIRONMENT": "Development" }
+    }
+  }
+}

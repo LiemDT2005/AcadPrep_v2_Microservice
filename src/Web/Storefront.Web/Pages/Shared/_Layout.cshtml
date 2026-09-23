@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - TOEIC Learning</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+<header class="topbar">
+    <a class="brand" asp-page="/Index">TOEIC Learning</a>
+    <nav>
+        <a asp-page="/Courses/Index">Khóa học</a>
+        <a asp-page="/Exams/Index">Luyện đề</a>
+        <a asp-page="/Progress/Index">Tiến độ</a>
+        @{
+            var name = Context.Session.GetString("name");
+        }
+        @if (string.IsNullOrEmpty(name))
+        {
+            <a asp-page="/Account/Login" class="btn">Đăng nhập</a>
+            <a asp-page="/Account/Register" class="btn btn-outline">Đăng ký</a>
+        }
+        else
+        {
+            <span class="user">Xin chào, @name</span>
+            <a asp-page="/Account/Logout" class="btn btn-outline">Đăng xuất</a>
+        }
+    </nav>
+</header>
+<main class="container">
+    @RenderBody()
+</main>
+<footer class="footer">
+    <p>Demo microservices · Clean Architecture · YARP · RabbitMQ · Redis · Razor Pages</p>
+</footer>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

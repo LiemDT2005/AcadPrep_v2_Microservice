@@ -1,0 +1,30 @@
+@page
+@model Storefront.Web.Pages.Progress.IndexModel
+@{ ViewData["Title"] = "Tiến độ"; }
+<h1>Tiến độ học tập</h1>
+<p class="meta">Progress service · SQLite + Redis cache · cập nhật qua RabbitMQ consumer.</p>
+@if (string.IsNullOrEmpty(HttpContext.Session.GetString("jwt")))
+{
+    <div class="alert alert-error">Hãy <a asp-page="/Account/Login">đăng nhập</a>.</div>
+}
+else if (Model.Summary is null)
+{
+    <div class="alert alert-error">Chưa có dữ liệu. Hãy làm một bài luyện đề trước. Nếu vừa nộp bài, đợi 1–2 giây rồi tải lại.</div>
+}
+else
+{
+    <div class="stats">
+        <div class="stat"><span>Số lần làm</span><strong>@Model.Summary.TotalAttempts</strong></div>
+        <div class="stat"><span>Điểm TB</span><strong>@Model.Summary.AverageScore%</strong></div>
+        <div class="stat"><span>Cao nhất</span><strong>@Model.Summary.BestScore%</strong></div>
+    </div>
+    <h2>Lịch sử gần đây</h2>
+    @foreach (var r in Model.Summary.Recent)
+    {
+        <div class="card" style="margin-bottom:.75rem">
+            <h3>@r.ExamTitle</h3>
+            <p class="meta">@r.CompletedAt.ToLocalTime().ToString("g")</p>
+            <p>Điểm <strong>@r.Score%</strong> (@r.CorrectAnswers/@r.TotalQuestions)</p>
+        </div>
+    }
+}

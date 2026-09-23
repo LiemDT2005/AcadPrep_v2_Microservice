@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "Catalog.API": {
+      "commandName": "Project",
+      "applicationUrl": "http://localhost:5002",
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "environmentVariables": { "ASPNETCORE_ENVIRONMENT": "Development" }
+    }
+  }
+}

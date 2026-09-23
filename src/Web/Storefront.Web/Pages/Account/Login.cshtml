@@ -1,0 +1,19 @@
+@page
+@model Storefront.Web.Pages.Account.LoginModel
+@{ ViewData["Title"] = "Đăng nhập"; }
+<h1>Đăng nhập</h1>
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert alert-error">@Model.Error</div>
+}
+<form method="post" class="form">
+    <div>
+        <label>Email</label>
+        <input asp-for="Email" type="email" required />
+    </div>
+    <div>
+        <label>Mật khẩu</label>
+        <input asp-for="Password" type="password" required />
+    </div>
+    <button class="btn" type="submit">Đăng nhập</button>
+</form>

@@ -1,0 +1,23 @@
+@page
+@model Storefront.Web.Pages.IndexModel
+@{
+    ViewData["Title"] = "Trang chủ";
+}
+<section class="hero">
+    <h1>Luyện TOEIC theo lộ trình microservice</h1>
+    <p>
+        Demo đầy đủ: đăng ký/JWT · xem khóa học · làm đề Part 5 · nộp bài qua RabbitMQ ·
+        cập nhật tiến độ + cache Redis · giao diện Razor Pages qua YARP Gateway.
+    </p>
+    <div class="actions">
+        <a class="btn" asp-page="/Courses/Index">Xem khóa học</a>
+        <a class="btn btn-outline" asp-page="/Exams/Index">Làm đề demo</a>
+    </div>
+</section>
+
+<section class="grid">
+    <div class="card"><h3>Identity</h3><p class="meta">ASP.NET Identity + JWT</p></div>
+    <div class="card"><h3>Catalog</h3><p class="meta">Clean Architecture + SQLite</p></div>
+    <div class="card"><h3>Exam → Progress</h3><p class="meta">RabbitMQ event-driven</p></div>
+    <div class="card"><h3>Gateway + Web</h3><p class="meta">YARP + Razor Pages</p></div>
+</section>

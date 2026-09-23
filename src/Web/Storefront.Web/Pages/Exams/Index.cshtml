@@ -1,0 +1,21 @@
+@page
+@model Storefront.Web.Pages.Exams.IndexModel
+@{ ViewData["Title"] = "Luyện đề"; }
+<h1>Luyện đề</h1>
+<p class="meta">Exam microservice — nộp bài sẽ publish event tới Progress qua RabbitMQ.</p>
+@if (string.IsNullOrEmpty(HttpContext.Session.GetString("jwt")))
+{
+    <div class="alert alert-error">Bạn cần <a asp-page="/Account/Login">đăng nhập</a> để nộp bài.</div>
+}
+<div class="grid">
+@foreach (var e in Model.Exams)
+{
+    <div class="card">
+        <span class="badge">@e.Part</span>
+        <h3>@e.Title</h3>
+        <p class="meta">@e.QuestionCount câu · @e.TimeLimitMinutes phút</p>
+        <p>@e.Description</p>
+        <a class="btn" asp-page="./Take" asp-route-id="@e.Id">Làm bài</a>
+    </div>
+}
+</div>

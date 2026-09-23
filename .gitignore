@@ -1,0 +1,12 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.db
+*.db-shm
+*.db-wal
+appsettings.Development.json
+.idea/
+.DS_Store
