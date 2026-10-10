@@ -11,7 +11,7 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddDbContext<CatalogDbContext>(opt =>
-            opt.UseSqlite(configuration.GetConnectionString("Default") ?? "Data Source=catalog.db"));
+            opt.UseSqlServer(configuration.GetConnectionString("Default")));
         services.AddScoped<ICatalogDbContext>(sp => sp.GetRequiredService<CatalogDbContext>());
         return services;
     }

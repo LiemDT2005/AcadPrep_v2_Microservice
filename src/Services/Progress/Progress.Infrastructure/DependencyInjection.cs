@@ -16,7 +16,7 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddDbContext<ProgressDbContext>(opt =>
-            opt.UseSqlite(configuration.GetConnectionString("Default") ?? "Data Source=progress.db"));
+            opt.UseSqlServer(configuration.GetConnectionString("Default")));
         services.AddScoped<IProgressDbContext>(sp => sp.GetRequiredService<ProgressDbContext>());
 
         var redis = configuration.GetConnectionString("Redis") ?? "localhost:6379";

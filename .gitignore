@@ -10,3 +10,5 @@ obj/
 appsettings.Development.json
 .idea/
 .DS_Store
+.~lock.*#
+~$*

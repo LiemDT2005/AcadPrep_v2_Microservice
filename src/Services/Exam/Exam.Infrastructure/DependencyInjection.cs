@@ -12,7 +12,7 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddDbContext<ExamDbContext>(opt =>
-            opt.UseSqlite(configuration.GetConnectionString("Default") ?? "Data Source=exam.db"));
+            opt.UseSqlServer(configuration.GetConnectionString("Default")));
         services.AddScoped<IExamDbContext>(sp => sp.GetRequiredService<ExamDbContext>());
         services.AddEventBus(configuration);
         return services;
