@@ -1,0 +1,15 @@
+namespace Learning.Domain.Entities;
+
+public class Vocabulary
+{
+    public int Id { get; set; }
+    public string Word { get; set; } = string.Empty;
+    public string? Phonetic { get; set; }
+    public string Meaning { get; set; } = string.Empty;
+    public string? Example { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    // Navigation properties
+    public List<VocabPassage> Passages { get; set; } = [];
+    public List<SavedVocabulary> SavedVocabularies { get; set; } = [];
+}

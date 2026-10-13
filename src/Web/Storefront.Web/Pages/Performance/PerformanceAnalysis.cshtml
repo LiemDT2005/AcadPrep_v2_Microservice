@@ -1,0 +1,146 @@
+@page
+@model Storefront.Web.Pages.Performance.PerformanceAnalysisModel
+@{
+    ViewData["Title"] = "Phân Tích Hiệu Suất";
+}
+
+<div class="max-w-5xl mx-auto py-xl px-margin-mobile md:px-margin-desktop">
+    <div class="mb-xl flex flex-col md:flex-row md:items-end md:justify-between gap-md">
+        <div>
+            <h2 class="font-headline-md text-headline-md text-on-surface mb-xs font-bold text-2xl">Phân Tích Hiệu Suất Học Tập</h2>
+            <p class="font-body-md text-body-md text-on-surface-variant">Đánh giá chi tiết điểm mạnh và điểm yếu giữa Listening và Reading.</p>
+        </div>
+        <div class="flex gap-sm">
+            <a href="/Performance/ScoreProgress" class="inline-flex items-center gap-xs px-md py-xs rounded-lg border border-outline-variant text-label-md font-medium hover:bg-surface-container bg-white text-sm p-2 shadow-sm">
+                <span class="material-symbols-outlined text-[16px]">trending_up</span> Tiến độ điểm số
+            </a>
+            <a href="/Performance/Leaderboard" class="inline-flex items-center gap-xs px-md py-xs rounded-lg border border-outline-variant text-label-md font-medium hover:bg-surface-container bg-white text-sm p-2 shadow-sm">
+                <span class="material-symbols-outlined text-[16px]">leaderboard</span> Bảng xếp hạng
+            </a>
+        </div>
+    </div>
+
+    @if (!Model.AnalysisData.HasData)
+    {
+        <div class="bg-secondary-container/30 border border-secondary-container rounded-xl p-xl text-center py-12 bg-gray-50 border-gray-200">
+            <span class="material-symbols-outlined text-[48px] text-secondary mb-md text-gray-500">analytics</span>
+            <h3 class="font-headline-sm text-headline-sm text-on-surface mb-sm font-semibold text-lg">Chưa có dữ liệu phân tích</h3>
+            <p class="font-body-md text-body-md text-on-surface-variant mb-lg text-gray-600">@Model.AnalysisData.Message</p>
+            <a href="/Exams/Index" class="inline-flex items-center gap-sm bg-primary text-white px-lg py-sm rounded-lg font-label-md hover:bg-primary/90 transition-colors shadow-sm mt-4 p-2">
+                <span class="material-symbols-outlined text-[18px]">quiz</span> Luyện đề ngay
+            </a>
+        </div>
+    }
+    else
+    {
+        <!-- Overview Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-md mb-lg">
+            <div class="bg-surface-container-lowest border border-surface-variant rounded-xl p-lg text-center shadow-sm p-4 bg-white">
+                <span class="material-symbols-outlined text-primary text-[28px] mb-sm">headphones</span>
+                <p class="font-display-sm text-[32px] text-primary font-bold">@Model.AnalysisData.AverageListeningScore.ToString("F0")</p>
+                <p class="font-label-md text-label-md text-on-surface-variant font-medium text-gray-600">Điểm TB Listening</p>
+                <div class="w-full bg-surface-container-high rounded-full h-[6px] mt-sm bg-gray-100 overflow-hidden">
+                    <div class="bg-primary h-full rounded-full transition-all" style="width: @((Model.AnalysisData.AverageListeningScore / 495 * 100).ToString("F0"))%"></div>
+                </div>
+                <p class="font-body-sm text-[11px] text-on-surface-variant mt-xs text-gray-400">/ 495 điểm</p>
+            </div>
+
+            <div class="bg-surface-container-lowest border border-surface-variant rounded-xl p-lg text-center shadow-sm p-4 bg-white">
+                <span class="material-symbols-outlined text-secondary text-[28px] mb-sm text-green-700">menu_book</span>
+                <p class="font-display-sm text-[32px] text-secondary font-bold text-green-700">@Model.AnalysisData.AverageReadingScore.ToString("F0")</p>
+                <p class="font-label-md text-label-md text-on-surface-variant font-medium text-gray-600">Điểm TB Reading</p>
+                <div class="w-full bg-surface-container-high rounded-full h-[6px] mt-sm bg-gray-100 overflow-hidden">
+                    <div class="bg-green-600 h-full rounded-full transition-all" style="width: @((Model.AnalysisData.AverageReadingScore / 495 * 100).ToString("F0"))%"></div>
+                </div>
+                <p class="font-body-sm text-[11px] text-on-surface-variant mt-xs text-gray-400">/ 495 điểm</p>
+            </div>
+
+            <div class="bg-surface-container-lowest border border-surface-variant rounded-xl p-lg text-center shadow-sm p-4 bg-white">
+                <span class="material-symbols-outlined text-tertiary text-[28px] mb-sm text-purple-700">assignment</span>
+                <p class="font-display-sm text-[32px] text-tertiary font-bold text-purple-700">@Model.AnalysisData.TotalTestsTaken</p>
+                <p class="font-label-md text-label-md text-on-surface-variant font-medium text-gray-600">Bài thi đã làm</p>
+                <p class="font-body-sm text-[11px] text-on-surface-variant mt-xs text-gray-400 mt-2">Dữ liệu tổng hợp</p>
+            </div>
+        </div>
+
+        <!-- Radar Chart -->
+        <div class="bg-surface-container-lowest border border-surface-variant rounded-xl shadow-sm p-lg mb-lg p-6 bg-white my-6">
+            <div class="flex justify-between items-center mb-md">
+                <h3 class="font-headline-sm text-headline-sm text-on-surface font-semibold text-lg">Biểu Đồ Độ Thông Thạo Từng Part (Part 1 - Part 7)</h3>
+            </div>
+            <div class="w-full flex justify-center" style="height: 350px;">
+                <canvas id="radarChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Tips Section -->
+        <div class="bg-primary-container/20 border border-primary-container rounded-xl p-lg p-6 bg-blue-50 border-blue-200">
+            <div class="flex items-center gap-sm mb-md font-semibold text-blue-900 text-lg mb-3">
+                <span class="material-symbols-outlined text-primary mr-2">lightbulb</span>
+                <h3>Gợi Ý Cải Thiện Kỹ Năng</h3>
+            </div>
+            @{
+                var listening = Model.AnalysisData.AverageListeningScore;
+                var reading = Model.AnalysisData.AverageReadingScore;
+                var weaker = listening < reading ? "Listening" : "Reading";
+            }
+            <div class="space-y-sm text-sm text-gray-800 space-y-2">
+                <div class="flex items-start gap-sm">
+                    <span class="material-symbols-outlined text-primary text-[18px] mr-2">check_circle</span>
+                    <p>Kỹ năng cần tập trung: <strong class="text-primary font-bold">@weaker</strong> – Hãy luyện tập thêm các đề chuyên sâu về phần này.</p>
+                </div>
+                <div class="flex items-start gap-sm">
+                    <span class="material-symbols-outlined text-primary text-[18px] mr-2">check_circle</span>
+                    <p>Đã hoàn thành <strong>@Model.AnalysisData.TotalTestsTaken bài thi</strong>. Làm thêm đề thi để thuật toán phân tích chính xác hơn.</p>
+                </div>
+                <div class="flex items-start gap-sm">
+                    <span class="material-symbols-outlined text-primary text-[18px] mr-2">check_circle</span>
+                    <p>Ôn luyện từ vựng qua Flashcards (Spaced Repetition) mỗi ngày giúp cải thiện cả kỹ năng Nghe và Đọc.</p>
+                </div>
+            </div>
+        </div>
+
+        @section Scripts {
+            <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+            <script>
+                const ctx = document.getElementById('radarChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'radar',
+                    data: {
+                        labels: ['Part 1 (Photos)', 'Part 2 (Q&R)', 'Part 3 (Conversations)', 'Part 4 (Talks)', 'Part 5 (Incomplete Sentences)', 'Part 6 (Text Completion)', 'Part 7 (Reading Comprehension)'],
+                        datasets: [{
+                            label: 'Tỷ lệ thông thạo (%)',
+                            data: [
+                                @(Model.AnalysisData.PartMastery.GetValueOrDefault(1, 0)),
+                                @(Model.AnalysisData.PartMastery.GetValueOrDefault(2, 0)),
+                                @(Model.AnalysisData.PartMastery.GetValueOrDefault(3, 0)),
+                                @(Model.AnalysisData.PartMastery.GetValueOrDefault(4, 0)),
+                                @(Model.AnalysisData.PartMastery.GetValueOrDefault(5, 0)),
+                                @(Model.AnalysisData.PartMastery.GetValueOrDefault(6, 0)),
+                                @(Model.AnalysisData.PartMastery.GetValueOrDefault(7, 0))
+                            ],
+                            borderColor: '#1e00a9',
+                            backgroundColor: 'rgba(30, 0, 169, 0.15)',
+                            borderWidth: 2,
+                            pointBackgroundColor: '#1e00a9',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            pointRadius: 5
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            r: {
+                                min: 0,
+                                max: 100,
+                                ticks: { stepSize: 20 }
+                            }
+                        }
+                    }
+                });
+            </script>
+        }
+    }
+</div>

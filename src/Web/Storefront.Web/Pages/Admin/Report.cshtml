@@ -1,0 +1,131 @@
+@page
+@model Storefront.Web.Pages.Admin.ReportModel
+@{
+    ViewData["Title"] = "Báo Cáo Tiến Độ Học Tập (Admin)";
+}
+
+<div class="max-w-[1200px] mx-auto py-xl px-margin-mobile md:px-margin-desktop">
+    <!-- Header -->
+    <div class="mb-xl flex flex-col md:flex-row md:items-end md:justify-between gap-md mb-6">
+        <div>
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-100 text-purple-800 text-xs font-bold mb-2">
+                <span class="material-symbols-outlined text-[14px]">shield_person</span> Quản Trị Hệ Thống · TV03 Learning Service
+            </div>
+            <h2 class="font-headline-md text-headline-md text-on-surface mb-xs font-bold text-2xl">Báo Cáo Tiến Độ Học Tập Tổng Hợp</h2>
+            <p class="font-body-md text-body-md text-on-surface-variant text-gray-600">Thống kê số lượt thi và điểm trung bình theo thời gian (Tối ưu Cache Redis ≥ 1 giờ).</p>
+        </div>
+        <div class="flex gap-2">
+            <a href="/Admin/Dashboard" class="inline-flex items-center gap-xs px-md py-xs rounded-xl border border-gray-300 bg-white text-gray-700 font-semibold text-xs p-2.5 shadow-sm hover:bg-gray-50 transition">
+                <span class="material-symbols-outlined text-[16px]">group</span> Thống kê người dùng
+            </a>
+            <a href="/Admin/ExamStats" class="inline-flex items-center gap-xs px-md py-xs rounded-xl border border-gray-300 bg-white text-gray-700 font-semibold text-xs p-2.5 shadow-sm hover:bg-gray-50 transition">
+                <span class="material-symbols-outlined text-[16px]">bar_chart</span> Thống kê đề thi
+            </a>
+        </div>
+    </div>
+
+    <!-- Filter Form -->
+    <div class="bg-surface-container-lowest rounded-2xl p-md shadow-sm border border-outline-variant mb-6 bg-white p-5">
+        <form method="get" class="flex flex-wrap items-end gap-4">
+            <div class="flex flex-col gap-1">
+                <label for="startDate" class="text-xs font-semibold text-gray-600">Từ ngày</label>
+                <input type="date" id="startDate" name="StartDate" class="px-3 py-2 border border-gray-300 rounded-xl text-sm" value="@Model.StartDate.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="flex flex-col gap-1">
+                <label for="endDate" class="text-xs font-semibold text-gray-600">Đến ngày</label>
+                <input type="date" id="endDate" name="EndDate" class="px-3 py-2 border border-gray-300 rounded-xl text-sm" value="@Model.EndDate.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="flex items-center gap-2">
+                <button type="submit" class="px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary/90 transition shadow-sm">
+                    Xem báo cáo
+                </button>
+                <button type="button" class="px-4 py-2.5 border border-gray-300 bg-white text-gray-700 rounded-xl text-sm font-semibold hover:bg-gray-50 transition" onclick="window.print()">
+                    In / Tải PDF
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+        <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+            <span class="text-xs font-bold uppercase text-gray-400">Tổng lượt làm bài</span>
+            <p class="text-3xl font-black text-indigo-900 mt-1">@Model.Report.TotalExamsCompleted</p>
+            <span class="text-xs text-gray-500">Trong khoảng thời gian đã chọn</span>
+        </div>
+        <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+            <span class="text-xs font-bold uppercase text-gray-400">Điểm số trung bình toàn hệ thống</span>
+            <p class="text-3xl font-black text-green-700 mt-1">@Model.Report.OverallAverageScore.ToString("F1")</p>
+            <span class="text-xs text-gray-500">Thang điểm 0 - 990</span>
+        </div>
+    </div>
+
+    <!-- Chart -->
+    <div class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant bg-white mb-6">
+        <h3 class="text-lg font-bold text-gray-900 mb-4">Biểu Đồ Lượt Thi Hoàn Thành Theo Ngày</h3>
+        <div class="w-full" style="height: 320px;">
+            <canvas id="progressChart"></canvas>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    <script>
+        const ctx = document.getElementById('progressChart').getContext('2d');
+        const labels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Report.DataPoints.Select(p => p.Date.ToString("dd/MM/yyyy"))));
+        const dataCounts = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Report.DataPoints.Select(p => p.CompletedExamsCount)));
+        const dataScores = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Report.DataPoints.Select(p => p.AverageScore)));
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Số lượt hoàn thành',
+                        data: dataCounts,
+                        backgroundColor: 'rgba(30, 0, 169, 0.15)',
+                        borderColor: '#1e00a9',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.3,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Điểm TB',
+                        data: dataScores,
+                        borderColor: '#10b981',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        fill: false,
+                        tension: 0.3,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        beginAtZero: true,
+                        title: { display: true, text: 'Số lượt thi' }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        grid: { drawOnChartArea: false },
+                        min: 0,
+                        max: 990,
+                        title: { display: true, text: 'Điểm TB' }
+                    }
+                }
+            }
+        });
+    </script>
+}
