@@ -1,0 +1,129 @@
+@page
+@model Storefront.Web.Pages.Account.VerifyOtpModel
+@{
+    ViewData["Title"] = "Xác thực mã OTP - AcadPrep";
+}
+
+<div class="auth-wrapper">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div style="font-size: 3rem; margin-bottom: 0.5rem;">📩</div>
+            <h1>Xác thực Email</h1>
+            <p>Mã bảo mật 6 số đã được gửi tới hòm thư:</p>
+            <strong style="color: var(--brand); font-size: 1.05rem;">@Model.Email</strong>
+        </div>
+
+        @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+        {
+            <div class="alert alert-ok">
+                @Model.SuccessMessage
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(Model.Error))
+        {
+            <div class="alert alert-error">
+                <strong>Lỗi:</strong> @Model.Error
+            </div>
+        }
+
+        <!-- Form Verify OTP -->
+        <form method="post" asp-page-handler="Verify" id="verifyForm">
+            <input type="hidden" asp-for="Email" />
+            <input type="hidden" asp-for="Otp" id="fullOtp" />
+
+            <div style="text-align: center; margin-bottom: 0.5rem;">
+                <label style="font-weight: 600; font-size: 0.9rem;">Nhập mã 6 chữ số:</label>
+            </div>
+
+            <div class="otp-input-container">
+                <input type="text" maxlength="1" class="otp-digit" data-index="0" autofocus inputmode="numeric" />
+                <input type="text" maxlength="1" class="otp-digit" data-index="1" inputmode="numeric" />
+                <input type="text" maxlength="1" class="otp-digit" data-index="2" inputmode="numeric" />
+                <input type="text" maxlength="1" class="otp-digit" data-index="3" inputmode="numeric" />
+                <input type="text" maxlength="1" class="otp-digit" data-index="4" inputmode="numeric" />
+                <input type="text" maxlength="1" class="otp-digit" data-index="5" inputmode="numeric" />
+            </div>
+
+            <button class="btn btn-block" type="submit" style="margin-top: 1rem;">Xác nhận kích hoạt tài khoản</button>
+        </form>
+
+        <!-- Form Resend OTP -->
+        <form method="post" asp-page-handler="Resend" style="margin-top: 1.25rem; text-align: center;">
+            <input type="hidden" asp-for="Email" />
+            <p style="font-size: 0.9rem; color: var(--muted); margin-bottom: 0.5rem;">Chưa nhận được mã?</p>
+            <button class="btn btn-outline" type="submit" id="resendBtn" style="font-size: 0.9rem; padding: 0.5rem 1rem;">
+                Gửi lại mã OTP (<span id="countdown">60</span>s)
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            <a asp-page="/Account/Login">Quay lại trang Đăng nhập</a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const digits = document.querySelectorAll(".otp-digit");
+        const fullOtpInput = document.getElementById("fullOtp");
+        const verifyForm = document.getElementById("verifyForm");
+
+        function updateFullOtp() {
+            let code = "";
+            digits.forEach(d => code += d.value);
+            fullOtpInput.value = code;
+        }
+
+        digits.forEach((digit, idx) => {
+            digit.addEventListener("input", function (e) {
+                this.value = this.value.replace(/[^0-9]/g, "");
+                updateFullOtp();
+                if (this.value && idx < digits.length - 1) {
+                    digits[idx + 1].focus();
+                }
+            });
+
+            digit.addEventListener("keydown", function (e) {
+                if (e.key === "Backspace" && !this.value && idx > 0) {
+                    digits[idx - 1].focus();
+                }
+            });
+
+            digit.addEventListener("paste", function (e) {
+                e.preventDefault();
+                const paste = (e.clipboardData || window.clipboardData).getData("text").replace(/[^0-9]/g, "");
+                if (paste.length >= 6) {
+                    for (let i = 0; i < 6; i++) {
+                        digits[i].value = paste[i];
+                    }
+                    updateFullOtp();
+                    digits[5].focus();
+                }
+            });
+        });
+
+        verifyForm.addEventListener("submit", function () {
+            updateFullOtp();
+        });
+
+        // 60-second Resend Cooldown Timer
+        let seconds = 60;
+        const btn = document.getElementById("resendBtn");
+        const countdownSpan = document.getElementById("countdown");
+        btn.disabled = true;
+
+        const timer = setInterval(() => {
+            seconds--;
+            if (seconds <= 0) {
+                clearInterval(timer);
+                btn.disabled = false;
+                btn.textContent = "Gửi lại mã OTP ngay";
+            } else {
+                countdownSpan.textContent = seconds;
+            }
+        }, 1000);
+    });
+</script>
+}

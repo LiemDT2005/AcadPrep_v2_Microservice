@@ -1,23 +1,53 @@
 @page
 @model Storefront.Web.Pages.Account.RegisterModel
-@{ ViewData["Title"] = "Đăng ký"; }
-<h1>Đăng ký</h1>
-@if (!string.IsNullOrEmpty(Model.Error))
-{
-    <div class="alert alert-error">@Model.Error</div>
+@{
+    ViewData["Title"] = "Đăng ký tài khoản - AcadPrep";
 }
-<form method="post" class="form">
-    <div>
-        <label>Họ tên</label>
-        <input asp-for="FullName" required />
+
+<div class="auth-wrapper">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h1>Tạo tài khoản</h1>
+            <p>Bắt đầu hành trình chinh phục điểm TOEIC cao cùng AcadPrep</p>
+        </div>
+
+        @if (!string.IsNullOrEmpty(Model.Error))
+        {
+            <div class="alert alert-error">
+                <strong>Lỗi:</strong> @Model.Error
+            </div>
+        }
+
+        <form method="post">
+            <div class="form-group">
+                <label asp-for="FullName">Họ và tên</label>
+                <input asp-for="FullName" placeholder="Ví dụ: Nguyễn Văn A" autofocus />
+                <span asp-validation-for="FullName" style="color: #b91c1c; font-size: 0.85rem;"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Email">Địa chỉ Email</label>
+                <input asp-for="Email" type="email" placeholder="name@example.com" />
+                <span asp-validation-for="Email" style="color: #b91c1c; font-size: 0.85rem;"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Password">Mật khẩu</label>
+                <input asp-for="Password" type="password" placeholder="Tối thiểu 6 ký tự" />
+                <span asp-validation-for="Password" style="color: #b91c1c; font-size: 0.85rem;"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="ConfirmPassword">Xác nhận mật khẩu</label>
+                <input asp-for="ConfirmPassword" type="password" placeholder="Nhập lại mật khẩu" />
+                <span asp-validation-for="ConfirmPassword" style="color: #b91c1c; font-size: 0.85rem;"></span>
+            </div>
+
+            <button class="btn btn-block" type="submit">Đăng ký & Nhận mã OTP</button>
+        </form>
+
+        <div class="auth-footer">
+            Đã có tài khoản? <a asp-page="/Account/Login">Đăng nhập ngay</a>
+        </div>
     </div>
-    <div>
-        <label>Email</label>
-        <input asp-for="Email" type="email" required />
-    </div>
-    <div>
-        <label>Mật khẩu (≥ 6 ký tự)</label>
-        <input asp-for="Password" type="password" required />
-    </div>
-    <button class="btn" type="submit">Tạo tài khoản</button>
-</form>
+</div>

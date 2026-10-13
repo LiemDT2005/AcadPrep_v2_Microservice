@@ -17,20 +17,128 @@ public class ToeicApiClient(HttpClient http, IHttpContextAccessor httpContextAcc
             http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
     }
 
-    public async Task<(AuthResponse? Data, string? Error)> RegisterAsync(string email, string password, string fullName)
+    private static string ExtractError(string rawJson)
     {
-        var res = await http.PostAsJsonAsync("/identity/api/auth/register", new { email, password, fullName });
-        if (!res.IsSuccessStatusCode)
-            return (null, await res.Content.ReadAsStringAsync());
-        return (await res.Content.ReadFromJsonAsync<AuthResponse>(JsonOpts), null);
+        try
+        {
+            using var doc = JsonDocument.Parse(rawJson);
+            if (doc.RootElement.TryGetProperty("error", out var err))
+                return err.GetString() ?? rawJson;
+            if (doc.RootElement.TryGetProperty("message", out var msg))
+                return msg.GetString() ?? rawJson;
+        }
+        catch { }
+        return rawJson;
     }
 
-    public async Task<(AuthResponse? Data, string? Error)> LoginAsync(string email, string password)
+    // ==========================================
+    // UC-1: Register
+    // ==========================================
+    public async Task<(RegisterResponse? Data, string? Error)> RegisterAsync(string email, string password, string fullName, string? confirmPassword = null)
+    {
+        var res = await http.PostAsJsonAsync("/identity/api/auth/register", new { email, password, fullName, confirmPassword });
+        var raw = await res.Content.ReadAsStringAsync();
+        if (!res.IsSuccessStatusCode)
+            return (null, ExtractError(raw));
+
+        return (JsonSerializer.Deserialize<RegisterResponse>(raw, JsonOpts), null);
+    }
+
+    // ==========================================
+    // UC-2: Verify OTP
+    // ==========================================
+    public async Task<(AuthResponse? Data, string? Error)> VerifyOtpAsync(string email, string otp)
+    {
+        var res = await http.PostAsJsonAsync("/identity/api/auth/verify-otp", new { email, otp });
+        var raw = await res.Content.ReadAsStringAsync();
+        if (!res.IsSuccessStatusCode)
+            return (null, ExtractError(raw));
+
+        return (JsonSerializer.Deserialize<AuthResponse>(raw, JsonOpts), null);
+    }
+
+    // ==========================================
+    // UC-2: Resend OTP
+    // ==========================================
+    public async Task<(bool Success, string Message)> ResendOtpAsync(string email)
+    {
+        var res = await http.PostAsJsonAsync("/identity/api/auth/resend-otp", new { email });
+        var raw = await res.Content.ReadAsStringAsync();
+        if (!res.IsSuccessStatusCode)
+            return (false, ExtractError(raw));
+
+        return (true, ExtractError(raw));
+    }
+
+    // ==========================================
+    // UC-5.1: Login with Email
+    // ==========================================
+    public async Task<(AuthResponse? Data, string? Error, bool RequiresOtp, string? Email)> LoginAsync(string email, string password)
     {
         var res = await http.PostAsJsonAsync("/identity/api/auth/login", new { email, password });
+        var raw = await res.Content.ReadAsStringAsync();
         if (!res.IsSuccessStatusCode)
-            return (null, await res.Content.ReadAsStringAsync());
-        return (await res.Content.ReadFromJsonAsync<AuthResponse>(JsonOpts), null);
+        {
+            bool requiresOtp = false;
+            try
+            {
+                using var doc = JsonDocument.Parse(raw);
+                if (doc.RootElement.TryGetProperty("requiresOtpVerification", out var req) && req.GetBoolean())
+                {
+                    requiresOtp = true;
+                }
+            }
+            catch { }
+
+            return (null, ExtractError(raw), requiresOtp, email);
+        }
+
+        return (JsonSerializer.Deserialize<AuthResponse>(raw, JsonOpts), null, false, null);
+    }
+
+    // ==========================================
+    // UC-5.2: Login with Google
+    // ==========================================
+    public async Task<(AuthResponse? Data, string? Error)> GoogleLoginAsync(string idToken)
+    {
+        var res = await http.PostAsJsonAsync("/identity/api/auth/google", new { idToken });
+        var raw = await res.Content.ReadAsStringAsync();
+        if (!res.IsSuccessStatusCode)
+            return (null, ExtractError(raw));
+
+        return (JsonSerializer.Deserialize<AuthResponse>(raw, JsonOpts), null);
+    }
+
+    // ==========================================
+    // UC-6: Logout
+    // ==========================================
+    public async Task LogoutAsync()
+    {
+        AttachToken();
+        var refreshToken = httpContextAccessor.HttpContext?.Session.GetString("refreshToken");
+        try
+        {
+            await http.PostAsJsonAsync("/identity/api/auth/logout", new { refreshToken });
+        }
+        catch { }
+
+        httpContextAccessor.HttpContext?.Session.Clear();
+    }
+
+    // ==========================================
+    // UC-7.1: View Profile
+    // ==========================================
+    public async Task<UserProfileDto?> GetProfileAsync()
+    {
+        var token = httpContextAccessor.HttpContext?.Session.GetString("jwt");
+        using var req = new HttpRequestMessage(HttpMethod.Get, "/identity/api/auth/me");
+        if (!string.IsNullOrEmpty(token))
+        {
+            req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        }
+        var res = await http.SendAsync(req);
+        if (!res.IsSuccessStatusCode) return null;
+        return await res.Content.ReadFromJsonAsync<UserProfileDto>(JsonOpts);
     }
 
     public async Task<List<CourseListItem>> GetCoursesAsync()

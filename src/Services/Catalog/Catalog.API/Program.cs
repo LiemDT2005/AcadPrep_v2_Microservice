@@ -1,4 +1,4 @@
-using System.Text;
+using System.Security.Cryptography;
 using Catalog.Application;
 using Catalog.Infrastructure;
 using Catalog.Infrastructure.Persistence;
@@ -12,6 +12,22 @@ builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 var jwt = builder.Configuration.GetSection("Jwt");
+var keyPath = jwt["PublicKeyPath"];
+string publicKeyPem;
+if (!string.IsNullOrEmpty(keyPath))
+{
+    var fullPath = Path.IsPathRooted(keyPath) ? keyPath : Path.Combine(builder.Environment.ContentRootPath, keyPath);
+    publicKeyPem = File.Exists(fullPath) ? File.ReadAllText(fullPath) : (jwt["PublicKey"] ?? string.Empty);
+}
+else
+{
+    publicKeyPem = jwt["PublicKey"] ?? string.Empty;
+}
+
+var rsaVerify = RSA.Create();
+rsaVerify.ImportFromPem(publicKeyPem);
+var rsaSecurityKey = new RsaSecurityKey(rsaVerify) { KeyId = "acadprep-rsa-key-1" };
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(opt =>
     {
@@ -23,7 +39,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             ValidIssuer = jwt["Issuer"],
             ValidAudience = jwt["Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt["Key"]!))
+            IssuerSigningKey = rsaSecurityKey
         };
     });
 

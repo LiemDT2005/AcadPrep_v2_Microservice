@@ -15,6 +15,7 @@
         <a asp-page="/Progress/Index">Tiến độ</a>
         @{
             var name = Context.Session.GetString("name");
+            var avatar = Context.Session.GetString("avatar");
         }
         @if (string.IsNullOrEmpty(name))
         {
@@ -23,8 +24,20 @@
         }
         else
         {
-            <span class="user">Xin chào, @name</span>
-            <a asp-page="/Account/Logout" class="btn btn-outline">Đăng xuất</a>
+            <a asp-page="/Account/Profile" style="display: flex; align-items: center; gap: 0.5rem; text-decoration: none; color: var(--ink); font-weight: 600;">
+                @if (!string.IsNullOrEmpty(avatar))
+                {
+                    <img src="@avatar" alt="@name" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover;" />
+                }
+                else
+                {
+                    <span style="width: 28px; height: 28px; border-radius: 50%; background: var(--brand); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold;">
+                        @(string.IsNullOrWhiteSpace(name) ? "U" : name.Substring(0, 1).ToUpper())
+                    </span>
+                }
+                <span>@name</span>
+            </a>
+            <a asp-page="/Account/Logout" class="btn btn-outline" style="font-size: 0.85rem; padding: 0.45rem 0.85rem;">Đăng xuất</a>
         }
     </nav>
 </header>

@@ -1,0 +1,88 @@
+@page
+@model Storefront.Web.Pages.Account.ProfileModel
+@{
+    ViewData["Title"] = "Hồ sơ cá nhân - AcadPrep";
+    var user = Model.UserProfile;
+}
+
+<div class="container" style="max-width: 760px; margin-top: 1rem;">
+    <div class="profile-card">
+        @if (user is not null)
+        {
+            <div class="profile-hero">
+                <div class="profile-avatar-wrap">
+                    @if (!string.IsNullOrEmpty(user.Avatar))
+                    {
+                        <img src="@user.Avatar" alt="@user.FullName" class="profile-avatar" />
+                    }
+                    else
+                    {
+                        <div class="profile-avatar-placeholder">
+                            @(string.IsNullOrWhiteSpace(user.FullName) ? "U" : user.FullName.Substring(0, 1).ToUpper())
+                        </div>
+                    }
+                </div>
+
+                <div class="profile-hero-info">
+                    <h2>@user.FullName</h2>
+                    <p>@user.Email</p>
+                    <div style="margin-top: 0.6rem; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                        @if (user.Status == "Active")
+                        {
+                            <span class="badge badge-active">● Đã kích hoạt</span>
+                        }
+                        else if (user.Status == "PendingVerification")
+                        {
+                            <span class="badge badge-pending"> Chờ xác thực OTP</span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-banned"> Đã bị khóa</span>
+                        }
+
+                        @foreach (var role in user.Roles)
+                        {
+                            <span class="badge badge-role">Vai trò: @role</span>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <h3 style="font-size: 1.15rem; margin: 1.5rem 0 1rem; color: var(--ink);">Chi tiết thông tin tài khoản</h3>
+
+            <div class="profile-info-grid">
+                <div class="info-item">
+                    <span>Mã định danh (User ID)</span>
+                    <strong style="font-family: monospace; font-size: 0.85rem; word-break: break-all;">@user.Id</strong>
+                </div>
+
+                <div class="info-item">
+                    <span>Địa chỉ Email</span>
+                    <strong>@user.Email</strong>
+                </div>
+
+                <div class="info-item">
+                    <span>Ngày tham gia</span>
+                    <strong>@user.CreatedAt.ToString("dd/MM/yyyy HH:mm")</strong>
+                </div>
+
+                <div class="info-item">
+                    <span>Đăng nhập gần nhất</span>
+                    <strong>@(user.LastLoginAt.HasValue ? user.LastLoginAt.Value.ToString("dd/MM/yyyy HH:mm") : "Lần đầu")</strong>
+                </div>
+            </div>
+
+            <div style="margin-top: 2rem; display: flex; gap: 1rem; flex-wrap: wrap; border-top: 1px solid var(--line); padding-top: 1.5rem;">
+                <a asp-page="/Exams/Index" class="btn">Bắt đầu Luyện đề TOEIC</a>
+                <a asp-page="/Courses/Index" class="btn btn-outline">Xem Khóa học</a>
+                <a asp-page="/Account/Logout" class="btn btn-outline" style="margin-left: auto; color: #b91c1c !important; border-color: #fca5a5;">Đăng xuất</a>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-error">
+                Không thể tải thông tin hồ sơ người dùng.
+            </div>
+        }
+    </div>
+</div>

@@ -1,6 +1,32 @@
 namespace Storefront.Web.Models;
 
-public record AuthResponse(string Token, string Email, string FullName, string UserId, DateTime ExpiresAt);
+public record AuthResponse(
+    string Token,
+    string Email,
+    string FullName,
+    string UserId,
+    DateTime ExpiresAt,
+    List<string>? Roles = null,
+    string? Avatar = null,
+    string? Status = null,
+    string? RefreshToken = null,
+    DateTime? RefreshTokenExpiresAt = null);
+
+public record RegisterResponse(
+    string Message,
+    string Email,
+    string UserId,
+    string Status);
+
+public record UserProfileDto(
+    string Id,
+    string Email,
+    string FullName,
+    string? Avatar,
+    string Status,
+    List<string> Roles,
+    DateTime CreatedAt,
+    DateTime? LastLoginAt);
 public record CourseListItem(Guid Id, string Title, string Level, int TargetScore, int LessonCount, string Description);
 public record LessonDto(Guid Id, string Title, string Skill, int Order, int DurationMinutes, string Content);
 public record CourseDetail(Guid Id, string Title, string Description, string Level, int TargetScore, List<LessonDto> Lessons);
