@@ -9,8 +9,20 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var identityConn = builder.Configuration.GetConnectionString("Default") ?? "Data Source=identity.db";
+var isIdentitySqlServer = string.Equals(builder.Configuration["UseSqlServer"], "true", StringComparison.OrdinalIgnoreCase) ||
+                          identityConn.Contains("Server=", StringComparison.OrdinalIgnoreCase) ||
+                          identityConn.Contains("Data Source=.", StringComparison.OrdinalIgnoreCase) ||
+                          identityConn.Contains("localhost", StringComparison.OrdinalIgnoreCase) ||
+                          identityConn.Contains("127.0.0.1", StringComparison.OrdinalIgnoreCase);
+
 builder.Services.AddDbContext<IdentityDbContext>(opt =>
-    opt.UseSqlite(builder.Configuration.GetConnectionString("Default") ?? "Data Source=identity.db"));
+{
+    if (isIdentitySqlServer)
+        opt.UseSqlServer(identityConn);
+    else
+        opt.UseSqlite(identityConn);
+});
 
 builder.Services.AddIdentity<AppUser, IdentityRole>(opt =>
     {

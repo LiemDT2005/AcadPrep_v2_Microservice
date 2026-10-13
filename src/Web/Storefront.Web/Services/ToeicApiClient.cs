@@ -73,4 +73,134 @@ public class ToeicApiClient(HttpClient http, IHttpContextAccessor httpContextAcc
         if (!res.IsSuccessStatusCode) return null;
         return await res.Content.ReadFromJsonAsync<ProgressSummary>(JsonOpts);
     }
+
+    // ==================== LEARNING SERVICE APIs (TV03) ====================
+    public async Task<LeaderboardResultDto?> GetLeaderboardAsync(string sortBy = "Score")
+    {
+        AttachToken();
+        var res = await http.GetAsync($"/learning/api/leaderboard?sortBy={sortBy}");
+        if (!res.IsSuccessStatusCode) return new LeaderboardResultDto([], null);
+        return await res.Content.ReadFromJsonAsync<LeaderboardResultDto>(JsonOpts);
+    }
+
+    public async Task<PerformanceAnalysisDto?> GetPerformanceAnalysisAsync(string? userId = null)
+    {
+        AttachToken();
+        var url = string.IsNullOrEmpty(userId) ? "/learning/api/performance/analysis" : $"/learning/api/performance/analysis?userId={userId}";
+        var res = await http.GetAsync(url);
+        if (!res.IsSuccessStatusCode) return null;
+        return await res.Content.ReadFromJsonAsync<PerformanceAnalysisDto>(JsonOpts);
+    }
+
+    public async Task<ScoreProgressResultDto?> GetScoreProgressAsync(string? userId = null)
+    {
+        AttachToken();
+        var url = string.IsNullOrEmpty(userId) ? "/learning/api/performance/progress" : $"/learning/api/performance/progress?userId={userId}";
+        var res = await http.GetAsync(url);
+        if (!res.IsSuccessStatusCode) return null;
+        return await res.Content.ReadFromJsonAsync<ScoreProgressResultDto>(JsonOpts);
+    }
+
+    public async Task<PaginatedListDto<SavedVocabularyDto>?> GetReviewFlashcardsAsync(int pageNumber = 1, int pageSize = 10)
+    {
+        AttachToken();
+        var res = await http.GetAsync($"/learning/api/vocabulary/flashcards?pageNumber={pageNumber}&pageSize={pageSize}");
+        if (!res.IsSuccessStatusCode) return new PaginatedListDto<SavedVocabularyDto>([], 1, 0, 0, false, false);
+        return await res.Content.ReadFromJsonAsync<PaginatedListDto<SavedVocabularyDto>>(JsonOpts);
+    }
+
+    public async Task<(bool Success, string? Error)> RateVocabularyAsync(int vocabularyId, bool isRemembered)
+    {
+        AttachToken();
+        var res = await http.PostAsJsonAsync("/learning/api/vocabulary/rate", new { vocabularyId, isRemembered });
+        if (!res.IsSuccessStatusCode)
+            return (false, await res.Content.ReadAsStringAsync());
+        return (true, null);
+    }
+
+    public async Task<(bool Success, string? Error)> SaveVocabularyAsync(int vocabularyId)
+    {
+        AttachToken();
+        var res = await http.PostAsJsonAsync("/learning/api/vocabulary/save", new { vocabularyId });
+        if (!res.IsSuccessStatusCode)
+            return (false, await res.Content.ReadAsStringAsync());
+        return (true, null);
+    }
+
+    public async Task<PaginatedListDto<SavedVocabularyDto>?> GetSavedVocabulariesAsync(string? searchTerm = null, int pageNumber = 1, int pageSize = 10)
+    {
+        AttachToken();
+        var url = $"/learning/api/vocabulary/notebook?pageNumber={pageNumber}&pageSize={pageSize}" + 
+                  (string.IsNullOrWhiteSpace(searchTerm) ? "" : $"&searchTerm={Uri.EscapeDataString(searchTerm)}");
+        var res = await http.GetAsync(url);
+        if (!res.IsSuccessStatusCode) return new PaginatedListDto<SavedVocabularyDto>([], 1, 0, 0, false, false);
+        return await res.Content.ReadFromJsonAsync<PaginatedListDto<SavedVocabularyDto>>(JsonOpts);
+    }
+
+    public async Task<(bool Success, string? Error)> RemoveSavedVocabularyAsync(int vocabularyId)
+    {
+        AttachToken();
+        var res = await http.DeleteAsync($"/learning/api/vocabulary/{vocabularyId}");
+        if (!res.IsSuccessStatusCode)
+            return (false, await res.Content.ReadAsStringAsync());
+        return (true, null);
+    }
+
+    public async Task<VocabContextDto?> GetVocabularyPassagesAsync(int vocabularyId)
+    {
+        AttachToken();
+        var res = await http.GetAsync($"/learning/api/vocabulary/{vocabularyId}/passages");
+        if (!res.IsSuccessStatusCode) return null;
+        return await res.Content.ReadFromJsonAsync<VocabContextDto>(JsonOpts);
+    }
+
+    public async Task<VocabularyDetailDto?> LookupVocabularyAsync(string keyword)
+    {
+        AttachToken();
+        var res = await http.GetAsync($"/learning/api/vocabulary/lookup?keyword={Uri.EscapeDataString(keyword)}");
+        if (!res.IsSuccessStatusCode) return null;
+        return await res.Content.ReadFromJsonAsync<VocabularyDetailDto>(JsonOpts);
+    }
+
+    public async Task<List<AchievementDto>> GetAchievementsAsync(string? userId = null)
+    {
+        AttachToken();
+        var url = string.IsNullOrEmpty(userId) ? "/learning/api/gamification/achievements" : $"/learning/api/gamification/achievements?userId={userId}";
+        var res = await http.GetAsync(url);
+        if (!res.IsSuccessStatusCode) return [];
+        return await res.Content.ReadFromJsonAsync<List<AchievementDto>>(JsonOpts) ?? [];
+    }
+
+    public async Task<StudyStreakDto?> GetStudyStreakAsync(string? userId = null)
+    {
+        AttachToken();
+        var url = string.IsNullOrEmpty(userId) ? "/learning/api/gamification/streak" : $"/learning/api/gamification/streak?userId={userId}";
+        var res = await http.GetAsync(url);
+        if (!res.IsSuccessStatusCode) return null;
+        return await res.Content.ReadFromJsonAsync<StudyStreakDto>(JsonOpts);
+    }
+
+    public async Task<ProgressReportDto?> GetProgressReportAsync(DateTime startDate, DateTime endDate)
+    {
+        AttachToken();
+        var res = await http.GetAsync($"/learning/api/admin/learning/reports?startDate={startDate:yyyy-MM-dd}&endDate={endDate:yyyy-MM-dd}");
+        if (!res.IsSuccessStatusCode) return new ProgressReportDto([], 0, 0);
+        return await res.Content.ReadFromJsonAsync<ProgressReportDto>(JsonOpts);
+    }
+
+    public async Task<UserStatsDto?> GetUserStatsAsync()
+    {
+        AttachToken();
+        var res = await http.GetAsync("/learning/api/admin/learning/user-stats");
+        if (!res.IsSuccessStatusCode) return null;
+        return await res.Content.ReadFromJsonAsync<UserStatsDto>(JsonOpts);
+    }
+
+    public async Task<PaginatedListDto<ExamStatsItemDto>?> GetExamStatsAsync(int pageNumber = 1, int pageSize = 10)
+    {
+        AttachToken();
+        var res = await http.GetAsync($"/learning/api/admin/learning/exam-stats?pageNumber={pageNumber}&pageSize={pageSize}");
+        if (!res.IsSuccessStatusCode) return new PaginatedListDto<ExamStatsItemDto>([], 1, 0, 0, false, false);
+        return await res.Content.ReadFromJsonAsync<PaginatedListDto<ExamStatsItemDto>>(JsonOpts);
+    }
 }

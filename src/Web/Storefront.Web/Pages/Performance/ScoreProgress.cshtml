@@ -1,0 +1,152 @@
+@page
+@model Storefront.Web.Pages.Performance.ScoreProgressModel
+@{
+    ViewData["Title"] = "Tiến Độ Điểm Số";
+}
+
+<div class="max-w-5xl mx-auto py-xl px-margin-mobile md:px-margin-desktop">
+    <div class="mb-xl flex flex-col md:flex-row md:items-end md:justify-between gap-md mb-6">
+        <div>
+            <h2 class="font-headline-md text-headline-md text-on-surface mb-xs font-bold text-2xl">Tiến Độ Điểm Số TOEIC</h2>
+            <p class="font-body-md text-body-md text-on-surface-variant text-gray-600">Theo dõi sự cải thiện và phát triển điểm số qua từng lần thi thử.</p>
+        </div>
+        <div class="flex gap-sm">
+            <a href="/Performance/PerformanceAnalysis" class="inline-flex items-center gap-xs px-md py-xs rounded-lg border border-outline-variant text-label-md font-medium hover:bg-surface-container bg-white text-sm p-2 shadow-sm">
+                <span class="material-symbols-outlined text-[16px]">analytics</span> Phân tích mạnh/yếu
+            </a>
+            <a href="/Exams/Index" class="inline-flex items-center gap-xs px-md py-xs rounded-lg bg-primary text-white text-label-md font-medium hover:bg-primary/90 text-sm p-2 shadow-sm">
+                <span class="material-symbols-outlined text-[16px]">quiz</span> Luyện đề mới
+            </a>
+        </div>
+    </div>
+
+    @if (!Model.ProgressData.HasSufficientData || !Model.ProgressData.Scores.Any())
+    {
+        <div class="bg-secondary-container/30 border border-secondary-container rounded-xl p-xl text-center py-12 bg-gray-50 border-gray-200">
+            <span class="material-symbols-outlined text-[48px] text-secondary mb-md text-gray-500">bar_chart</span>
+            <h3 class="font-headline-sm text-headline-sm text-on-surface mb-sm font-semibold text-lg">Chưa đủ dữ liệu vẽ biểu đồ</h3>
+            <p class="font-body-md text-body-md text-on-surface-variant mb-lg text-gray-600">@Model.ProgressData.Message</p>
+            <p class="text-xs text-gray-500 mb-4">Cần làm tối thiểu 2 bài thi để hệ thống có thể đối sánh tiến độ và vẽ biểu đồ tăng trưởng điểm số.</p>
+            <a href="/Exams/Index" class="inline-flex items-center gap-sm bg-primary text-white px-lg py-sm rounded-lg font-label-md hover:bg-primary/90 transition-colors shadow-sm p-2">
+                <span class="material-symbols-outlined text-[18px]">quiz</span> Làm bài thi ngay
+            </a>
+        </div>
+    }
+    else
+    {
+        var scores = Model.ProgressData.Scores;
+        var latest = scores.Last().Score;
+        var highest = scores.Max(s => s.Score);
+        var lowest = scores.Min(s => s.Score);
+        var improvement = scores.Last().Score - scores.First().Score;
+
+        <!-- Stats Summary -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-md mb-lg mb-6">
+            <div class="bg-surface-container-lowest border border-surface-variant rounded-xl p-md text-center p-4 bg-white shadow-sm">
+                <span class="material-symbols-outlined text-primary text-[24px]">trending_up</span>
+                <p class="font-display-sm text-[28px] text-primary font-bold mt-xs">@latest</p>
+                <p class="font-label-sm text-label-sm text-on-surface-variant text-gray-500 text-xs">Điểm gần nhất</p>
+            </div>
+            <div class="bg-surface-container-lowest border border-surface-variant rounded-xl p-md text-center p-4 bg-white shadow-sm">
+                <span class="material-symbols-outlined text-green-600 text-[24px]">emoji_events</span>
+                <p class="font-display-sm text-[28px] text-green-700 font-bold mt-xs">@highest</p>
+                <p class="font-label-sm text-label-sm text-on-surface-variant text-gray-500 text-xs">Điểm cao nhất</p>
+            </div>
+            <div class="bg-surface-container-lowest border border-surface-variant rounded-xl p-md text-center p-4 bg-white shadow-sm">
+                <span class="material-symbols-outlined text-gray-500 text-[24px]">arrow_downward</span>
+                <p class="font-display-sm text-[28px] text-gray-700 font-bold mt-xs">@lowest</p>
+                <p class="font-label-sm text-label-sm text-on-surface-variant text-gray-500 text-xs">Điểm thấp nhất</p>
+            </div>
+            <div class="bg-surface-container-lowest border border-surface-variant rounded-xl p-md text-center p-4 bg-white shadow-sm">
+                <span class="material-symbols-outlined text-[24px] @(improvement >= 0 ? "text-green-600" : "text-red-500")">
+                    @(improvement >= 0 ? "north" : "south")
+                </span>
+                <p class="font-display-sm text-[28px] font-bold mt-xs @(improvement >= 0 ? "text-green-700" : "text-red-600")">
+                    @(improvement >= 0 ? "+" : "")@improvement
+                </p>
+                <p class="font-label-sm text-label-sm text-on-surface-variant text-gray-500 text-xs">Tăng trưởng tổng</p>
+            </div>
+        </div>
+
+        <!-- Chart Card -->
+        <div class="bg-surface-container-lowest border border-surface-variant rounded-xl shadow-sm p-lg mb-lg p-6 bg-white mb-6">
+            <div class="flex justify-between items-center mb-md mb-4">
+                <h3 class="font-headline-sm text-headline-sm text-on-surface font-semibold text-lg">Biểu Đồ Tiến Độ Qua Các Lần Thi</h3>
+                <span class="inline-flex items-center px-sm py-xs rounded-full bg-blue-100 text-blue-800 font-label-sm text-[12px] px-3 py-1 font-semibold">
+                    @scores.Count lần thi
+                </span>
+            </div>
+            <div class="w-full" style="height: 320px;">
+                <canvas id="scoreProgressChart"></canvas>
+            </div>
+        </div>
+
+        <!-- History Table -->
+        <div class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant overflow-hidden bg-white">
+            <div class="p-4 border-b border-gray-100 bg-gray-50 font-semibold text-gray-700">
+                Lịch sử các lần thi gần đây
+            </div>
+            <table class="w-full text-left border-collapse">
+                <thead class="bg-gray-50 text-gray-500 text-xs uppercase">
+                    <tr>
+                        <th class="p-3">#</th>
+                        <th class="p-3">Đề thi</th>
+                        <th class="p-3 text-right">Điểm số</th>
+                        <th class="p-3 text-right">Ngày thi</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 text-sm">
+                    @for (int i = 0; i < scores.Count; i++)
+                    {
+                        var s = scores[i];
+                        <tr class="hover:bg-gray-50">
+                            <td class="p-3 font-semibold text-gray-500">@(i + 1)</td>
+                            <td class="p-3 font-medium text-gray-800">@s.ExamTitle</td>
+                            <td class="p-3 text-right font-bold text-primary">@s.Score</td>
+                            <td class="p-3 text-right text-gray-500">@s.AttemptDate.ToString("dd/MM/yyyy HH:mm")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @section Scripts {
+            <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+            <script>
+                const ctx = document.getElementById('scoreProgressChart').getContext('2d');
+                const labels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(scores.Select(s => s.AttemptDate.ToString("dd/MM") + " (" + (s.ExamTitle.Length > 15 ? s.ExamTitle.Substring(0, 15) + "..." : s.ExamTitle) + ")")));
+                const dataValues = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(scores.Select(s => s.Score)));
+
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Điểm TOEIC (0-990)',
+                            data: dataValues,
+                            borderColor: '#1e00a9',
+                            backgroundColor: 'rgba(30, 0, 169, 0.1)',
+                            borderWidth: 3,
+                            pointBackgroundColor: '#1e00a9',
+                            pointRadius: 6,
+                            pointHoverRadius: 8,
+                            tension: 0.3,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                min: 0,
+                                max: 990,
+                                ticks: { stepSize: 100 }
+                            }
+                        }
+                    }
+                });
+            </script>
+        }
+    }
+</div>
