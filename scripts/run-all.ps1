@@ -15,6 +15,7 @@ $services = @(
     @{ Name = "Exam.API";     Path = "src/Services/Exam/Exam.API" },
     @{ Name = "Progress.API"; Path = "src/Services/Progress/Progress.API" },
     @{ Name = "Learning.API"; Path = "src/Services/Learning/Learning.API" },
+    @{ Name = "Content.API";  Path = "src/Services/Content/Content.API" },
     @{ Name = "ApiGateway";   Path = "src/ApiGateways/ApiGateway" },
     @{ Name = "Storefront.Web"; Path = "src/Web/Storefront.Web" }
 )
@@ -28,12 +29,14 @@ foreach ($s in $services) {
 Write-Host ""
 Write-Host "Microservices running:" -ForegroundColor Yellow
 Write-Host "  Web UI:       http://localhost:5100"
+Write-Host "  CMS Exams:    http://localhost:5100/Admin/Exams"
 Write-Host "  Gateway:      http://localhost:5080"
 Write-Host "  Identity:     http://localhost:5001/swagger"
 Write-Host "  Catalog:      http://localhost:5002/swagger"
 Write-Host "  Exam:         http://localhost:5003/swagger"
 Write-Host "  Progress:     http://localhost:5004/swagger"
 Write-Host "  Learning:     http://localhost:5005/swagger"
+Write-Host "  Content:      http://localhost:5006/swagger"
 Write-Host "  RabbitMQ:     http://localhost:15672 (guest/guest)"
-Write-Host "  Gateway Route: http://localhost:5080/learning/*"
+Write-Host "  Gateway Content: http://localhost:5080/content/*"
 Write-Host ""

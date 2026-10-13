@@ -1,0 +1,370 @@
+@page
+@model Storefront.Web.Pages.Admin.Exams.IndexModel
+@{
+    Layout = "_ModeratorLayout";
+    ViewData["Title"] = "Exam Management";
+}
+
+<link rel="stylesheet" href="~/css/admin-question-create.css" />
+
+@Html.AntiForgeryToken()
+
+<div class="w-full flex flex-col gap-xl">
+    
+    <!-- 1. STATS ROW (Bento Grid Style) -->
+    <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-md">
+        <div class="bg-surface-container-lowest rounded-xl p-md border border-outline-variant/30 shadow-sm relative overflow-hidden group">
+            <div class="absolute top-0 right-0 -mr-4 -mt-4 w-24 h-24 bg-primary-fixed rounded-full opacity-20 group-hover:scale-110 transition-transform duration-500"></div>
+            <div class="flex justify-between items-start mb-sm relative z-10">
+                <span class="font-label-md text-label-md text-on-surface-variant">Total Exams</span>
+                <span class="material-symbols-outlined text-primary">quiz</span>
+            </div>
+            <div class="flex items-end gap-sm relative z-10">
+                <span class="font-display-lg text-display-lg text-on-surface font-bold text-2xl">@Model.TotalExams</span>
+                <span class="font-label-sm text-label-sm text-tertiary pb-1">Stored</span>
+            </div>
+        </div>
+        <div class="bg-surface-container-lowest rounded-xl p-md border border-outline-variant/30 shadow-sm relative overflow-hidden group">
+            <div class="absolute top-0 right-0 -mr-4 -mt-4 w-24 h-24 bg-primary-fixed rounded-full opacity-20 group-hover:scale-110 transition-transform duration-500"></div>
+            <div class="flex justify-between items-start mb-sm relative z-10">
+                <span class="font-label-md text-label-md text-on-surface-variant">Public Exams</span>
+                <span class="material-symbols-outlined text-tertiary">check_circle</span>
+            </div>
+            <div class="flex items-end gap-sm relative z-10">
+                <span class="font-display-lg text-display-lg text-on-surface font-bold text-2xl">@Model.ActiveExams</span>
+                <span class="font-body-sm text-body-sm text-on-surface-variant pb-1">Active / Published</span>
+            </div>
+        </div>
+        <div class="bg-surface-container-lowest rounded-xl p-md border border-outline-variant/30 shadow-sm relative overflow-hidden group">
+            <div class="absolute top-0 right-0 -mr-4 -mt-4 w-24 h-24 bg-primary-fixed rounded-full opacity-20 group-hover:scale-110 transition-transform duration-500"></div>
+            <div class="flex justify-between items-start mb-sm relative z-10">
+                <span class="font-label-md text-label-md text-on-surface-variant">Total Attempts</span>
+                <span class="material-symbols-outlined text-primary">trending_up</span>
+            </div>
+            <div class="flex items-end gap-sm relative z-10">
+                <span class="font-display-lg text-display-lg text-on-surface font-bold text-2xl">@Model.TotalAttempts</span>
+                <span class="font-body-sm text-body-sm text-on-surface-variant pb-1">Attempts taken</span>
+            </div>
+        </div>
+        <div class="bg-secondary-fixed rounded-xl p-md border border-secondary-fixed-dim shadow-sm relative overflow-hidden group">
+            <div class="absolute top-0 right-0 -mr-4 -mt-4 w-24 h-24 bg-secondary-container rounded-full opacity-20 group-hover:scale-110 transition-transform duration-500"></div>
+            <div class="flex justify-between items-start mb-sm relative z-10">
+                <span class="font-label-md text-label-md text-on-secondary-fixed-variant">Hidden Exams</span>
+                <span class="material-symbols-outlined text-secondary">visibility_off</span>
+            </div>
+            <div class="flex items-end gap-sm relative z-10">
+                <span class="font-display-lg text-display-lg text-on-secondary-fixed font-bold text-2xl">@Model.HiddenExams</span>
+                <span class="font-label-sm text-label-sm text-secondary pb-1">Hidden / Soft Deleted</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- 2. QUICK ACTIONS & SEARCH / FILTER (UC-16.6, UC-16.7) -->
+    <section class="bg-surface-container-lowest rounded-xl p-md border border-outline-variant/30 shadow-sm flex flex-col md:flex-row justify-between items-stretch md:items-center gap-md">
+        <form method="get" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-sm flex-1">
+            <!-- Search Keyword (UC-16.6) -->
+            <div class="relative flex-1">
+                <input type="text"
+                       name="keyword"
+                       value="@Model.Keyword"
+                       placeholder="Search exams by title or description..."
+                       class="w-full pl-10 pr-4 py-2 border border-outline-variant rounded-lg text-sm bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:border-primary transition" />
+                <span class="material-symbols-outlined absolute left-3 top-2.5 text-on-surface-variant text-sm">search</span>
+            </div>
+
+            <!-- Filter Status (UC-16.7) -->
+            <div class="w-full sm:w-40">
+                <select name="status" onchange="this.form.submit()" class="w-full py-2 px-3 border border-outline-variant rounded-lg text-sm bg-surface-container-lowest focus:ring-2 focus:ring-primary cursor-pointer">
+                    <option value="All" selected="@(Model.Status == "All" || string.IsNullOrEmpty(Model.Status))">All Statuses</option>
+                    <option value="Published" selected="@(Model.Status == "Published")">Published</option>
+                    <option value="Draft" selected="@(Model.Status == "Draft")">Draft</option>
+                    <option value="Hidden" selected="@(Model.Status == "Hidden")">Hidden / Deleted</option>
+                </select>
+            </div>
+
+            <!-- Filter Part / ExamType (UC-16.7) -->
+            <div class="w-full sm:w-44">
+                <select name="examType" onchange="this.form.submit()" class="w-full py-2 px-3 border border-outline-variant rounded-lg text-sm bg-surface-container-lowest focus:ring-2 focus:ring-primary cursor-pointer">
+                    <option value="All" selected="@(Model.ExamType == "All" || string.IsNullOrEmpty(Model.ExamType))">Tất cả Part / Loại đề</option>
+                    <option value="Full Test" selected="@(Model.ExamType == "Full Test")">Full Test (Part 1-7)</option>
+                    <option value="Part 1" selected="@(Model.ExamType == "Part 1")">Part 1: Photographs</option>
+                    <option value="Part 2" selected="@(Model.ExamType == "Part 2")">Part 2: Question-Response</option>
+                    <option value="Part 3" selected="@(Model.ExamType == "Part 3")">Part 3: Conversations</option>
+                    <option value="Part 4" selected="@(Model.ExamType == "Part 4")">Part 4: Talks</option>
+                    <option value="Part 5" selected="@(Model.ExamType == "Part 5")">Part 5: Incomplete Sentences</option>
+                    <option value="Part 6" selected="@(Model.ExamType == "Part 6")">Part 6: Text Completion</option>
+                    <option value="Part 7" selected="@(Model.ExamType == "Part 7")">Part 7: Reading Comprehension</option>
+                    <option value="Reading" selected="@(Model.ExamType == "Reading")">Reading Practice</option>
+                    <option value="Listening" selected="@(Model.ExamType == "Listening")">Listening Practice</option>
+                </select>
+            </div>
+
+            <button type="submit" class="bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-medium text-sm py-2 px-4 rounded-lg flex items-center justify-center gap-xs transition cursor-pointer">
+                <span>Filter</span>
+            </button>
+            @if (!string.IsNullOrEmpty(Model.Keyword) || (Model.Status != "All" && !string.IsNullOrEmpty(Model.Status)) || (Model.ExamType != "All" && !string.IsNullOrEmpty(Model.ExamType)))
+            {
+                <a href="/Admin/Exams" class="text-xs text-on-surface-variant hover:text-error flex items-center justify-center px-2 py-2">Clear</a>
+            }
+        </form>
+
+        <div class="flex items-center gap-sm shrink-0">
+            <button type="button" onclick="openCreateExamModal()" class="bg-primary hover:bg-primary/90 text-on-primary font-label-md text-label-md py-2 px-4 rounded-lg flex items-center gap-xs transition-colors cursor-pointer shadow-sm">
+                <span class="material-symbols-outlined text-sm">add</span>
+                Create New Exam
+            </button>
+        </div>
+    </section>
+
+    <!-- 3. EXAMS TABLE (UC-16.1) -->
+    <section class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden border border-outline-variant/30">
+        <div class="px-md py-sm border-b border-outline-variant/50 flex justify-between items-center bg-surface-container/30">
+            <h2 class="font-headline-md text-headline-md text-on-surface font-semibold text-base">
+                All Exams (@Model.TotalCount)
+            </h2>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-surface-container-lowest border-b border-outline-variant">
+                        <th class="px-md py-sm font-label-sm text-label-sm text-on-surface-variant font-semibold">Exam ID</th>
+                        <th class="px-md py-sm font-label-sm text-label-sm text-on-surface-variant font-semibold">Exam Name & Part</th>
+                        <th class="px-md py-sm font-label-sm text-label-sm text-on-surface-variant font-semibold">Duration</th>
+                        <th class="px-md py-sm font-label-sm text-label-sm text-on-surface-variant font-semibold">Attempts</th>
+                        <th class="px-md py-sm font-label-sm text-label-sm text-on-surface-variant font-semibold">Status</th>
+                        <th class="px-md py-sm font-label-sm text-label-sm text-on-surface-variant font-semibold text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-outline-variant/50">
+                    @if (Model.Exams.Any())
+                    {
+                        foreach (var exam in Model.Exams)
+                        {
+                            <tr class="hover:bg-surface-container-low transition-colors group">
+                                <td class="px-md py-sm font-body-sm text-body-sm text-on-surface-variant">#@exam.Id</td>
+                                <td class="px-md py-sm font-body-sm text-body-sm text-on-surface font-medium">
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <a href="/Admin/Exams/Detail?id=@exam.Id" class="text-primary hover:underline font-semibold">
+                                            @exam.Title
+                                        </a>
+                                        <span class="inline-block bg-primary/10 text-primary px-2 py-0.5 rounded text-[11px] font-bold">
+                                            @exam.ExamType
+                                        </span>
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(exam.Description))
+                                    {
+                                        <p class="text-xs text-on-surface-variant font-normal line-clamp-1 mt-0.5">@exam.Description</p>
+                                    }
+                                </td>
+                                <td class="px-md py-sm font-body-sm text-body-sm text-on-surface-variant">@exam.Duration mins</td>
+                                <td class="px-md py-sm font-body-sm text-body-sm text-on-surface-variant">@exam.AttemptCount attempts</td>
+                                <td class="px-md py-sm">
+                                    @if (exam.IsDeleted || exam.Status == "Hidden")
+                                    {
+                                        <span class="bg-error-container text-on-error-container px-2.5 py-1 rounded-full font-label-sm text-label-sm flex items-center gap-xs w-fit">
+                                            <span class="material-symbols-outlined text-sm">visibility_off</span>
+                                            Hidden
+                                        </span>
+                                    }
+                                    else if (exam.Status == "Published")
+                                    {
+                                        <span class="bg-tertiary-fixed text-on-tertiary-fixed-variant px-2.5 py-1 rounded-full font-label-sm text-label-sm flex items-center gap-xs w-fit">
+                                            <span class="material-symbols-outlined text-sm">visibility</span>
+                                            Published
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="bg-secondary-container text-on-secondary-container px-2.5 py-1 rounded-full font-label-sm text-label-sm flex items-center gap-xs w-fit">
+                                            <span class="material-symbols-outlined text-sm">edit_note</span>
+                                            Draft
+                                        </span>
+                                    }
+                                </td>
+                                <td class="px-md py-sm text-right">
+                                    <div class="flex items-center justify-end gap-sm">
+                                        <a href="/Admin/Exams/Detail?id=@exam.Id" class="text-on-surface-variant hover:text-primary p-1 rounded hover:bg-surface-container" title="View Details">
+                                            <span class="material-symbols-outlined text-sm block">info</span>
+                                        </a>
+                                        @if (!exam.IsDeleted && exam.Status != "Hidden")
+                                        {
+                                            <a href="/Admin/Exams/Edit?id=@exam.Id" class="text-on-surface-variant hover:text-primary p-1 rounded hover:bg-surface-container" title="Edit Exam">
+                                                <span class="material-symbols-outlined text-sm block">edit</span>
+                                            </a>
+                                            <button onclick="confirmSoftDelete(@exam.Id, '@exam.Title')" class="text-on-surface-variant hover:text-error p-1 rounded hover:bg-surface-container cursor-pointer" title="Hide/Delete">
+                                                <span class="material-symbols-outlined text-sm block">delete</span>
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button onclick="confirmRestore(@exam.Id, '@exam.Title')" class="text-on-surface-variant hover:text-tertiary p-1 rounded hover:bg-surface-container cursor-pointer" title="Restore/Publish">
+                                                <span class="material-symbols-outlined text-sm block">publish</span>
+                                            </button>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center py-12 text-on-surface-variant">
+                                <span class="material-symbols-outlined text-4xl text-outline-variant block mb-sm">inbox</span>
+                                <p class="font-headline-sm text-headline-sm mb-xs">No exams found</p>
+                                <p class="font-body-sm text-body-sm">Click "Create New Exam" above to add an exam.</p>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        @if (Model.TotalPages > 1)
+        {
+            <div class="px-md py-sm border-t border-outline-variant/30 flex items-center justify-between bg-surface-container/20">
+                <div class="text-xs text-on-surface-variant">
+                    Showing Page @Model.PageNumber of @Model.TotalPages (Total @Model.TotalCount exams)
+                </div>
+                <div class="flex items-center gap-1">
+                    @if (Model.PageNumber > 1)
+                    {
+                        <a href="/Admin/Exams?keyword=@Model.Keyword&status=@Model.Status&page=@(Model.PageNumber - 1)" class="px-2.5 py-1 text-xs border border-outline-variant rounded hover:bg-surface-container">Prev</a>
+                    }
+                    @for (int p = 1; p <= Model.TotalPages; p++)
+                    {
+                        <a href="/Admin/Exams?keyword=@Model.Keyword&status=@Model.Status&page=@p" class="px-2.5 py-1 text-xs border rounded @(p == Model.PageNumber ? "bg-primary text-white border-primary" : "border-outline-variant hover:bg-surface-container")">@p</a>
+                    }
+                    @if (Model.PageNumber < Model.TotalPages)
+                    {
+                        <a href="/Admin/Exams?keyword=@Model.Keyword&status=@Model.Status&page=@(Model.PageNumber + 1)" class="px-2.5 py-1 text-xs border border-outline-variant rounded hover:bg-surface-container">Next</a>
+                    }
+                </div>
+            </div>
+        }
+    </section>
+</div>
+
+<partial name="_CreateExamModal" />
+
+@section Scripts {
+<script>
+    function openCreateExamModal() {
+        const modal = document.getElementById('create-exam-modal');
+        const content = document.getElementById('create-exam-modal-content');
+        if (!modal || !content) return;
+
+        modal.classList.remove('hidden', 'pointer-events-none', 'opacity-0');
+        modal.classList.add('opacity-100');
+        content.classList.remove('scale-95', 'opacity-0');
+        content.classList.add('scale-100', 'opacity-100');
+    }
+
+    function closeCreateExamModal() {
+        const modal = document.getElementById('create-exam-modal');
+        const content = document.getElementById('create-exam-modal-content');
+        if (!modal || !content) return;
+
+        content.classList.remove('scale-100', 'opacity-100');
+        content.classList.add('scale-95', 'opacity-0');
+        modal.classList.remove('opacity-100');
+        modal.classList.add('opacity-0');
+
+        setTimeout(() => {
+            modal.classList.add('hidden', 'pointer-events-none');
+        }, 300);
+    }
+
+    document.getElementById('create-exam-modal')?.addEventListener('click', (e) => {
+        if (e.target.id === 'create-exam-modal') {
+            closeCreateExamModal();
+        }
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeCreateExamModal();
+        }
+    });
+
+    @if (Model.ShowCreateModal)
+    {
+        <text>document.addEventListener('DOMContentLoaded', openCreateExamModal);</text>
+    }
+
+    function confirmSoftDelete(id, title) {
+        showConfirm({
+            title: 'Delete / Hide Exam',
+            message: `Are you sure you want to delete or hide the exam "${title}"? If the exam has user attempts, it will be soft-deleted (hidden) to preserve learner history. Otherwise, it will be permanently removed.`,
+            confirmText: 'Confirm Delete',
+            isDestructive: true,
+            onConfirm: async () => {
+                try {
+                    const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+                    const response = await fetch(`/Admin/Exams?handler=Delete&id=${id}`, {
+                        method: 'POST',
+                        headers: {
+                            'RequestVerificationToken': token
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.success) {
+                            showToast(data.message || 'Exam processed successfully!', 'success');
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1000);
+                        } else {
+                            showToast(data.error || 'Failed to delete exam.', 'error');
+                        }
+                    } else {
+                        showToast('Failed to delete the exam.', 'error');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    showToast('Could not connect to the server.', 'error');
+                }
+            }
+        });
+    }
+
+    function confirmRestore(id, title) {
+        showConfirm({
+            title: 'Restore Exam',
+            message: `Are you sure you want to restore and republish the exam "${title}"?`,
+            confirmText: 'Restore Exam',
+            isDestructive: false,
+            onConfirm: async () => {
+                try {
+                    const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+                    const response = await fetch(`/Admin/Exams?handler=Restore&id=${id}`, {
+                        method: 'POST',
+                        headers: {
+                            'RequestVerificationToken': token
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.success) {
+                            showToast(data.message || 'Exam restored successfully!', 'success');
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1000);
+                        } else {
+                            showToast(data.error || 'Failed to restore exam.', 'error');
+                        }
+                    } else {
+                        showToast('Failed to restore the exam.', 'error');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    showToast('Could not connect to the server.', 'error');
+                }
+            }
+        });
+    }
+</script>
+}

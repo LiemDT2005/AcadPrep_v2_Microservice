@@ -203,4 +203,93 @@ public class ToeicApiClient(HttpClient http, IHttpContextAccessor httpContextAcc
         if (!res.IsSuccessStatusCode) return new PaginatedListDto<ExamStatsItemDto>([], 1, 0, 0, false, false);
         return await res.Content.ReadFromJsonAsync<PaginatedListDto<ExamStatsItemDto>>(JsonOpts);
     }
+
+    // ==================== CONTENT SERVICE APIs (CMS EXAM) ====================
+    public async Task<PagedResult<AdminExamListItem>?> GetAdminExamsPagedAsync(
+        string? search = null,
+        string? status = null,
+        string? examType = null,
+        int pageNumber = 1,
+        int pageSize = 10)
+    {
+        AttachToken();
+        var q = new List<string>
+        {
+            $"page={pageNumber}",
+            $"pageSize={pageSize}"
+        };
+        if (!string.IsNullOrWhiteSpace(search)) q.Add($"keyword={Uri.EscapeDataString(search.Trim())}");
+        if (!string.IsNullOrWhiteSpace(status) && status != "All") q.Add($"status={Uri.EscapeDataString(status)}");
+        if (!string.IsNullOrWhiteSpace(examType) && examType != "All") q.Add($"examType={Uri.EscapeDataString(examType)}");
+
+        var queryString = string.Join("&", q);
+        var res = await http.GetAsync($"/content/api/cms/exams?{queryString}");
+        if (!res.IsSuccessStatusCode) return new PagedResult<AdminExamListItem>([], 0, pageNumber, pageSize, 0);
+        return await res.Content.ReadFromJsonAsync<PagedResult<AdminExamListItem>>(JsonOpts);
+    }
+
+    public async Task<AdminExamDetail?> GetAdminExamAsync(int id)
+    {
+        AttachToken();
+        var res = await http.GetAsync($"/content/api/cms/exams/{id}");
+        if (!res.IsSuccessStatusCode) return null;
+        return await res.Content.ReadFromJsonAsync<AdminExamDetail>(JsonOpts);
+    }
+
+    public async Task<(int? Id, string? Error)> CreateAdminExamAsync(AdminCreateExamRequest request)
+    {
+        AttachToken();
+        var res = await http.PostAsJsonAsync("/content/api/cms/exams", request);
+        if (!res.IsSuccessStatusCode)
+        {
+            var err = await res.Content.ReadAsStringAsync();
+            return (null, err);
+        }
+        var created = await res.Content.ReadFromJsonAsync<AdminExamDetail>(JsonOpts);
+        return (created?.Id, null);
+    }
+
+    public async Task<(bool Success, string? Error)> UpdateAdminExamAsync(int id, AdminUpdateExamRequest request)
+    {
+        AttachToken();
+        var res = await http.PutAsJsonAsync($"/content/api/cms/exams/{id}", request);
+        if (!res.IsSuccessStatusCode)
+            return (false, await res.Content.ReadAsStringAsync());
+        return (true, null);
+    }
+
+    public async Task<(bool Success, string? Error)> ChangeExamStatusAsync(int id, string status)
+    {
+        AttachToken();
+        var res = await http.PostAsJsonAsync($"/content/api/cms/exams/{id}/status", new AdminChangeExamStatusRequest(status));
+        if (!res.IsSuccessStatusCode)
+            return (false, await res.Content.ReadAsStringAsync());
+        return (true, null);
+    }
+
+    public async Task<(DeleteExamApiResponse? Data, string? Error)> DeleteAdminExamAsync(int id)
+    {
+        AttachToken();
+        var res = await http.DeleteAsync($"/content/api/cms/exams/{id}");
+        if (!res.IsSuccessStatusCode)
+            return (null, await res.Content.ReadAsStringAsync());
+        return (await res.Content.ReadFromJsonAsync<DeleteExamApiResponse>(JsonOpts), null);
+    }
+
+    public async Task<(bool Success, string? Error)> RestoreAdminExamAsync(int id)
+    {
+        AttachToken();
+        var res = await http.PostAsync($"/content/api/cms/exams/{id}/restore", null);
+        if (!res.IsSuccessStatusCode)
+            return (false, await res.Content.ReadAsStringAsync());
+        return (true, null);
+    }
+
+    public async Task<List<AdminExamSeries>> GetExamSeriesAsync()
+    {
+        AttachToken();
+        var res = await http.GetAsync("/content/api/cms/exams/series");
+        if (!res.IsSuccessStatusCode) return [];
+        return await res.Content.ReadFromJsonAsync<List<AdminExamSeries>>(JsonOpts) ?? [];
+    }
 }
