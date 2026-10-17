@@ -1,0 +1,419 @@
+@page "{id:int}"
+@model Storefront.Web.Pages.Exams.DetailModel
+@{
+    ViewData["Title"] = Model.ExamDetail?.Title ?? "Exam Detail";
+}
+
+<style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #f1f1f1; }
+    ::-webkit-scrollbar-thumb { background: #c7c4d8; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #777587; }
+    .glass-card { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); }
+    .custom-shadow { box-shadow: 0 4px 20px -2px rgba(30, 0, 169, 0.05); }
+</style>
+
+<!-- Breadcrumb Navigation -->
+<nav class="flex items-center gap-xs text-on-surface-variant mb-lg">
+    <a asp-page="/Exams/Index" class="text-label-sm font-label-sm uppercase tracking-wider hover:text-primary transition-colors">Exam Library</a>
+    <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+    <span class="text-label-sm font-label-sm text-primary uppercase tracking-wider">@Model.ExamDetail?.Title</span>
+</nav>
+
+@if (Model.ExamDetail == null)
+{
+    <div class="bg-error-container text-on-error-container p-lg rounded-2xl flex items-center gap-md">
+        <span class="material-symbols-outlined text-[24px]">error</span>
+        <span class="text-body-md font-label-md">Exam information not found. Please go back and try again.</span>
+    </div>
+}
+else
+{
+    <!-- Hero Section -->
+    <section class="mb-xl bg-surface-container-lowest rounded-2xl p-xl shadow-sm border border-outline-variant/30">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-lg">
+            <div>
+                <div class="flex flex-wrap gap-2 mb-sm">
+                    <span class="bg-primary/10 text-primary px-3 py-1 rounded-full text-label-sm font-bold uppercase tracking-wider">TOEIC</span>
+                    <span class="bg-surface-container-highest text-on-surface-variant px-3 py-1 rounded-full text-label-sm font-bold">@Model.ExamDetail.SeriesName</span>
+                    <span class="bg-tertiary-container/30 text-tertiary px-3 py-1 rounded-full text-label-sm font-bold">Year @Model.ExamDetail.Year</span>
+                </div>
+                <h1 class="font-headline-lg text-headline-lg text-on-surface mb-xs">@Model.ExamDetail.Title</h1>
+            </div>
+            <div class="flex gap-4 items-center">
+                <div class="text-right">
+                    <p class="text-label-sm text-on-surface-variant">Latest Update</p>
+                    <p class="font-label-md font-bold text-on-surface">2025</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-primary/5 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-primary">event_available</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Stats Bar -->
+        <div class="grid grid-cols-2 md:grid-cols-6 gap-lg mt-xl pt-xl border-t border-outline-variant/30">
+            <div class="flex flex-col">
+                <span class="text-on-surface-variant text-label-sm mb-1 flex items-center gap-1">
+                    <span class="material-symbols-outlined text-sm">schedule</span> @Model.ExamDetail.Duration mins
+                </span>
+                <span class="font-headline-sm text-headline-sm font-bold text-on-surface">Duration</span>
+            </div>
+            <div class="flex flex-col">
+                <span class="text-on-surface-variant text-label-sm mb-1 flex items-center gap-1">
+                    <span class="material-symbols-outlined text-sm">quiz</span> @Model.ExamDetail.TotalQuestions q's
+                </span>
+                <span class="font-headline-sm text-headline-sm font-bold text-on-surface">Questions</span>
+            </div>
+            <div class="flex flex-col">
+                <span class="text-on-surface-variant text-label-sm mb-1 flex items-center gap-1">
+                    <span class="material-symbols-outlined text-sm">layers</span> @Model.ExamDetail.Parts.Count parts
+                </span>
+                <span class="font-headline-sm text-headline-sm font-bold text-on-surface">Structure</span>
+            </div>
+            <div class="flex flex-col">
+                <span class="text-on-surface-variant text-label-sm mb-1 flex items-center gap-1">
+                    <span class="material-symbols-outlined text-sm">trending_up</span> @(Model.ExamDetail.TotalAttempts >= 1000 ? $"{(Model.ExamDetail.TotalAttempts / 1000.0):F1}k" : Model.ExamDetail.TotalAttempts.ToString()) Attempts
+                </span>
+                <span class="font-headline-sm text-headline-sm font-bold text-on-surface">Popularity</span>
+            </div>
+            <div class="flex flex-col">
+                <span class="text-on-surface-variant text-label-sm mb-1 flex items-center gap-1">
+                    <span class="material-symbols-outlined text-sm text-secondary">star</span> 4.9 Rating
+                </span>
+                <span class="font-headline-sm text-headline-sm font-bold text-on-surface">Satisfaction</span>
+            </div>
+            <div class="flex flex-col items-end">
+                <button class="bg-surface-container-high hover:bg-surface-container-highest text-primary p-2 rounded-lg transition-colors">
+                    <span class="material-symbols-outlined">share</span>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    @if (Model.ExamDetail.AttemptHistory?.FirstOrDefault(a => !a.IsSubmitted) is { } inProgressAttempt)
+    {
+        <div class="mb-lg bg-secondary-container/20 border border-secondary-container rounded-2xl p-lg flex flex-col md:flex-row md:items-center justify-between gap-md">
+            <div class="flex items-start gap-3">
+                <span class="material-symbols-outlined text-primary text-2xl">history</span>
+                <div>
+                    <p class="font-headline-sm font-bold text-on-surface">In-Progress Attempt</p>
+                    <p class="text-body-sm text-on-surface-variant">
+                        Remaining: @TimeSpan.FromSeconds(inProgressAttempt.RemainingTime).ToString(@"hh\:mm\:ss") ·
+                        Started at: @inProgressAttempt.StartedAt.ToString("dd/MM/yyyy HH:mm")
+                    </p>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button type="button" onclick="resumeTest(@inProgressAttempt.AttemptId)" class="px-5 py-2.5 rounded-xl bg-primary text-white font-bold hover:bg-primary-container transition-colors shadow-sm">
+                    Resume Exam
+                </button>
+            </div>
+        </div>
+    }
+
+    <div class="flex flex-col lg:flex-row gap-lg">
+        <!-- Left Main Area: Tabs & Cards -->
+        <div class="w-full lg:w-2/3">
+            <!-- Tab Headers -->
+            <div class="flex border-b border-outline-variant/30 mb-lg">
+                <button class="px-xl py-md text-primary font-bold border-b-2 border-primary transition-all flex items-center gap-2" id="tab-practice" onclick="switchTab('practice')">
+                    <span class="material-symbols-outlined">fitness_center</span> Practice by Part
+                </button>
+                <button class="px-xl py-md text-on-surface-variant hover:text-on-surface transition-all flex items-center gap-2" id="tab-fulltest" onclick="switchTab('fulltest')">
+                    <span class="material-symbols-outlined">timer</span> Full Test Simulation
+                </button>
+                <button class="px-xl py-md text-on-surface-variant hover:text-on-surface transition-all flex items-center gap-2" id="tab-info" onclick="switchTab('info')">
+                    <span class="material-symbols-outlined">info</span> Exam Information
+                </button>
+            </div>
+
+            <!-- Tab Content: Practice (Active) -->
+            <div class="space-y-md" id="content-practice">
+                @if (!Model.ExamDetail.Parts.Any())
+                {
+                    <div class="bg-surface-container-low p-lg rounded-2xl border border-outline-variant/30 text-center">
+                        <span class="material-symbols-outlined text-4xl text-on-surface-variant mb-2">quiz</span>
+                        <p class="text-body-md text-on-surface-variant">This exam currently has no questions. Please select another exam.</p>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-body-sm text-on-surface-variant mb-sm">Select the parts you want to practice (multiple selections allowed):</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-md" id="part-selection-grid">
+                        @foreach (var part in Model.ExamDetail.Parts)
+                        {
+                            var partIcon = part.PartNumber switch
+                            {
+                                1 => "photo_camera",
+                                2 => "question_answer",
+                                3 => "forum",
+                                4 => "volume_up",
+                                5 => "text_fields",
+                                6 => "edit_document",
+                                7 => "auto_stories",
+                                _ => "quiz"
+                            };
+                            
+                            var partDifficulty = part.PartNumber switch
+                            {
+                                1 => "Easy",
+                                2 => "Medium",
+                                3 => "Medium",
+                                4 => "Hard",
+                                5 => "Hard",
+                                6 => "Medium",
+                                7 => "Hard",
+                                _ => "Medium"
+                            };
+
+                            var difficultyColorClass = partDifficulty switch
+                            {
+                                "Easy" => "text-tertiary",
+                                "Medium" => "text-primary",
+                                "Hard" => "text-error",
+                                _ => "text-on-surface-variant"
+                            };
+
+                            var partTime = part.PartNumber switch
+                            {
+                                1 => "10 mins",
+                                2 => "15 mins",
+                                3 => "20 mins",
+                                4 => "15 mins",
+                                5 => "10 mins",
+                                6 => "10 mins",
+                                7 => "55 mins",
+                                _ => "15 mins"
+                            };
+                            
+                            var description = part.PartNumber switch
+                            {
+                                1 => "Listen and choose the best description for the image.",
+                                2 => "Choose the most appropriate response to a question or statement.",
+                                3 => "Listen to short conversations and answer comprehension questions.",
+                                4 => "Listen to short talks or announcements and answer comprehension questions.",
+                                5 => "Fill in blanks with appropriate grammar or vocabulary.",
+                                6 => "Complete short texts and passages.",
+                                7 => "Reading comprehension for single, double, and triple passages.",
+                                _ => "Answer questions for this section."
+                            };
+                            
+                            <div id="part-card-@part.PartNumber" class="part-card p-md bg-surface-container-lowest rounded-2xl border-2 border-outline-variant/30 transition-all flex flex-col gap-sm relative">
+                                <div class="flex items-start gap-md cursor-pointer select-none" onclick="togglePartCheckbox(@part.PartNumber)">
+                                    <input type="checkbox" id="part-check-@part.PartNumber" data-part="@part.PartNumber" checked
+                                        class="part-checkbox shrink-0 w-5 h-5 mt-1 rounded border-outline-variant text-primary focus:ring-primary cursor-pointer"
+                                        onclick="event.stopPropagation(); togglePartCheckbox(@part.PartNumber, true)">
+                                    
+                                    <div class="flex-grow">
+                                        <h3 class="font-headline-sm text-headline-sm text-on-surface mb-xs flex items-center gap-xs">
+                                            <span class="material-symbols-outlined text-primary">@partIcon</span>
+                                            @part.PartName
+                                        </h3>
+                                        <div class="flex gap-2 mb-xs flex-wrap">
+                                            <span class="text-label-sm bg-surface-container px-2 py-0.5 rounded text-on-surface-variant font-bold">@part.QuestionCount Questions</span>
+                                            <span class="text-label-sm bg-surface-container px-2 py-0.5 rounded text-on-surface-variant">@partTime</span>
+                                        </div>
+                                        <p class="text-body-sm text-on-surface-variant mb-xs">@description</p>
+                                        <div class="flex items-center gap-1 text-label-sm @difficultyColorClass">
+                                            <span class="material-symbols-outlined text-xs">signal_cellular_alt</span>
+                                            @partDifficulty
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                @if (part.Tags.Any())
+                                {
+                                    <details class="mt-xs pt-sm border-t border-outline-variant/20" onclick="event.stopPropagation();">
+                                        <summary class="text-label-sm text-primary cursor-pointer font-medium mb-xs">Filter by Topic (@part.Tags.Count)</summary>
+                                        <div class="flex flex-wrap gap-xs max-h-32 overflow-y-auto">
+                                            @foreach (var tag in part.Tags.Take(12))
+                                            {
+                                                <label class="inline-flex items-center gap-1 bg-surface-container px-sm py-xs rounded-lg text-body-sm border border-outline-variant/30 cursor-pointer hover:border-primary/40">
+                                                    <input type="checkbox" class="tag-checkbox w-3.5 h-3.5 text-primary rounded" value="@tag" data-parent-part="@part.PartNumber" onchange="syncParentPartCheckbox(@part.PartNumber)">
+                                                    <span class="truncate max-w-[180px]">@tag</span>
+                                                </label>
+                                            }
+                                        </div>
+                                    </details>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+
+                <!-- Time Limit Dropdown -->
+                <div class="bg-surface-container-low p-lg rounded-2xl flex flex-col md:flex-row items-center justify-between gap-md border border-outline-variant/20">
+                    <div class="flex items-center gap-md">
+                        <span class="material-symbols-outlined text-primary text-[28px]">timer</span>
+                        <div>
+                            <h4 class="font-label-md font-bold text-on-surface">Time Limit</h4>
+                            <p class="text-body-sm text-on-surface-variant">The practice session will automatically end when time runs out.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <select id="customTimeLimit" class="bg-surface-container-lowest border border-outline-variant/40 rounded-lg py-2 pl-3 pr-10 focus:ring-2 focus:ring-primary focus:border-primary">
+                            <option value="">No limit</option>
+                            <option value="15">15 mins</option>
+                            <option value="30">30 mins</option>
+                            <option value="45">45 mins</option>
+                            <option value="60">60 mins</option>
+                            <option value="90">90 mins</option>
+                            <option value="120">120 mins</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Start Practice Button & Selection Status -->
+                <div class="sticky bottom-4 md:static flex flex-col gap-sm">
+                    <div class="text-body-sm text-on-surface-variant text-center md:text-left font-medium" id="selection-summary">
+                        Selecting practice sections...
+                    </div>
+                    <button onclick="startPracticeSession()" class="w-full bg-primary hover:bg-primary-container text-white font-headline-sm py-4 rounded-2xl shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+                        START PRACTICE
+                        <span class="material-symbols-outlined">play_arrow</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab Content: Full Test (Hidden) -->
+            <div class="hidden space-y-md" id="content-fulltest">
+                <div class="bg-primary/5 rounded-2xl p-xl border border-primary/10">
+                    <div class="flex items-center gap-xl mb-xl">
+                        <div class="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-white">
+                            <span class="material-symbols-outlined text-3xl">psychology</span>
+                        </div>
+                        <div>
+                            <h3 class="font-headline-md text-headline-md text-primary">Standard Full Test Simulation</h3>
+                            <p class="text-body-md text-on-surface-variant">Take the full 2-hour exam under realistic test room timing and pressure.</p>
+                        </div>
+                    </div>
+                    <ul class="space-y-md mb-xl">
+                        <li class="flex items-center gap-4 text-on-surface">
+                            <span class="material-symbols-outlined text-tertiary">check_circle</span>
+                            <span>200 questions (100 Listening / 100 Reading)</span>
+                        </li>
+                        <li class="flex items-center gap-4 text-on-surface">
+                            <span class="material-symbols-outlined text-tertiary">check_circle</span>
+                            <span>Exact 120-minute countdown</span>
+                        </li>
+                        <li class="flex items-center gap-4 text-on-surface">
+                            <span class="material-symbols-outlined text-tertiary">check_circle</span>
+                            <span>Strict test flow — no pausing mid-exam</span>
+                        </li>
+                    </ul>
+                    <button onclick="startFullTestSession()" class="w-full bg-primary hover:bg-primary-container text-white font-headline-sm py-4 rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2">
+                        Start Full Test
+                        <span class="material-symbols-outlined">rocket_launch</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab Content: Info (Hidden) -->
+            <div class="hidden" id="content-info">
+                <div class="space-y-md text-on-surface-variant">
+                    <p class="text-body-md leading-relaxed">
+                        @(string.IsNullOrWhiteSpace(Model.ExamDetail.Description) 
+                            ? "Standard TOEIC practice exam simulating the real test format, helping test-takers get familiar with pacing and question styles." 
+                            : Model.ExamDetail.Description)
+                    </p>
+                    <h4 class="font-bold text-on-surface text-headline-sm mt-lg mb-sm">Detailed Part Structure</h4>
+                    <table class="w-full text-left border-collapse border border-outline-variant/30 rounded-xl overflow-hidden shadow-sm">
+                        <thead class="bg-surface-container">
+                            <tr>
+                                <th class="p-md text-label-md font-bold text-on-surface">Section</th>
+                                <th class="p-md text-label-md font-bold text-on-surface">Part Name</th>
+                                <th class="p-md text-label-md font-bold text-on-surface">Number of Questions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var part in Model.ExamDetail.Parts)
+                            {
+                                var partSectionName = part.PartNumber <= 4 ? "Listening" : "Reading";
+                                <tr class="border-b border-outline-variant/30 hover:bg-surface-container-low/30 transition-colors">
+                                    <td class="p-md text-body-sm font-bold text-on-surface">@partSectionName</td>
+                                    <td class="p-md text-body-sm">@part.PartName</td>
+                                    <td class="p-md text-body-sm font-medium">@part.QuestionCount</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Sidebar: Stats & Practice History -->
+        <aside class="w-full lg:w-1/3 space-y-lg">
+            <!-- Practice History Card -->
+            <div class="bg-surface-container-lowest p-lg rounded-2xl custom-shadow border border-outline-variant/30">
+                <div class="flex justify-between items-center mb-md">
+                    <h4 class="font-bold text-on-surface">Attempt History</h4>
+                    <span class="material-symbols-outlined text-primary">history</span>
+                </div>
+                <div class="space-y-sm">
+                    @if (Model.ExamDetail.AttemptHistory != null && Model.ExamDetail.AttemptHistory.Any())
+                    {
+                        @foreach (var attempt in Model.ExamDetail.AttemptHistory.Where(a => a.IsSubmitted).Take(5))
+                        {
+                            var attemptTime = attempt.CompletedAt.HasValue 
+                                ? $"{(attempt.CompletedAt.Value - attempt.StartedAt).Minutes} mins" 
+                                : "—";
+                            
+                            <div class="bg-surface-container-low p-md rounded-xl border border-outline-variant/30 flex justify-between items-center hover:bg-surface-container transition-colors">
+                                <div class="flex gap-3 items-center">
+                                    <div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-primary">
+                                        <span class="material-symbols-outlined">timer</span>
+                                    </div>
+                                    <div>
+                                        <p class="text-body-sm font-bold">Attempt #@attempt.AttemptId</p>
+                                        <p class="text-[11px] text-on-surface-variant">@attempt.StartedAt.ToString("dd/MM/yyyy") · @attemptTime</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-label-md font-bold text-primary">@attempt.TotalScore / 990</p>
+                                    <p class="text-[10px] text-on-surface-variant">L: @attempt.ListeningScore | R: @attempt.ReadingScore</p>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-body-sm text-on-surface-variant italic text-center py-4">No attempts recorded for this exam yet.</p>
+                    }
+                </div>
+            </div>
+
+            <!-- Promotion / Community Card -->
+            <div class="bg-primary p-xl rounded-2xl text-white shadow-xl relative overflow-hidden">
+                <div class="relative z-10">
+                    <h2 class="font-headline-md text-headline-md mb-md leading-tight text-[22px]">Smart Practice</h2>
+                    <ul class="space-y-sm mb-lg text-body-sm">
+                        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-sm">check_circle</span> Detailed part-by-part weakness analysis</li>
+                        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-sm">check_circle</span> In-depth explanations & audio scripts</li>
+                        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-sm">check_circle</span> Save vocabulary instantly while practicing</li>
+                    </ul>
+                </div>
+            </div>
+        </aside>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        window.EXAM_CONFIG = {
+            examId: @(Model.ExamDetail?.Id ?? 0),
+            inProgressAttemptId: @(Model.ExamDetail?.AttemptHistory?.FirstOrDefault(a => !a.IsSubmitted)?.AttemptId.ToString() ?? "null"),
+            partsData: {
+                @if (Model.ExamDetail != null)
+                {
+                    @foreach (var part in Model.ExamDetail.Parts)
+                    {
+                        @Html.Raw($"\"{part.PartNumber}\": {{ questionCount: {part.QuestionCount}, partName: \"{part.PartName}\" }},")
+                    }
+                }
+            }
+        };
+    </script>
+    <script src="~/js/exam-detail.js" asp-append-version="true"></script>
+}

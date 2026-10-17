@@ -17,7 +17,7 @@ public class LoginModel(ToeicApiClient api) : PageModel
         var (data, error) = await api.LoginAsync(Email, Password);
         if (data is null)
         {
-            Error = error ?? "Sai email hoặc mật khẩu.";
+            Error = error ?? "Invalid email or password.";
             return Page();
         }
         HttpContext.Session.SetString("jwt", data.Token);

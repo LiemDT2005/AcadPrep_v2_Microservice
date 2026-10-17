@@ -1,14 +1,14 @@
 @page
 @model Storefront.Web.Pages.Account.RegisterModel
-@{ ViewData["Title"] = "Đăng ký"; }
-<h1>Đăng ký</h1>
+@{ ViewData["Title"] = "Register"; }
+<h1>Register</h1>
 @if (!string.IsNullOrEmpty(Model.Error))
 {
     <div class="alert alert-error">@Model.Error</div>
 }
 <form method="post" class="form">
     <div>
-        <label>Họ tên</label>
+        <label>Full Name</label>
         <input asp-for="FullName" required />
     </div>
     <div>
@@ -16,8 +16,8 @@
         <input asp-for="Email" type="email" required />
     </div>
     <div>
-        <label>Mật khẩu (≥ 6 ký tự)</label>
+        <label>Password (≥ 6 characters)</label>
         <input asp-for="Password" type="password" required />
     </div>
-    <button class="btn" type="submit">Tạo tài khoản</button>
+    <button class="btn" type="submit">Create Account</button>
 </form>

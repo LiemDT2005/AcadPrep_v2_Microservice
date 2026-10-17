@@ -18,7 +18,7 @@ public class RegisterModel(ToeicApiClient api) : PageModel
         var (data, error) = await api.RegisterAsync(Email, Password, FullName);
         if (data is null)
         {
-            Error = error ?? "Đăng ký thất bại.";
+            Error = error ?? "Registration failed.";
             return Page();
         }
         HttpContext.Session.SetString("jwt", data.Token);

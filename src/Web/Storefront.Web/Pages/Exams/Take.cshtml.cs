@@ -38,7 +38,7 @@ public class TakeModel(ToeicApiClient api) : PageModel
         var (data, error) = await api.SubmitExamAsync(id, payload);
         if (data is null)
         {
-            Error = error ?? "Nộp bài thất bại.";
+            Error = error ?? "Submission failed.";
             return Page();
         }
         Result = data;

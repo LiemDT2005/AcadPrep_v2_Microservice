@@ -3,37 +3,149 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - TOEIC Learning</title>
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <title>@ViewData["Title"] - AcadPrep</title>
+    <!-- MDB / Bootstrap & FontAwesome for styling -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/7.1.0/mdb.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+    <style>
+        body { background-color: #f8f9fa; font-family: 'Inter', sans-serif; }
+        .navbar { box-shadow: 0 2px 4px rgba(0,0,0,.08); }
+    </style>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                  "background": "#fcf8ff",
+                  "primary": "#1e00a9",
+                  "primary-container": "#3525cd",
+                  "on-primary": "#ffffff",
+                  "on-surface": "#1b1b24",
+                  "on-surface-variant": "#464555",
+                  "surface-container-lowest": "#ffffff",
+                  "surface-container-low": "#f5f2ff",
+                  "surface-container": "#efe9f8",
+                  "surface-container-high": "#e9e4f0",
+                  "surface-variant": "#e5e1ec",
+                  "outline": "#787680",
+                  "outline-variant": "#c7c4d8",
+                  "secondary": "#5e5c71",
+                  "secondary-container": "#e4dffa",
+                  "on-secondary-container": "#1b1a2c",
+                  "tertiary": "#006c4c",
+                  "tertiary-container": "#89f8c7",
+                  "on-tertiary-container": "#002115",
+                  "error": "#ba1a1a",
+                  "error-container": "#ffdad6",
+                  "on-error-container": "#410002"
+              },
+              spacing: {
+                  "xs": "4px", "sm": "8px", "md": "16px", "lg": "24px", "xl": "32px", "2xl": "48px", "3xl": "64px",
+                  "margin-mobile": "16px", "margin-desktop": "40px"
+              },
+              fontSize: {
+                  "display-lg": ["57px", { lineHeight: "64px", letterSpacing: "-0.25px" }],
+                  "display-md": ["45px", { lineHeight: "52px" }],
+                  "display-sm": ["36px", { lineHeight: "44px" }],
+                  "headline-lg": ["32px", { lineHeight: "40px" }],
+                  "headline-md": ["28px", { lineHeight: "36px" }],
+                  "headline-sm": ["20px", { lineHeight: "28px" }],
+                  "body-lg": ["16px", { lineHeight: "24px", letterSpacing: "0.5px" }],
+                  "body-md": ["14px", { lineHeight: "20px", letterSpacing: "0.25px" }],
+                  "body-sm": ["12px", { lineHeight: "16px", letterSpacing: "0.4px" }],
+                  "label-lg": ["14px", { lineHeight: "20px", letterSpacing: "0.1px" }],
+                  "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.5px" }],
+                  "label-sm": ["11px", { lineHeight: "16px", letterSpacing: "0.5px" }]
+              },
+              fontFamily: {
+                  "display-lg": ["Inter", "sans-serif"],
+                  "display-md": ["Inter", "sans-serif"],
+                  "display-sm": ["Inter", "sans-serif"],
+                  "headline-lg": ["Inter", "sans-serif"],
+                  "headline-md": ["Inter", "sans-serif"],
+                  "headline-sm": ["Inter", "sans-serif"],
+                  "body-lg": ["Inter", "sans-serif"],
+                  "body-md": ["Inter", "sans-serif"],
+                  "body-sm": ["Inter", "sans-serif"],
+                  "label-lg": ["Inter", "sans-serif"],
+                  "label-md": ["Inter", "sans-serif"],
+                  "label-sm": ["Inter", "sans-serif"]
+              }
+            }
+          }
+        }
+    </script>
 </head>
-<body>
-<header class="topbar">
-    <a class="brand" asp-page="/Index">TOEIC Learning</a>
-    <nav>
-        <a asp-page="/Courses/Index">Khóa học</a>
-        <a asp-page="/Exams/Index">Luyện đề</a>
-        <a asp-page="/Progress/Index">Tiến độ</a>
-        @{
-            var name = Context.Session.GetString("name");
-        }
-        @if (string.IsNullOrEmpty(name))
-        {
-            <a asp-page="/Account/Login" class="btn">Đăng nhập</a>
-            <a asp-page="/Account/Register" class="btn btn-outline">Đăng ký</a>
-        }
-        else
-        {
-            <span class="user">Xin chào, @name</span>
-            <a asp-page="/Account/Logout" class="btn btn-outline">Đăng xuất</a>
-        }
-    </nav>
-</header>
-<main class="container">
-    @RenderBody()
-</main>
-<footer class="footer">
-    <p>Demo microservices · Clean Architecture · YARP · RabbitMQ · Redis · Razor Pages</p>
-</footer>
-@await RenderSectionAsync("Scripts", required: false)
+<body class="bg-background text-on-surface min-h-screen flex flex-col">
+    @{
+        var userName = Context.Session.GetString("name");
+        var hasUser = !string.IsNullOrEmpty(userName);
+    }
+
+    <!-- Sticky Header -->
+    <header class="sticky top-0 z-50 bg-surface-container-lowest border-b border-outline-variant/30 w-full h-[64px] font-[Inter]">
+        <div class="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop max-w-7xl mx-auto h-full">
+            <!-- Brand Logo -->
+            <a class="flex items-center gap-sm group" asp-page="/Index" style="text-decoration:none;">
+                <span class="material-symbols-outlined text-primary text-[28px]" style="font-variation-settings: 'FILL' 1;">school</span>
+                <span class="text-[20px] font-bold text-primary-container leading-[28px]">AcadPrep</span>
+            </a>
+
+            <!-- Navigation Links -->
+            <nav class="hidden md:flex items-center h-full gap-lg">
+                <a class="h-full flex items-center px-sm text-[15px] text-on-surface-variant font-medium hover:text-primary transition-colors" asp-page="/Index" style="text-decoration:none;">Home</a>
+                <a class="h-full flex items-center px-sm text-[15px] text-on-surface-variant font-medium hover:text-primary transition-colors" asp-page="/Courses/Index" style="text-decoration:none;">Courses</a>
+                <a class="h-full flex items-center px-sm text-[15px] text-primary-container font-semibold border-b-2 border-primary-container relative top-[1px] hover:text-primary transition-colors" asp-page="/Exams/Index" style="text-decoration:none;">Exams</a>
+                <a class="h-full flex items-center px-sm text-[15px] text-on-surface-variant font-medium hover:text-primary transition-colors" asp-page="/Progress/Index" style="text-decoration:none;">Progress</a>
+            </nav>
+
+            <!-- Trailing Actions -->
+            <div class="flex items-center gap-md">
+                @if (hasUser)
+                {
+                    <span class="text-sm font-semibold text-primary">Hello, @userName</span>
+                    <a asp-page="/Account/Logout"
+                       class="inline-flex items-center justify-center px-md py-sm rounded-lg border border-outline-variant text-on-surface text-[14px] font-medium hover:bg-surface-container-low transition-colors duration-100"
+                       style="text-decoration:none;">Logout</a>
+                }
+                else
+                {
+                    <a asp-page="/Account/Login"
+                       class="inline-flex items-center justify-center px-md py-sm rounded-lg border border-outline-variant text-on-surface text-[14px] font-medium hover:bg-surface-container-low transition-colors duration-100"
+                       style="text-decoration:none;">Login</a>
+                    <a asp-page="/Account/Register"
+                       class="inline-flex items-center justify-center px-md py-sm rounded-lg bg-primary text-white text-[14px] font-medium hover:opacity-90 active:scale-95 transition-all duration-100 shadow-sm border-0"
+                       style="text-decoration:none;">Register</a>
+                }
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main role="main" class="flex-grow w-full font-[Inter]">
+        @RenderBody()
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-surface-container border-t border-outline-variant/30 pt-xl pb-lg font-[Inter] mt-auto">
+        <div class="max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop flex flex-col md:flex-row justify-between items-center gap-md">
+            <div>
+                <p class="font-extrabold text-primary text-lg">AcadPrep</p>
+                <p class="text-body-sm text-on-surface-variant">Clean Architecture Microservices · YARP · SQL Server · Razor Pages</p>
+            </div>
+            <div class="flex gap-lg text-body-sm text-on-surface-variant">
+                <a asp-page="/Courses/Index" class="hover:text-primary transition-colors">Courses</a>
+                <a asp-page="/Exams/Index" class="hover:text-primary transition-colors">Exams</a>
+                <a asp-page="/Progress/Index" class="hover:text-primary transition-colors">Progress</a>
+            </div>
+        </div>
+    </footer>
+
+    @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
