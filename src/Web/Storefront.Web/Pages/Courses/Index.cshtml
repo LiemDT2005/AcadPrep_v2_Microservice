@@ -1,18 +1,18 @@
 @page
 @model Storefront.Web.Pages.Courses.IndexModel
-@{ ViewData["Title"] = "Khóa học"; }
-<h1>Khóa học TOEIC</h1>
-<p class="meta">Dữ liệu từ Catalog microservice (Clean Architecture).</p>
+@{ ViewData["Title"] = "Courses"; }
+<h1>TOEIC Courses</h1>
+<p class="meta">Powered by Catalog microservice (Clean Architecture).</p>
 <div class="grid">
 @foreach (var c in Model.Courses)
 {
     <div class="card">
         <span class="badge">@c.Level</span>
-        <span class="badge">Mục tiêu @c.TargetScore</span>
+        <span class="badge">Target @c.TargetScore</span>
         <h3>@c.Title</h3>
-        <p class="meta">@c.LessonCount bài học</p>
+        <p class="meta">@c.LessonCount lessons</p>
         <p>@c.Description</p>
-        <a class="btn" asp-page="./Details" asp-route-id="@c.Id">Chi tiết</a>
+        <a class="btn" asp-page="./Details" asp-route-id="@c.Id">Details</a>
     </div>
 }
 </div>

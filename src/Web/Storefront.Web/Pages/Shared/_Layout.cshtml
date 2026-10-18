@@ -3,13 +3,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - TOEIC Learning</title>
+    <title>@ViewData["Title"] - AcadPrep</title>
     <!-- Tailwind CSS with Monolith Custom Palette -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <script id="tailwind-config">
         tailwind.config = {
+          darkMode: "class",
           theme: {
             extend: {
               colors: {
@@ -39,61 +41,137 @@
               spacing: {
                   "xs": "4px", "sm": "8px", "md": "16px", "lg": "24px", "xl": "32px", "2xl": "48px", "3xl": "64px",
                   "margin-mobile": "16px", "margin-desktop": "40px"
+              },
+              fontSize: {
+                  "display-lg": ["57px", { lineHeight: "64px", letterSpacing: "-0.25px" }],
+                  "display-md": ["45px", { lineHeight: "52px" }],
+                  "display-sm": ["36px", { lineHeight: "44px" }],
+                  "headline-lg": ["32px", { lineHeight: "40px" }],
+                  "headline-md": ["28px", { lineHeight: "36px" }],
+                  "headline-sm": ["20px", { lineHeight: "28px" }],
+                  "body-lg": ["16px", { lineHeight: "24px", letterSpacing: "0.5px" }],
+                  "body-md": ["14px", { lineHeight: "20px", letterSpacing: "0.25px" }],
+                  "body-sm": ["12px", { lineHeight: "16px", letterSpacing: "0.4px" }],
+                  "label-lg": ["14px", { lineHeight: "20px", letterSpacing: "0.1px" }],
+                  "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.5px" }],
+                  "label-sm": ["11px", { lineHeight: "16px", letterSpacing: "0.5px" }]
+              },
+              fontFamily: {
+                  "display-lg": ["Inter", "sans-serif"],
+                  "display-md": ["Inter", "sans-serif"],
+                  "display-sm": ["Inter", "sans-serif"],
+                  "headline-lg": ["Inter", "sans-serif"],
+                  "headline-md": ["Inter", "sans-serif"],
+                  "headline-sm": ["Inter", "sans-serif"],
+                  "body-lg": ["Inter", "sans-serif"],
+                  "body-md": ["Inter", "sans-serif"],
+                  "body-sm": ["Inter", "sans-serif"],
+                  "label-lg": ["Inter", "sans-serif"],
+                  "label-md": ["Inter", "sans-serif"],
+                  "label-sm": ["Inter", "sans-serif"]
               }
             }
           }
         }
     </script>
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
-<body>
-<header class="topbar">
-    <a class="brand" href="/Admin/Exams">AcadPrep CMS</a>
-    <nav>
-        <a asp-page="/Courses/Index">Khóa học</a>
-        <a asp-page="/Exams/Index">Luyện đề</a>
-        <a asp-page="/Progress/Index">Tiến độ</a>
-        <a asp-page="/Vocabulary/Notebook">Sổ tay từ</a>
-        <a asp-page="/Vocabulary/Review">Ôn Flashcards</a>
-        <a asp-page="/Performance/Leaderboard">Bảng xếp hạng</a>
-        <a asp-page="/Performance/PerformanceAnalysis">Phân tích</a>
-        <a asp-page="/Performance/Achievements">Danh hiệu</a>
-        <a asp-page="/Admin/Dashboard" class="text-xs uppercase bg-purple-100 text-purple-700 px-2 py-1 rounded">Admin</a>
-        <a href="/Admin/Exams" class="text-xs font-bold uppercase bg-[#4840E4] text-white px-2.5 py-1 rounded shadow hover:bg-[#3830c8] transition">CMS Đề Thi</a>
-        @{
-            var name = Context.Session.GetString("name");
-            var avatar = Context.Session.GetString("avatar");
-        }
-        @if (string.IsNullOrEmpty(name))
-        {
-            <a asp-page="/Account/Login" class="btn">Đăng nhập</a>
-            <a asp-page="/Account/Register" class="btn btn-outline">Đăng ký</a>
-        }
-        else
-        {
-            <a asp-page="/Account/Profile" style="display: flex; align-items: center; gap: 0.5rem; text-decoration: none; color: var(--ink); font-weight: 600;">
-                @if (!string.IsNullOrEmpty(avatar))
+<body class="bg-background text-on-surface min-h-screen flex flex-col font-[Inter]">
+    @{
+        var userName = Context.Session.GetString("name");
+        var userAvatar = Context.Session.GetString("avatar");
+        var hasUser = !string.IsNullOrEmpty(Context.Session.GetString("jwt"));
+        var currentPage = ViewContext.RouteData.Values["page"]?.ToString();
+        string NavClass(string page) => currentPage == page || (page != "/Index" && currentPage?.StartsWith(page.Replace("/Index", "") + "/") == true)
+            ? "text-primary font-semibold border-b-2 border-primary"
+            : "text-on-surface-variant font-medium hover:text-primary";
+    }
+
+    <!-- Sticky Header -->
+    <header class="sticky top-0 z-50 bg-surface-container-lowest border-b border-outline-variant/30 w-full h-[64px] shadow-sm">
+        <div class="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop max-w-7xl mx-auto h-full">
+            <!-- Brand Logo -->
+            <a class="flex items-center gap-sm group" asp-page="/Index" style="text-decoration:none;">
+                <span class="material-symbols-outlined text-primary text-[28px]" style="font-variation-settings: 'FILL' 1;">school</span>
+                <span class="text-[20px] font-bold text-primary-container leading-[28px]">AcadPrep</span>
+            </a>
+
+            <!-- Navigation Links -->
+            <nav class="hidden lg:flex items-center h-full gap-md">
+                <a class="h-full flex items-center px-sm text-[14px] @NavClass("/Index") transition-colors" asp-page="/Index" style="text-decoration:none;">Trang chủ</a>
+                <a class="h-full flex items-center px-sm text-[14px] @NavClass("/Courses/Index") transition-colors" asp-page="/Courses/Index" style="text-decoration:none;">Khóa học</a>
+                <a class="h-full flex items-center px-sm text-[14px] @NavClass("/Exams/Index") transition-colors" asp-page="/Exams/Index" style="text-decoration:none;">Luyện đề</a>
+                <a class="h-full flex items-center px-sm text-[14px] @NavClass("/Progress/Index") transition-colors" asp-page="/Progress/Index" style="text-decoration:none;">Tiến độ</a>
+                <a class="h-full flex items-center px-sm text-[14px] @NavClass("/Vocabulary/Notebook") transition-colors" asp-page="/Vocabulary/Notebook" style="text-decoration:none;">Sổ từ</a>
+                <a class="h-full flex items-center px-sm text-[14px] @NavClass("/Vocabulary/Review") transition-colors" asp-page="/Vocabulary/Review" style="text-decoration:none;">Flashcards</a>
+                <a class="h-full flex items-center px-sm text-[14px] @NavClass("/Performance/Leaderboard") transition-colors" asp-page="/Performance/Leaderboard" style="text-decoration:none;">BXH</a>
+                <a href="/Admin/Exams" class="inline-flex items-center px-2.5 py-1 text-xs font-bold uppercase rounded bg-purple-100 text-purple-700 hover:bg-purple-200 transition" style="text-decoration:none;">
+                    CMS Đề Thi
+                </a>
+            </nav>
+
+            <!-- Trailing Actions -->
+            <div class="flex items-center gap-md">
+                @if (hasUser)
                 {
-                    <img src="@avatar" alt="@name" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover;" />
+                    <a asp-page="/Account/Profile" class="flex items-center gap-2 hover:opacity-80 transition" style="text-decoration:none;">
+                        @if (!string.IsNullOrEmpty(userAvatar))
+                        {
+                            <img src="@userAvatar" alt="@userName" class="w-8 h-8 rounded-full object-cover border border-primary/20" />
+                        }
+                        else
+                        {
+                            <span class="w-8 h-8 rounded-full bg-primary text-white font-bold text-xs flex items-center justify-center">
+                                @(string.IsNullOrWhiteSpace(userName) ? "U" : userName.Substring(0, 1).ToUpper())
+                            </span>
+                        }
+                        <span class="text-sm font-semibold text-on-surface hidden sm:inline">@userName</span>
+                    </a>
+                    <a asp-page="/Account/Logout"
+                       class="inline-flex items-center justify-center px-md py-sm rounded-lg border border-outline-variant text-on-surface text-[14px] font-medium hover:bg-surface-container-low transition-colors duration-100"
+                       style="text-decoration:none;">Đăng xuất</a>
                 }
                 else
                 {
-                    <span style="width: 28px; height: 28px; border-radius: 50%; background: var(--brand); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold;">
-                        @(string.IsNullOrWhiteSpace(name) ? "U" : name.Substring(0, 1).ToUpper())
-                    </span>
+                    <a asp-page="/Account/Login"
+                       class="inline-flex items-center justify-center px-md py-sm rounded-lg border border-outline-variant text-on-surface text-[14px] font-medium hover:bg-surface-container-low transition-colors duration-100"
+                       style="text-decoration:none;">Đăng nhập</a>
+                    <a asp-page="/Account/Register"
+                       class="inline-flex items-center justify-center px-md py-sm rounded-lg bg-primary text-white text-[14px] font-medium hover:opacity-90 active:scale-95 transition-all duration-100 shadow-sm border-0"
+                       style="text-decoration:none;">Đăng ký</a>
                 }
-                <span>@name</span>
-            </a>
-            <a asp-page="/Account/Logout" class="btn btn-outline" style="font-size: 0.85rem; padding: 0.45rem 0.85rem;">Đăng xuất</a>
-        }
-    </nav>
-</header>
-<main class="container">
-    @RenderBody()
-</main>
-<footer class="footer">
-    <p>Demo microservices · Clean Architecture · YARP · RabbitMQ · Redis · Razor Pages</p>
-</footer>
-@await RenderSectionAsync("Scripts", required: false)
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main role="main" class="flex-grow w-full @ViewData["ContentClass"]">
+        @RenderBody()
+    </main>
+
+    <!-- Footer -->
+    @if (ViewData["IsHomePage"] as bool? == true)
+    {
+        <partial name="_HomeFooter" />
+    }
+    else
+    {
+    <footer class="bg-surface-container border-t border-outline-variant/30 pt-xl pb-lg mt-auto">
+        <div class="max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop flex flex-col md:flex-row justify-between items-center gap-md">
+            <div>
+                <p class="font-extrabold text-primary text-lg">AcadPrep</p>
+                <p class="text-body-sm text-on-surface-variant">Luyện thi TOEIC thông minh cùng AcadPrep.</p>
+            </div>
+            <div class="flex flex-wrap gap-lg text-body-sm text-on-surface-variant">
+                <a asp-page="/Courses/Index" class="hover:text-primary transition-colors">Khóa học</a>
+                <a asp-page="/Exams/Index" class="hover:text-primary transition-colors">Luyện đề</a>
+                <a asp-page="/Progress/Index" class="hover:text-primary transition-colors">Tiến độ</a>
+                <a asp-page="/Performance/Leaderboard" class="hover:text-primary transition-colors">Bảng xếp hạng</a>
+                <a href="/Admin/Exams" class="hover:text-primary transition-colors">Quản trị CMS</a>
+            </div>
+        </div>
+    </footer>
+    }
+
+    @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

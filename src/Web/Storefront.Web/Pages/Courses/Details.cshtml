@@ -1,20 +1,20 @@
 @page "{id:guid}"
 @model Storefront.Web.Pages.Courses.DetailsModel
-@{ ViewData["Title"] = Model.Course?.Title ?? "Chi tiết"; }
+@{ ViewData["Title"] = Model.Course?.Title ?? "Course Details"; }
 @if (Model.Course is null)
 {
-    <div class="alert alert-error">Không tìm thấy khóa học.</div>
+    <div class="alert alert-error">Course not found.</div>
 }
 else
 {
     <h1>@Model.Course.Title</h1>
-    <p class="meta"><span class="badge">@Model.Course.Level</span> Mục tiêu @Model.Course.TargetScore</p>
+    <p class="meta"><span class="badge">@Model.Course.Level</span> Target @Model.Course.TargetScore</p>
     <p>@Model.Course.Description</p>
     @foreach (var l in Model.Course.Lessons)
     {
         <div class="lesson">
             <h3>@l.Order. @l.Title <span class="badge">@l.Skill</span></h3>
-            <p class="meta">@l.DurationMinutes phút</p>
+            <p class="meta">@l.DurationMinutes mins</p>
             <p>@l.Content</p>
         </div>
     }

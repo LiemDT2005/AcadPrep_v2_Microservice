@@ -21,3 +21,57 @@ services:
     environment:
       ACCEPT_EULA: "Y"
       MSSQL_SA_PASSWORD: "Password123!"
+
+  exam.api:
+    build:
+      context: .
+      dockerfile: src/Services/Exam/Exam.API/Dockerfile
+    container_name: acadprep-exam-api
+    ports:
+      - "5003:5003"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://0.0.0.0:5003
+      - Urls=http://0.0.0.0:5003
+      - ConnectionStrings__Default=Server=sqlserver,1433;Database=AcadPrep_ExamDb;User Id=sa;Password=Password123!;TrustServerCertificate=True
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__UserName=guest
+      - RabbitMQ__Password=guest
+    depends_on:
+      - sqlserver
+      - rabbitmq
+
+  apigateway:
+    build:
+      context: .
+      dockerfile: src/ApiGateways/ApiGateway/Dockerfile
+    container_name: acadprep-apigateway
+    ports:
+      - "5080:5080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://0.0.0.0:5080
+      - Urls=http://0.0.0.0:5080
+      - ReverseProxy__Clusters__exam__Destinations__d1__Address=http://exam.api:5003/
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - exam.api
+
+  storefront.web:
+    build:
+      context: .
+      dockerfile: src/Web/Storefront.Web/Dockerfile
+    container_name: acadprep-storefront-web
+    ports:
+      - "5100:5100"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://0.0.0.0:5100
+      - Urls=http://0.0.0.0:5100
+      - GatewayUrl=http://apigateway:5080
+    depends_on:
+      - apigateway
+
+

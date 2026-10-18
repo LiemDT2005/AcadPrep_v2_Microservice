@@ -1,7 +1,6 @@
 using System.Security.Claims;
-using Exam.Application.DTOs;
+using BuildingBlocks.Common.Pagination;
 using Exam.Application.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Exam.API.Controllers;
@@ -10,30 +9,45 @@ namespace Exam.API.Controllers;
 [Route("api/[controller]")]
 public class ExamsController(ExamService examService) : ControllerBase
 {
+    /// <summary>
+    /// Get list of exams (with pagination, search, and filtering by series, year) - UC-3.1
+    /// </summary>
     [HttpGet]
-    public async Task<IActionResult> GetAll(CancellationToken ct)
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetList(
+        [FromQuery] string? search,
+        [FromQuery] string? seriesName,
+        [FromQuery] int? year,
+        [FromQuery] int pageIndex = PaginationConstants.DefaultPageIndex,
+        [FromQuery] int pageSize = PaginationConstants.DefaultPageSize,
+        CancellationToken ct = default)
     {
-        var result = await examService.GetAllAsync(ct);
+        var result = await examService.GetExamListAsync(search, seriesName, year, pageIndex, pageSize, ct);
+        if (!result.IsSuccess)
+        {
+            return BadRequest(new { error = result.Error });
+        }
+
         return Ok(result.Value);
     }
 
-    [HttpGet("{id:guid}")]
-    public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
+    /// <summary>
+    /// Get exam detail along with parts breakdown and attempt history - UC-3.2
+    /// </summary>
+    [HttpGet("{id:int}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetDetail(
+        [FromRoute] int id,
+        CancellationToken ct = default)
     {
-        var result = await examService.GetByIdAsync(id, ct);
-        if (!result.IsSuccess) return NotFound(new { error = result.Error });
-        return Ok(result.Value);
-    }
+        var result = await examService.GetExamDetailAsync(id, User.FindFirstValue(ClaimTypes.NameIdentifier), ct);
+        if (!result.IsSuccess)
+        {
+            return NotFound(new { error = result.Error });
+        }
 
-    [Authorize]
-    [HttpPost("{id:guid}/submit")]
-    public async Task<IActionResult> Submit(Guid id, [FromBody] SubmitExamRequest request, CancellationToken ct)
-    {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
-        if (string.IsNullOrEmpty(userId)) return Unauthorized();
-
-        var result = await examService.SubmitAsync(id, userId, request, ct);
-        if (!result.IsSuccess) return BadRequest(new { error = result.Error });
         return Ok(result.Value);
     }
 }
