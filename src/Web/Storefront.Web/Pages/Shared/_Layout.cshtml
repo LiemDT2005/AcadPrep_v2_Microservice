@@ -4,15 +4,62 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - TOEIC Learning</title>
+    <!-- Tailwind CSS with Monolith Custom Palette -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+          theme: {
+            extend: {
+              colors: {
+                  "background": "#fcf8ff",
+                  "primary": "#4840E4",
+                  "primary-container": "#3525cd",
+                  "on-primary": "#ffffff",
+                  "on-surface": "#1b1b24",
+                  "on-surface-variant": "#464555",
+                  "surface-container-lowest": "#ffffff",
+                  "surface-container-low": "#f5f2ff",
+                  "surface-container": "#efe9f8",
+                  "surface-container-high": "#e9e4f0",
+                  "surface-variant": "#e5e1ec",
+                  "outline": "#787680",
+                  "outline-variant": "#c7c4d8",
+                  "secondary": "#5e5c71",
+                  "secondary-container": "#e4dffa",
+                  "on-secondary-container": "#1b1a2c",
+                  "tertiary": "#006c4c",
+                  "tertiary-container": "#89f8c7",
+                  "on-tertiary-container": "#002115",
+                  "error": "#ba1a1a",
+                  "error-container": "#ffdad6",
+                  "on-error-container": "#410002"
+              },
+              spacing: {
+                  "xs": "4px", "sm": "8px", "md": "16px", "lg": "24px", "xl": "32px", "2xl": "48px", "3xl": "64px",
+                  "margin-mobile": "16px", "margin-desktop": "40px"
+              }
+            }
+          }
+        }
+    </script>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 <body>
 <header class="topbar">
-    <a class="brand" asp-page="/Index">TOEIC Learning</a>
+    <a class="brand" href="/Admin/Exams">AcadPrep CMS</a>
     <nav>
         <a asp-page="/Courses/Index">Khóa học</a>
         <a asp-page="/Exams/Index">Luyện đề</a>
         <a asp-page="/Progress/Index">Tiến độ</a>
+        <a asp-page="/Vocabulary/Notebook">Sổ tay từ</a>
+        <a asp-page="/Vocabulary/Review">Ôn Flashcards</a>
+        <a asp-page="/Performance/Leaderboard">Bảng xếp hạng</a>
+        <a asp-page="/Performance/PerformanceAnalysis">Phân tích</a>
+        <a asp-page="/Performance/Achievements">Danh hiệu</a>
+        <a asp-page="/Admin/Dashboard" class="text-xs uppercase bg-purple-100 text-purple-700 px-2 py-1 rounded">Admin</a>
+        <a href="/Admin/Exams" class="text-xs font-bold uppercase bg-[#4840E4] text-white px-2.5 py-1 rounded shadow hover:bg-[#3830c8] transition">CMS Đề Thi</a>
         @{
             var name = Context.Session.GetString("name");
             var avatar = Context.Session.GetString("avatar");

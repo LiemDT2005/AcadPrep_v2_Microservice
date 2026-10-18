@@ -1,0 +1,124 @@
+@page
+@model Storefront.Web.Pages.Admin.ExamStatsModel
+@{
+    ViewData["Title"] = "Exam Statistics";
+}
+
+<div class="max-w-[1400px] mx-auto flex flex-col gap-6">
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800">Thống Kê Đề Thi (Exam Statistics)</h1>
+            <p class="text-sm text-slate-500 mt-1">Lượt làm bài, điểm trung bình và tỷ lệ hoàn thành theo từng đề thi (learning-service · UC-20.3)</p>
+        </div>
+        <div class="flex gap-3">
+            <a href="/Admin/Dashboard" class="inline-flex items-center gap-1.5 px-4 py-2 border border-slate-300 rounded-lg text-slate-700 bg-white hover:bg-slate-50 text-sm font-medium shadow-sm transition">
+                <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+                Dashboard
+            </a>
+            <a href="/Admin/Report" class="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 rounded-lg text-white hover:bg-indigo-700 text-sm font-medium shadow-sm transition">
+                <span class="material-symbols-outlined text-[18px]">analytics</span>
+                Báo cáo tiến độ
+            </a>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="p-5 border-b border-slate-200 bg-slate-50/50 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-indigo-600">quiz</span>
+                <h2 class="text-base font-semibold text-slate-800">Chi Tiết Hiệu Suất Đề Thi</h2>
+            </div>
+            @if (Model.Stats != null && Model.Stats.TotalCount > 0)
+            {
+                <span class="text-xs font-medium px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-full border border-indigo-200">
+                    Tổng cộng: @Model.Stats.TotalCount đề thi
+                </span>
+            }
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500 border-b border-slate-200 font-semibold">
+                        <th class="p-4">Tên Đề Thi</th>
+                        <th class="p-4 text-center">Tổng Lượt Làm</th>
+                        <th class="p-4 text-center">Điểm TB</th>
+                        <th class="p-4 text-center">Điểm Cao Nhất</th>
+                        <th class="p-4 text-center">Điểm Thấp Nhất</th>
+                        <th class="p-4 text-center">Tỷ Lệ Hoàn Thành</th>
+                    </tr>
+                </thead>
+                <tbody class="text-sm divide-y divide-slate-100">
+                    @if (Model.Stats?.Items != null && Model.Stats.Items.Any())
+                    {
+                        foreach (var stat in Model.Stats.Items)
+                        {
+                            <tr class="hover:bg-slate-50/80 transition-colors">
+                                <td class="p-4">
+                                    <div class="font-medium text-slate-900">@stat.ExamName</div>
+                                    <div class="text-xs text-slate-400 mt-0.5">ID: @stat.ExamId</div>
+                                </td>
+                                <td class="p-4 text-center">
+                                    <span class="font-semibold text-slate-700">@stat.TotalAttempts</span>
+                                </td>
+                                <td class="p-4 text-center">
+                                    <span class="font-bold text-indigo-600">@stat.AverageScore.ToString("F1")</span>
+                                </td>
+                                <td class="p-4 text-center">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-50 text-emerald-700">
+                                        @stat.HighestScore
+                                    </span>
+                                </td>
+                                <td class="p-4 text-center">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-rose-50 text-rose-700">
+                                        @stat.LowestScore
+                                    </span>
+                                </td>
+                                <td class="p-4 text-center">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <div class="w-20 bg-slate-200 rounded-full h-2 overflow-hidden">
+                                            <div class="bg-indigo-600 h-2 rounded-full" style="width: @(Math.Min(100, stat.CompletionRate))%"></div>
+                                        </div>
+                                        <span class="text-xs font-semibold text-slate-600">@stat.CompletionRate.ToString("F0")%</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="6" class="p-8 text-center text-slate-400">
+                                <span class="material-symbols-outlined text-4xl block mb-2 text-slate-300">hourglass_empty</span>
+                                Hiện chưa có dữ liệu thống kê bài thi nào.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (Model.Stats != null && Model.Stats.TotalPages > 1)
+        {
+            <div class="p-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between text-sm">
+                <span class="text-slate-500">
+                    Trang <strong class="text-slate-800">@Model.Stats.PageNumber</strong> / @Model.Stats.TotalPages
+                </span>
+                <div class="flex gap-2">
+                    @if (Model.Stats.HasPreviousPage)
+                    {
+                        <a href="/Admin/ExamStats?pageNumber=@(Model.Stats.PageNumber - 1)" class="px-3 py-1.5 bg-white border border-slate-300 rounded text-slate-700 hover:bg-slate-100 font-medium transition text-xs flex items-center gap-1">
+                            <span class="material-symbols-outlined text-[14px]">chevron_left</span> Trước
+                        </a>
+                    }
+                    @if (Model.Stats.HasNextPage)
+                    {
+                        <a href="/Admin/ExamStats?pageNumber=@(Model.Stats.PageNumber + 1)" class="px-3 py-1.5 bg-white border border-slate-300 rounded text-slate-700 hover:bg-slate-100 font-medium transition text-xs flex items-center gap-1">
+                            Sau <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>

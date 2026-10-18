@@ -1,0 +1,128 @@
+@model Storefront.Web.Pages.Admin.Exams.EditModel
+
+<section class="qc-form-card">
+    <div class="qc-section__header" style="margin-bottom:0.75rem;padding-bottom:0.75rem">
+        <span class="material-symbols-outlined">tune</span>
+        <div>
+            <div class="qc-section__title">Exam Information</div>
+            <div class="qc-section__hint">Update title, duration, series, audio and description</div>
+        </div>
+    </div>
+
+    @if (Model.UpdateErrors.Any())
+    {
+        <div class="mb-md bg-error-container text-on-error-container p-md rounded-xl border border-error/20">
+            <ul class="list-disc pl-lg font-body-sm text-body-sm">
+                @foreach (var error in Model.UpdateErrors)
+                {
+                    <li>@error</li>
+                }
+            </ul>
+        </div>
+    }
+
+    <form method="post"
+          asp-page-handler="Update"
+          asp-route-id="@Model.Exam.Id"
+          class="space-y-lg"
+          id="update-exam-form">
+        <input type="hidden" name="id" value="@Model.Exam.Id" />
+        <input type="hidden" asp-for="UpdateForm.Id" />
+
+        <div class="space-y-xs">
+            <label class="flex items-center gap-xs font-label-md text-label-md text-on-surface-variant" asp-for="UpdateForm.Title">
+                Exam Title
+                <span class="text-error font-bold">*</span>
+            </label>
+            <input asp-for="UpdateForm.Title" required class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md focus:outline-none focus:ring-2 focus:ring-primary-container focus:border-primary transition-all" />
+        </div>
+
+        <div class="space-y-xs">
+            <label class="font-label-md text-label-md text-on-surface-variant" asp-for="UpdateForm.Description">
+                Description (Optional)
+            </label>
+            <textarea asp-for="UpdateForm.Description" rows="3" class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md focus:outline-none focus:ring-2 focus:ring-primary-container focus:border-primary transition-all resize-none"></textarea>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-md">
+            <div class="space-y-xs">
+                <label class="flex items-center gap-xs font-label-md text-label-md text-on-surface-variant" asp-for="UpdateForm.ExamType">
+                    Part / Loại đề
+                    <span class="text-error font-bold">*</span>
+                </label>
+                <div class="relative">
+                    <select asp-for="UpdateForm.ExamType" required class="w-full appearance-none bg-surface-container-lowest border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all cursor-pointer">
+                        <option value="Full Test">Full Test (Part 1-7)</option>
+                        <option value="Part 1">Part 1: Photographs</option>
+                        <option value="Part 2">Part 2: Question-Response</option>
+                        <option value="Part 3">Part 3: Conversations</option>
+                        <option value="Part 4">Part 4: Talks</option>
+                        <option value="Part 5">Part 5: Incomplete Sentences</option>
+                        <option value="Part 6">Part 6: Text Completion</option>
+                        <option value="Part 7">Part 7: Reading Comprehension</option>
+                        <option value="Reading">Reading (Mini Test)</option>
+                        <option value="Listening">Listening (Mini Test)</option>
+                    </select>
+                    <div class="absolute inset-y-0 right-0 flex items-center pr-sm pointer-events-none">
+                        <span class="material-symbols-outlined text-on-surface-variant">expand_more</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-xs">
+                <label class="flex items-center gap-xs font-label-md text-label-md text-on-surface-variant" asp-for="UpdateForm.Duration">
+                    Thời gian (phút)
+                    <span class="text-error font-bold">*</span>
+                </label>
+                <div class="relative">
+                    <input asp-for="UpdateForm.Duration" type="number" min="1" max="240" class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg pl-md pr-14 py-sm font-body-md text-body-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all" />
+                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                        <span class="text-xs text-outline">phút</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-xs">
+                <label class="flex items-center gap-xs font-label-md text-label-md text-on-surface-variant" asp-for="UpdateForm.ExamSeriesId">
+                    Bộ đề thi (Series)
+                    <span class="text-error font-bold">*</span>
+                </label>
+                <div class="relative">
+                    <select asp-for="UpdateForm.ExamSeriesId" required class="w-full appearance-none bg-surface-container-lowest border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all cursor-pointer">
+                        <option value="">-- Chọn bộ đề --</option>
+                        @foreach (var series in Model.ExamSeries)
+                        {
+                            <option value="@series.Id">@series.Name (@series.Year)</option>
+                        }
+                    </select>
+                    <div class="absolute inset-y-0 right-0 flex items-center pr-sm pointer-events-none">
+                        <span class="material-symbols-outlined text-on-surface-variant">expand_more</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="space-y-xs">
+            <label class="font-label-md text-label-md text-on-surface-variant" asp-for="UpdateForm.AudioUrl">
+                Full Exam Audio URL / Path
+            </label>
+            @if (!string.IsNullOrEmpty(Model.Exam.AudioUrl))
+            {
+                <div class="flex flex-col gap-sm mb-sm p-sm rounded-lg bg-surface-container/40 border border-outline-variant/20">
+                    <div class="flex items-center gap-sm">
+                        <span class="material-symbols-outlined text-primary">audiotrack</span>
+                        <audio controls class="w-full h-8 max-w-md" src="@Model.Exam.AudioUrl"></audio>
+                    </div>
+                </div>
+            }
+            <input asp-for="UpdateForm.AudioUrl" class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md focus:outline-none focus:ring-2 focus:ring-primary-container focus:border-primary transition-all placeholder:text-outline" placeholder="e.g. /audio/sample-listening.wav or audio URL" />
+        </div>
+
+        <div class="flex justify-end gap-sm">
+            <button type="submit" class="qc-btn-primary">
+                <span class="material-symbols-outlined text-[18px]">save</span>
+                Save Exam Info
+            </button>
+        </div>
+    </form>
+</section>

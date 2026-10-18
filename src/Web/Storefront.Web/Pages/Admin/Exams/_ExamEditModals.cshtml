@@ -1,0 +1,98 @@
+@model Storefront.Web.Pages.Admin.Exams.ExamStructureViewModel
+@{
+    var exam = Model.Exam;
+}
+<!-- Part Picker Modal -->
+<div id="partPickerModal" class="qc-modal hidden">
+    <div class="qc-modal__backdrop" onclick="closePartPicker()"></div>
+    <div class="qc-modal__panel qc-modal__panel--lg">
+        <div class="flex justify-between items-center border-b border-outline-variant/30 pb-xs">
+            <div>
+                <h3 class="font-headline-sm text-headline-sm text-on-surface font-bold">Add Content to Exam</h3>
+                <p class="font-body-sm text-body-sm text-on-surface-variant mt-2xs">Select which Part you want to configure</p>
+            </div>
+            <button type="button" onclick="closePartPicker()" class="hover:bg-surface-container-high p-2 rounded-full transition-colors flex items-center justify-center">
+                <span class="material-symbols-outlined text-on-surface-variant">close</span>
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-sm py-xs">
+            <div class="qc-part-picker-card">
+                <div class="qc-part-picker-icon">
+                    <span class="material-symbols-outlined">image</span>
+                </div>
+                <div>
+                    <h5 class="font-title-sm text-title-sm font-bold text-on-surface">Part 1: Photographs</h5>
+                    <p class="font-body-xs text-body-xs text-on-surface-variant mt-3xs">Current: @Model.Part1Count/@Storefront.Web.Pages.Admin.Exams.ExamStructureViewModel.TargetP1</p>
+                </div>
+            </div>
+            <div class="qc-part-picker-card">
+                <div class="qc-part-picker-icon">
+                    <span class="material-symbols-outlined">hearing</span>
+                </div>
+                <div>
+                    <h5 class="font-title-sm text-title-sm font-bold text-on-surface">Part 2: Question-Response</h5>
+                    <p class="font-body-xs text-body-xs text-on-surface-variant mt-3xs">Current: @Model.Part2Count/@Storefront.Web.Pages.Admin.Exams.ExamStructureViewModel.TargetP2</p>
+                </div>
+            </div>
+            <div class="qc-part-picker-card">
+                <div class="qc-part-picker-icon">
+                    <span class="material-symbols-outlined">forum</span>
+                </div>
+                <div>
+                    <h5 class="font-title-sm text-title-sm font-bold text-on-surface">Part 3: Conversations</h5>
+                    <p class="font-body-xs text-body-xs text-on-surface-variant mt-3xs">Current: @Model.Part3Count/@Storefront.Web.Pages.Admin.Exams.ExamStructureViewModel.TargetP3</p>
+                </div>
+            </div>
+            <div class="qc-part-picker-card">
+                <div class="qc-part-picker-icon">
+                    <span class="material-symbols-outlined">record_voice_over</span>
+                </div>
+                <div>
+                    <h5 class="font-title-sm text-title-sm font-bold text-on-surface">Part 4: Talks</h5>
+                    <p class="font-body-xs text-body-xs text-on-surface-variant mt-3xs">Current: @Model.Part4Count/@Storefront.Web.Pages.Admin.Exams.ExamStructureViewModel.TargetP4</p>
+                </div>
+            </div>
+            <div class="qc-part-picker-card">
+                <div class="qc-part-picker-icon">
+                    <span class="material-symbols-outlined">description</span>
+                </div>
+                <div>
+                    <h5 class="font-title-sm text-title-sm font-bold text-on-surface">Part 5: Incomplete Sentences</h5>
+                    <p class="font-body-xs text-body-xs text-on-surface-variant mt-3xs">Current: @Model.Part5Count/@Storefront.Web.Pages.Admin.Exams.ExamStructureViewModel.TargetP5</p>
+                </div>
+            </div>
+            <div class="qc-part-picker-card">
+                <div class="qc-part-picker-icon">
+                    <span class="material-symbols-outlined">article</span>
+                </div>
+                <div>
+                    <h5 class="font-title-sm text-title-sm font-bold text-on-surface">Part 6: Text Completion</h5>
+                    <p class="font-body-xs text-body-xs text-on-surface-variant mt-3xs">Current: @Model.Part6Count/@Storefront.Web.Pages.Admin.Exams.ExamStructureViewModel.TargetP6</p>
+                </div>
+            </div>
+            <div class="qc-part-picker-card">
+                <div class="qc-part-picker-icon">
+                    <span class="material-symbols-outlined">menu_book</span>
+                </div>
+                <div>
+                    <h5 class="font-title-sm text-title-sm font-bold text-on-surface">Part 7: Reading Comprehension</h5>
+                    <p class="font-body-xs text-body-xs text-on-surface-variant mt-3xs">Current: @Model.Part7Count/@Storefront.Web.Pages.Admin.Exams.ExamStructureViewModel.TargetP7</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex justify-end pt-sm border-t border-outline-variant/30">
+            <button type="button" onclick="closePartPicker()" class="qc-btn-ghost">Close</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openPartPicker() {
+        document.getElementById('partPickerModal')?.classList.remove('hidden');
+    }
+    function closePartPicker() {
+        document.getElementById('partPickerModal')?.classList.add('hidden');
+    }
+</script>

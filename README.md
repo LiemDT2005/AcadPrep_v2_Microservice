@@ -21,7 +21,7 @@ Project demo học TOEIC theo kiến trúc **microservices + Clean Architecture 
 ToeicLearning.Microservices/
 ├── ToeicLearning.sln
 ├── docker-compose.yml          # RabbitMQ + Redis
-├── scripts/run-all.sh
+├── scripts/run-all.sh / run-all.ps1
 ├── src/
 │   ├── BuildingBlocks/
 │   │   ├── BuildingBlocks.Common      # Result, IntegrationEvent
@@ -30,7 +30,8 @@ ToeicLearning.Microservices/
 │   │   ├── Identity/Identity.API
 │   │   ├── Catalog/   (Domain, Application, Infrastructure, API)
 │   │   ├── Exam/      (Domain, Application, Infrastructure, API)
-│   │   └── Progress/  (Domain, Application, Infrastructure, API)
+│   │   ├── Progress/  (Domain, Application, Infrastructure, API)
+│   │   └── Learning/  (Domain, Application, Infrastructure, API - TV03)
 │   ├── ApiGateways/ApiGateway
 │   └── Web/Storefront.Web             # Razor Pages UI
 ```
@@ -47,14 +48,16 @@ ToeicLearning.Microservices/
 3. Làm đề Mini Part 5
       → Web → YARP `/exam/*` → Exam.API
       → chấm điểm, lưu ExamAttempt
-      → Publish ExamCompletedEvent lên RabbitMQ
+      → Publish ExamCompletedEvent / TestSubmittedEvent lên RabbitMQ
 
-4. Progress.API subscribe event
-      → ghi LearningRecord (SQLite)
-      → invalidate / cache summary trên Redis
+4. Learning.API subscribe event TestSubmitted / ExamCompletedEvent
+      → ghi ExamAttemptRecord (SQLite)
+      → cập nhật StudyStreak (chuỗi ngày học theo UTC+7)
+      → tự động đánh giá & mở khóa danh hiệu (Achievements)
+      → invalidate / cache trên Redis
 
-5. Trang Tiến độ
-      → Web → YARP `/progress/*` → Progress.API (đọc DB + Redis)
+5. Xem Bảng xếp hạng & Tiến độ & Từ vựng Flashcards
+      → Web → YARP `/learning/*` → Learning.API (đọc DB + Redis)
 ```
 
 ## Ports
@@ -67,6 +70,7 @@ ToeicLearning.Microservices/
 | Catalog.API | http://localhost:5002/swagger |
 | Exam.API | http://localhost:5003/swagger |
 | Progress.API | http://localhost:5004/swagger |
+| Learning.API (TV03) | http://localhost:5005/swagger |
 | RabbitMQ UI | http://localhost:15672 (`guest` / `guest`) |
 | Redis | localhost:6379 |
 
@@ -106,6 +110,7 @@ dotnet run --project src/Services/Identity/Identity.API
 dotnet run --project src/Services/Catalog/Catalog.API
 dotnet run --project src/Services/Exam/Exam.API
 dotnet run --project src/Services/Progress/Progress.API
+dotnet run --project src/Services/Learning/Learning.API
 dotnet run --project src/ApiGateways/ApiGateway
 dotnet run --project src/Web/Storefront.Web
 ```
@@ -128,6 +133,7 @@ dotnet run --project src/Web/Storefront.Web
 | `/catalog/*` | Catalog `:5002` |
 | `/exam/*` | Exam `:5003` |
 | `/progress/*` | Progress `:5004` |
+| `/learning/*` | Learning `:5005` |
 
 Ví dụ: `GET http://localhost:5080/catalog/api/courses`
 
