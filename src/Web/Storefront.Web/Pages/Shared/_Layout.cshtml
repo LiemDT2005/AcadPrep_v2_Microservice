@@ -84,7 +84,11 @@
 <body class="bg-background text-on-surface min-h-screen flex flex-col">
     @{
         var userName = Context.Session.GetString("name");
-        var hasUser = !string.IsNullOrEmpty(userName);
+        var hasUser = !string.IsNullOrEmpty(Context.Session.GetString("jwt"));
+        var currentPage = ViewContext.RouteData.Values["page"]?.ToString();
+        string NavClass(string page) => currentPage == page || (page != "/Index" && currentPage?.StartsWith(page.Replace("/Index", "") + "/") == true)
+            ? "text-primary-container font-semibold border-b-2 border-primary-container"
+            : "text-on-surface-variant font-medium";
     }
 
     <!-- Sticky Header -->
@@ -98,10 +102,10 @@
 
             <!-- Navigation Links -->
             <nav class="hidden md:flex items-center h-full gap-lg">
-                <a class="h-full flex items-center px-sm text-[15px] text-on-surface-variant font-medium hover:text-primary transition-colors" asp-page="/Index" style="text-decoration:none;">Home</a>
-                <a class="h-full flex items-center px-sm text-[15px] text-on-surface-variant font-medium hover:text-primary transition-colors" asp-page="/Courses/Index" style="text-decoration:none;">Courses</a>
-                <a class="h-full flex items-center px-sm text-[15px] text-primary-container font-semibold border-b-2 border-primary-container relative top-[1px] hover:text-primary transition-colors" asp-page="/Exams/Index" style="text-decoration:none;">Exams</a>
-                <a class="h-full flex items-center px-sm text-[15px] text-on-surface-variant font-medium hover:text-primary transition-colors" asp-page="/Progress/Index" style="text-decoration:none;">Progress</a>
+                <a class="h-full flex items-center px-sm text-[15px] @NavClass("/Index") hover:text-primary transition-colors" asp-page="/Index" style="text-decoration:none;">Home</a>
+                <a class="h-full flex items-center px-sm text-[15px] @NavClass("/Courses/Index") hover:text-primary transition-colors" asp-page="/Courses/Index" style="text-decoration:none;">Courses</a>
+                <a class="h-full flex items-center px-sm text-[15px] @NavClass("/Exams/Index") hover:text-primary transition-colors" asp-page="/Exams/Index" style="text-decoration:none;">Exams</a>
+                <a class="h-full flex items-center px-sm text-[15px] @NavClass("/Progress/Index") hover:text-primary transition-colors" asp-page="/Progress/Index" style="text-decoration:none;">Progress</a>
             </nav>
 
             <!-- Trailing Actions -->
@@ -127,16 +131,22 @@
     </header>
 
     <!-- Main Content -->
-    <main role="main" class="flex-grow w-full font-[Inter]">
+    <main role="main" class="flex-grow w-full font-[Inter] @ViewData["ContentClass"]">
         @RenderBody()
     </main>
 
     <!-- Footer -->
+    @if (ViewData["IsHomePage"] as bool? == true)
+    {
+        <partial name="_HomeFooter" />
+    }
+    else
+    {
     <footer class="bg-surface-container border-t border-outline-variant/30 pt-xl pb-lg font-[Inter] mt-auto">
         <div class="max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop flex flex-col md:flex-row justify-between items-center gap-md">
             <div>
                 <p class="font-extrabold text-primary text-lg">AcadPrep</p>
-                <p class="text-body-sm text-on-surface-variant">Clean Architecture Microservices · YARP · SQL Server · Razor Pages</p>
+                <p class="text-body-sm text-on-surface-variant">Practice smarter and reach your TOEIC goals with AcadPrep.</p>
             </div>
             <div class="flex gap-lg text-body-sm text-on-surface-variant">
                 <a asp-page="/Courses/Index" class="hover:text-primary transition-colors">Courses</a>
@@ -145,6 +155,7 @@
             </div>
         </div>
     </footer>
+    }
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

@@ -1,41 +1,25 @@
-@page "{id:guid}"
+@page "{id:int}"
 @model Storefront.Web.Pages.Exams.TakeModel
-@{ ViewData["Title"] = Model.Exam?.Title ?? "Exam Session"; }
-@if (Model.Exam is null)
-{
-    <div class="alert alert-error">Exam not found.</div>
+@{
+    Layout = null;
 }
-else if (Model.Result is not null)
+@if (Model.TestSession is not { Questions.Count: > 0 } session)
 {
-    <div class="alert alert-ok">
-        <h2>Completed: @Model.Result.ExamTitle</h2>
-        <p>Score: <strong>@Model.Result.Score%</strong> (@Model.Result.CorrectAnswers/@Model.Result.TotalQuestions correct)</p>
-        <p>Event dispatched to Progress service. View <a asp-page="/Progress/Index">progress</a>.</p>
-    </div>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Session unavailable | AcadPrep</title>
+        <partial name="Shared/_ExamTestAssets" />
+    </head>
+    <body class="bg-surface font-body-md text-on-surface p-6">
+        <div role="alert" class="rounded-2xl bg-error-container p-6 mb-4">Session unavailable. It may not exist, belong to another visitor, or the exam service may be offline.</div>
+        <a asp-page="/Exams/Index" class="text-primary">Back to exam library</a>
+    </body>
+    </html>
 }
 else
 {
-    <h1>@Model.Exam.Title</h1>
-    <p class="meta">@Model.Exam.Part · @Model.Exam.TimeLimitMinutes mins</p>
-    @if (!string.IsNullOrEmpty(Model.Error))
-    {
-        <div class="alert alert-error">@Model.Error</div>
-    }
-    <form method="post">
-        @for (var i = 0; i < Model.Exam.Questions.Count; i++)
-        {
-            var q = Model.Exam.Questions[i];
-            <div class="question">
-                <h4>Question @q.Order. @q.Stem</h4>
-                <input type="hidden" name="Answers[@i].QuestionId" value="@q.Id" />
-                <div class="options">
-                    <label><input type="radio" name="Answers[@i].Answer" value="A" required /> A. @q.OptionA</label>
-                    <label><input type="radio" name="Answers[@i].Answer" value="B" /> B. @q.OptionB</label>
-                    <label><input type="radio" name="Answers[@i].Answer" value="C" /> C. @q.OptionC</label>
-                    <label><input type="radio" name="Answers[@i].Answer" value="D" /> D. @q.OptionD</label>
-                </div>
-            </div>
-        }
-        <button class="btn" type="submit">Submit Exam</button>
-    </form>
+    <partial name="@(session.Mode == "practice" ? "Shared/_PracticeSession" : "Shared/_FullTestSession")" model="session" />
 }

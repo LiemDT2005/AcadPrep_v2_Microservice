@@ -91,7 +91,7 @@ public class ExamService(IExamDbContext db)
 
     public async Task<Result<GetExamDetailDto>> GetExamDetailAsync(
         int id,
-        int? userId = null,
+        string? userId = null,
         CancellationToken ct = default)
     {
         var exam = await db.Exams
@@ -155,11 +155,11 @@ public class ExamService(IExamDbContext db)
             Parts = partsSummary
         };
 
-        if (userId.HasValue)
+        if (!string.IsNullOrEmpty(userId))
         {
             var history = await db.ExamAttempts
                 .AsNoTracking()
-                .Where(ea => ea.ExamId == id && ea.UserId == userId.Value)
+                .Where(ea => ea.ExamId == id && ea.UserId == userId)
                 .OrderByDescending(ea => ea.StartedAt)
                 .Select(ea => new UserAttemptHistoryDto
                 {

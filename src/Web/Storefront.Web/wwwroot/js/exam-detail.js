@@ -119,13 +119,56 @@ function updateSummary() {
 }
 
 async function startPracticeSession() {
-    alert("Practice Session feature is under development for the upcoming sprint.");
+    const selectedPartNumbers = Array.from(document.querySelectorAll('input.part-checkbox:checked'))
+        .map(cb => Number(cb.dataset.part));
+    if (!selectedPartNumbers.length) {
+        showStartError('Please select at least one Part.');
+        return;
+    }
+    const selectedTags = Array.from(document.querySelectorAll('input.tag-checkbox:checked'))
+        .filter(cb => selectedPartNumbers.includes(Number(cb.dataset.parentPart))).map(cb => cb.value);
+    const time = document.getElementById('customTimeLimit').value;
+    await startSession('StartPractice', {
+        selectedPartNumbers,
+        selectedTags: [...new Set(selectedTags)],
+        timeLimitMinutes: time ? Number(time) : null
+    });
 }
 
 async function startFullTestSession() {
-    alert("Full Test Simulation feature is under development for the upcoming sprint.");
+    await startSession('StartFullTest', {});
 }
 
-function resumeTest(attemptId) {
-    alert("Resume Test feature is under development for the upcoming sprint.");
+function showStartError(message) {
+    const error = document.getElementById('start-session-error');
+    error.textContent = message;
+    error.classList.remove('hidden');
+    error.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+let startingSession = false;
+async function startSession(handler, payload) {
+    if (startingSession) return;
+    startingSession = true;
+    const buttons = document.querySelectorAll('button[onclick^="start"]');
+    buttons.forEach(button => { button.disabled = true; button.setAttribute('aria-busy', 'true'); });
+    document.getElementById('start-session-error').classList.add('hidden');
+    try {
+        const response = await fetch(`?handler=${handler}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+            },
+            body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || 'Unable to start the session.');
+        window.location.assign(result.redirectUrl);
+    } catch (error) {
+        showStartError(error.message || 'Unable to connect. Please try again.');
+    } finally {
+        startingSession = false;
+        buttons.forEach(button => { button.disabled = false; button.removeAttribute('aria-busy'); });
+    }
 }

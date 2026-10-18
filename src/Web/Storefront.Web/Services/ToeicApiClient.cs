@@ -18,6 +18,20 @@ public class ToeicApiClient(HttpClient http, IHttpContextAccessor httpContextAcc
             http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
     }
 
+    private void AttachExamIdentity()
+    {
+        AttachToken();
+        var session = httpContextAccessor.HttpContext!.Session;
+        var guestKey = session.GetString("examGuestKey");
+        if (guestKey is null)
+        {
+            guestKey = Guid.NewGuid().ToString("N");
+            session.SetString("examGuestKey", guestKey);
+        }
+        http.DefaultRequestHeaders.Remove("X-Exam-Guest-Key");
+        http.DefaultRequestHeaders.Add("X-Exam-Guest-Key", guestKey);
+    }
+
     public async Task<(AuthResponse? Data, string? Error)> RegisterAsync(string email, string password, string fullName)
     {
         var res = await http.PostAsJsonAsync("/identity/api/auth/register", new { email, password, fullName });
@@ -76,10 +90,10 @@ public class ToeicApiClient(HttpClient http, IHttpContextAccessor httpContextAcc
         }
     }
 
-    public async Task<GetExamDetailDto?> GetExamDetailAsync(int id, int? userId = null)
+    public async Task<GetExamDetailDto?> GetExamDetailAsync(int id)
     {
         AttachToken();
-        var url = $"/exam/api/exams/{id}" + (userId.HasValue ? $"?userId={userId.Value}" : "");
+        var url = $"/exam/api/exams/{id}";
         try
         {
             return await http.GetFromJsonAsync<GetExamDetailDto>(url, JsonOpts);
@@ -90,17 +104,50 @@ public class ToeicApiClient(HttpClient http, IHttpContextAccessor httpContextAcc
         }
     }
 
-    public async Task<ExamDetail?> GetExamAsync(Guid id)
+    public async Task<(int? SessionId, string? Error, bool Unauthorized)> StartSessionAsync(int examId, StartPracticeRequest? practice)
     {
-        AttachToken();
-        return await Task.FromResult<ExamDetail?>(null);
+        AttachExamIdentity();
+        try
+        {
+            using var response = await http.PostAsJsonAsync(
+                $"/exam/api/exams/{examId}/{(practice is null ? "full-test" : "practice")}", (object?)practice ?? new { });
+            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                return (null, "Guest sessions are unavailable. Check the Exam API guest setting or sign in.", true);
+            if (!response.IsSuccessStatusCode)
+            {
+                var body = await response.Content.ReadAsStringAsync();
+                try
+                {
+                    using var json = JsonDocument.Parse(body);
+                    if (json.RootElement.TryGetProperty("error", out var error))
+                        return (null, error.GetString(), false);
+                }
+                catch (JsonException) { }
+                return (null, "Unable to start the session. Please check your selection and try again.", false);
+            }
+            var result = await response.Content.ReadFromJsonAsync<StartSessionResponse>(JsonOpts);
+            return (result?.SessionId, null, false);
+        }
+        catch (HttpRequestException) { return (null, "Exam service is unavailable. Please try again later.", false); }
+        catch (TaskCanceledException) { return (null, "Exam service timed out. Please try again.", false); }
     }
 
-    public async Task<(SubmitExamResult? Data, string? Error)> SubmitExamAsync(Guid examId, object answers)
+    public async Task<(ExamSessionDto? Session, bool Unauthorized)> GetSessionAsync(int id, string mode)
     {
-        AttachToken();
-        return await Task.FromResult<(SubmitExamResult?, string?)>((null, "Feature under development."));
+        AttachExamIdentity();
+        try
+        {
+            var route = mode == "practice" ? "practice-sessions" : "full-tests";
+            using var response = await http.GetAsync($"/exam/api/{route}/{id}");
+            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized) return (null, true);
+            if (!response.IsSuccessStatusCode) return (null, false);
+            return (await response.Content.ReadFromJsonAsync<ExamSessionDto>(JsonOpts), false);
+        }
+        catch (HttpRequestException) { return (null, false); }
+        catch (TaskCanceledException) { return (null, false); }
     }
+
+    private record StartSessionResponse(int SessionId);
 
     public async Task<ProgressSummary?> GetProgressAsync()
     {

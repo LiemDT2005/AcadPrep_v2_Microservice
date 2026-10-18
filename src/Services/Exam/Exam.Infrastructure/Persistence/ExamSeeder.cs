@@ -30,6 +30,15 @@ public static class ExamSeeder
         }
 
 
+        // Upgrade the two legacy monolith user keys without dropping existing data.
+        // EnsureCreated does not update schemas in databases that already exist.
+        await db.Database.ExecuteSqlRawAsync("""
+            IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID(N'EXAM_ATTEMPTS') AND name = N'UserId' AND TYPE_NAME(user_type_id) = N'int')
+                ALTER TABLE [EXAM_ATTEMPTS] ALTER COLUMN [UserId] nvarchar(450) NOT NULL;
+            IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID(N'PRACTICE_SESSIONS') AND name = N'UserId' AND TYPE_NAME(user_type_id) = N'int')
+                ALTER TABLE [PRACTICE_SESSIONS] ALTER COLUMN [UserId] nvarchar(450) NOT NULL;
+            """);
+
         // 1. Seed ExamSeries
         if (!await db.ExamSeries.AnyAsync())
         {
@@ -183,11 +192,11 @@ public static class ExamSeeder
             var exams = await db.Exams.Take(4).ToListAsync();
             var attempts = new List<ExamAttempt>
             {
-                new() { UserId = 1, ExamId = exams[0].Id, ListeningScore = 380, ReadingScore = 350, TotalScore = 730, RemainingTime = 300, IsSubmitted = true, StartedAt = DateTime.UtcNow.AddDays(-10), CompletedAt = DateTime.UtcNow.AddDays(-10).AddMinutes(115) },
-                new() { UserId = 1, ExamId = exams[0].Id, ListeningScore = 420, ReadingScore = 390, TotalScore = 810, RemainingTime = 540, IsSubmitted = true, StartedAt = DateTime.UtcNow.AddDays(-3), CompletedAt = DateTime.UtcNow.AddDays(-3).AddMinutes(110) },
-                new() { UserId = 1, ExamId = exams[1].Id, ListeningScore = 350, ReadingScore = 310, TotalScore = 660, RemainingTime = 120, IsSubmitted = true, StartedAt = DateTime.UtcNow.AddDays(-7), CompletedAt = DateTime.UtcNow.AddDays(-7).AddMinutes(118) },
-                new() { UserId = 2, ExamId = exams[0].Id, ListeningScore = 400, ReadingScore = 420, TotalScore = 820, RemainingTime = 600, IsSubmitted = true, StartedAt = DateTime.UtcNow.AddDays(-5), CompletedAt = DateTime.UtcNow.AddDays(-5).AddMinutes(108) },
-                new() { UserId = 3, ExamId = exams[2].Id, ListeningScore = 290, ReadingScore = 280, TotalScore = 570, RemainingTime = 0, IsSubmitted = true, StartedAt = DateTime.UtcNow.AddDays(-2), CompletedAt = DateTime.UtcNow.AddDays(-2).AddMinutes(120) }
+                new() { UserId = "1", ExamId = exams[0].Id, ListeningScore = 380, ReadingScore = 350, TotalScore = 730, RemainingTime = 300, IsSubmitted = true, StartedAt = DateTime.UtcNow.AddDays(-10), CompletedAt = DateTime.UtcNow.AddDays(-10).AddMinutes(115) },
+                new() { UserId = "1", ExamId = exams[0].Id, ListeningScore = 420, ReadingScore = 390, TotalScore = 810, RemainingTime = 540, IsSubmitted = true, StartedAt = DateTime.UtcNow.AddDays(-3), CompletedAt = DateTime.UtcNow.AddDays(-3).AddMinutes(110) },
+                new() { UserId = "1", ExamId = exams[1].Id, ListeningScore = 350, ReadingScore = 310, TotalScore = 660, RemainingTime = 120, IsSubmitted = true, StartedAt = DateTime.UtcNow.AddDays(-7), CompletedAt = DateTime.UtcNow.AddDays(-7).AddMinutes(118) },
+                new() { UserId = "2", ExamId = exams[0].Id, ListeningScore = 400, ReadingScore = 420, TotalScore = 820, RemainingTime = 600, IsSubmitted = true, StartedAt = DateTime.UtcNow.AddDays(-5), CompletedAt = DateTime.UtcNow.AddDays(-5).AddMinutes(108) },
+                new() { UserId = "3", ExamId = exams[2].Id, ListeningScore = 290, ReadingScore = 280, TotalScore = 570, RemainingTime = 0, IsSubmitted = true, StartedAt = DateTime.UtcNow.AddDays(-2), CompletedAt = DateTime.UtcNow.AddDays(-2).AddMinutes(120) }
             };
 
             db.ExamAttempts.AddRange(attempts);

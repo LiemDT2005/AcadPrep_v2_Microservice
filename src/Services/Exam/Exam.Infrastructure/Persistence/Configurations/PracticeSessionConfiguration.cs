@@ -17,6 +17,7 @@ public class PracticeSessionConfiguration : IEntityTypeConfiguration<PracticeSes
             .ValueGeneratedOnAdd();
 
         builder.Property(x => x.UserId)
+            .HasMaxLength(450)
             .IsRequired();
 
         builder.Property(x => x.ExamId)

@@ -17,6 +17,7 @@ public class ExamAttemptConfiguration : IEntityTypeConfiguration<ExamAttempt>
             .ValueGeneratedOnAdd();
 
         builder.Property(x => x.UserId)
+            .HasMaxLength(450)
             .IsRequired();
 
         builder.Property(x => x.ExamId)

@@ -4,7 +4,7 @@ namespace Exam.Domain.Entities;
 
 public class ExamAttempt : BaseEntity<int>
 {
-    public int UserId { get; set; }
+    public string UserId { get; set; } = string.Empty;
     public int ExamId { get; set; }
     public int ListeningScore { get; set; }
     public int ReadingScore { get; set; }

@@ -54,9 +54,6 @@ services:
       - ASPNETCORE_URLS=http://0.0.0.0:5080
       - Urls=http://0.0.0.0:5080
       - ReverseProxy__Clusters__exam__Destinations__d1__Address=http://exam.api:5003/
-      - ReverseProxy__Clusters__identity__Destinations__d1__Address=http://host.docker.internal:5001/
-      - ReverseProxy__Clusters__catalog__Destinations__d1__Address=http://host.docker.internal:5002/
-      - ReverseProxy__Clusters__progress__Destinations__d1__Address=http://host.docker.internal:5004/
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:

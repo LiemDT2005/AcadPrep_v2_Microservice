@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using BuildingBlocks.Common.Pagination;
 using Exam.Application.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -39,10 +40,9 @@ public class ExamsController(ExamService examService) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetDetail(
         [FromRoute] int id,
-        [FromQuery] int? userId,
         CancellationToken ct = default)
     {
-        var result = await examService.GetExamDetailAsync(id, userId, ct);
+        var result = await examService.GetExamDetailAsync(id, User.FindFirstValue(ClaimTypes.NameIdentifier), ct);
         if (!result.IsSuccess)
         {
             return NotFound(new { error = result.Error });

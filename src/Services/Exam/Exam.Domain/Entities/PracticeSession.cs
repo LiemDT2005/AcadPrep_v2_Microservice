@@ -4,7 +4,7 @@ namespace Exam.Domain.Entities;
 
 public class PracticeSession : BaseEntity<int>
 {
-    public int UserId { get; set; }
+    public string UserId { get; set; } = string.Empty;
     public int ExamId { get; set; }
     public string SelectedParts { get; set; } = null!;
     public string? SelectedTags { get; set; }

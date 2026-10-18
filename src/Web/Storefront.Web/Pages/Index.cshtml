@@ -2,6 +2,7 @@
 @model Storefront.Web.Pages.IndexModel
 @{
     ViewData["Title"] = "Home page";
+    ViewData["IsHomePage"] = true;
 }
 
 <!-- Section 1: Hero -->
@@ -13,10 +14,10 @@
 <span class="inline-flex items-center px-md py-xs rounded-full bg-white text-primary-container font-label-sm text-label-sm border border-primary-container/20 shadow-sm">
                         TOEIC Preparation Platform
                     </span>
-<h1 class="font-display-lg text-display-lg text-on-surface">Ace Your TOEIC Exam with Confidence</h1>
+<h1 class="font-display-lg text-display-sm md:text-display-lg text-on-surface">Ace Your TOEIC Exam with Confidence</h1>
 <p class="font-body-lg text-body-lg text-on-surface-variant max-w-[600px]">Full simulation tests, smart flashcards, and real-time progress tracking — all in one place.</p>
 <div class="flex flex-wrap gap-md mt-sm">
-<a asp-page="/Exams/Index" class="bg-primary text-on-primary px-lg py-sm rounded-lg font-label-md text-label-md hover:bg-primary/90 transition-colors shadow-sm flex items-center gap-sm" style="text-decoration:none;">
+<a asp-page="/Account/Register" class="bg-primary text-on-primary px-lg py-sm rounded-lg font-label-md text-label-md hover:bg-primary/90 transition-colors shadow-sm flex items-center gap-sm" style="text-decoration:none;">
                             Start for Free <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
 </a>
 <a asp-page="/Exams/Index" class="border border-outline bg-transparent text-primary px-lg py-sm rounded-lg font-label-md text-label-md hover:bg-surface-container-high transition-colors" style="text-decoration:none;">
@@ -56,7 +57,7 @@
 </div>
 </div>
 <!-- Decorative floating element -->
-<div class="absolute -bottom-xl -right-xl bg-white p-sm rounded-lg shadow-lg border border-surface-variant flex items-center gap-sm animate-bounce" style="animation-duration: 3s;">
+<div class="absolute -bottom-md right-0 md:-right-xl bg-white p-sm rounded-lg shadow-lg border border-surface-variant flex items-center gap-sm animate-bounce" style="animation-duration: 3s;">
 <span class="material-symbols-outlined text-tertiary-container fill-1">check_circle</span>
 <span class="font-label-sm text-label-sm">Goal Reached</span>
 </div>
@@ -133,8 +134,8 @@
 <div class="flex items-center gap-[4px]"><span class="material-symbols-outlined text-[16px]">group</span> 1.2k</div>
 </div>
 <div class="flex gap-sm mt-auto pl-sm">
-<a asp-page="/Exams/Detail" asp-route-id="1" class="flex-1 text-center border border-outline bg-transparent text-on-surface px-sm py-sm rounded-lg font-label-md text-label-md hover:bg-surface-container-high transition-colors flex items-center justify-center" style="text-decoration:none;">View Details</a>
-<a asp-page="/Exams/Detail" asp-route-id="1" class="flex-1 bg-primary text-on-primary px-sm py-sm rounded-lg font-label-md text-label-md hover:bg-primary/90 transition-colors flex items-center justify-center gap-[4px]" style="text-decoration:none;">Start Exam <span class="material-symbols-outlined text-[16px]">arrow_forward</span></a>
+<a asp-page="/Exams/Index" class="flex-1 text-center border border-outline bg-transparent text-on-surface px-sm py-sm rounded-lg font-label-md text-label-md hover:bg-surface-container-high transition-colors flex items-center justify-center" style="text-decoration:none;">View Details</a>
+<a asp-page="/Exams/Index" class="flex-1 bg-primary text-on-primary px-sm py-sm rounded-lg font-label-md text-label-md hover:bg-primary/90 transition-colors flex items-center justify-center gap-[4px]" style="text-decoration:none;">Start Exam <span class="material-symbols-outlined text-[16px]">arrow_forward</span></a>
 </div>
 </div>
 <!-- Exam Card 2 -->
@@ -151,8 +152,8 @@
 <div class="flex items-center gap-[4px]"><span class="material-symbols-outlined text-[16px]">group</span> 3.4k</div>
 </div>
 <div class="flex gap-sm mt-auto pl-sm">
-<a asp-page="/Exams/Detail" asp-route-id="9" class="flex-1 text-center border border-outline bg-transparent text-on-surface px-sm py-sm rounded-lg font-label-md text-label-md hover:bg-surface-container-high transition-colors flex items-center justify-center" style="text-decoration:none;">View Details</a>
-<a asp-page="/Exams/Detail" asp-route-id="9" class="flex-1 bg-primary text-on-primary px-sm py-sm rounded-lg font-label-md text-label-md hover:bg-primary/90 transition-colors flex items-center justify-center gap-[4px]" style="text-decoration:none;">Start Exam <span class="material-symbols-outlined text-[16px]">arrow_forward</span></a>
+<a asp-page="/Exams/Index" class="flex-1 text-center border border-outline bg-transparent text-on-surface px-sm py-sm rounded-lg font-label-md text-label-md hover:bg-surface-container-high transition-colors flex items-center justify-center" style="text-decoration:none;">View Details</a>
+<a asp-page="/Exams/Index" class="flex-1 bg-primary text-on-primary px-sm py-sm rounded-lg font-label-md text-label-md hover:bg-primary/90 transition-colors flex items-center justify-center gap-[4px]" style="text-decoration:none;">Start Exam <span class="material-symbols-outlined text-[16px]">arrow_forward</span></a>
 </div>
 </div>
 <!-- Exam Card 3 -->
@@ -169,8 +170,8 @@
 <div class="flex items-center gap-[4px]"><span class="material-symbols-outlined text-[16px]">group</span> 800</div>
 </div>
 <div class="flex gap-sm mt-auto pl-sm">
-<a asp-page="/Exams/Detail" asp-route-id="6" class="flex-1 text-center border border-outline bg-transparent text-on-surface px-sm py-sm rounded-lg font-label-md text-label-md hover:bg-surface-container-high transition-colors flex items-center justify-center" style="text-decoration:none;">View Details</a>
-<a asp-page="/Exams/Detail" asp-route-id="6" class="flex-1 bg-primary text-on-primary px-sm py-sm rounded-lg font-label-md text-label-md hover:bg-primary/90 transition-colors flex items-center justify-center gap-[4px]" style="text-decoration:none;">Start Exam <span class="material-symbols-outlined text-[16px]">arrow_forward</span></a>
+<a asp-page="/Exams/Index" class="flex-1 text-center border border-outline bg-transparent text-on-surface px-sm py-sm rounded-lg font-label-md text-label-md hover:bg-surface-container-high transition-colors flex items-center justify-center" style="text-decoration:none;">View Details</a>
+<a asp-page="/Exams/Index" class="flex-1 bg-primary text-on-primary px-sm py-sm rounded-lg font-label-md text-label-md hover:bg-primary/90 transition-colors flex items-center justify-center gap-[4px]" style="text-decoration:none;">Start Exam <span class="material-symbols-outlined text-[16px]">arrow_forward</span></a>
 </div>
 </div>
 </div>
@@ -232,7 +233,7 @@
 <section class="py-2xl px-margin-mobile md:px-margin-desktop max-w-4xl mx-auto">
 <div class="flex justify-between items-end mb-lg">
 <h2 class="font-headline-md text-headline-md text-on-surface">See Where You Stand</h2>
-<span class="text-on-surface-variant font-body-sm text-body-sm">Updated hourly</span>
+<span class="text-on-surface-variant font-body-sm text-body-sm">Leaderboard preview</span>
 </div>
 <div class="bg-surface-container-lowest rounded-xl shadow-sm border border-surface-variant overflow-hidden mb-lg">
 <table class="w-full text-left border-collapse">
@@ -300,8 +301,8 @@
 </table>
 </div>
 <div class="text-center">
-<button class="bg-primary text-on-primary px-lg py-sm rounded-lg font-label-md text-label-md hover:bg-primary/90 transition-colors shadow-sm inline-flex items-center gap-sm">
-                    View Full Leaderboard <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+<button type="button" disabled title="Leaderboard is not available yet" class="bg-primary text-on-primary px-lg py-sm rounded-lg font-label-md text-label-md shadow-sm inline-flex items-center gap-sm opacity-60 cursor-not-allowed">
+                    Leaderboard Coming Soon <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
 </button>
 </div>
 </section>
