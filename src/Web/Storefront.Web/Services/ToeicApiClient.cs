@@ -6,7 +6,7 @@ using Storefront.Web.Models;
 
 namespace Storefront.Web.Services;
 
-public class ToeicApiClient(HttpClient http, IHttpContextAccessor httpContextAccessor)
+public partial class ToeicApiClient(HttpClient http, IHttpContextAccessor httpContextAccessor)
 {
     private static readonly JsonSerializerOptions JsonOpts = new() { PropertyNameCaseInsensitive = true };
 

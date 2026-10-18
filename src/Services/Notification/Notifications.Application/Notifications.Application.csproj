@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Notifications.Domain/Notifications.Domain.csproj" />
+    <ProjectReference Include="../../../BuildingBlocks/BuildingBlocks.Common/BuildingBlocks.Common.csproj" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.0" />
+    <InternalsVisibleTo Include="Notifications.API.Tests" />
+  </ItemGroup>
+</Project>

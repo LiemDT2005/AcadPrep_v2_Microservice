@@ -111,6 +111,7 @@
 
             <!-- Trailing Actions -->
             <div class="flex items-center gap-md">
+                @await Component.InvokeAsync("NotificationBadge")
                 @if (hasUser)
                 {
                     <a asp-page="/Account/Profile" class="flex items-center gap-2 hover:opacity-80 transition" style="text-decoration:none;">

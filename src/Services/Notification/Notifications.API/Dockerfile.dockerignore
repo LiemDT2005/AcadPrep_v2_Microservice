@@ -1,0 +1,18 @@
+# Build from the repository root; send only Notification and BuildingBlocks.Common source.
+**
+!src/
+!src/BuildingBlocks/
+!src/BuildingBlocks/BuildingBlocks.Common/
+!src/BuildingBlocks/BuildingBlocks.Common/**
+!src/Services/
+!src/Services/Notification/
+!src/Services/Notification/**
+**/bin/
+**/obj/
+**/*.pem
+**/*.key
+**/*.pfx
+**/*.p12
+**/appsettings.Development.json
+**/.env
+**/.env.*

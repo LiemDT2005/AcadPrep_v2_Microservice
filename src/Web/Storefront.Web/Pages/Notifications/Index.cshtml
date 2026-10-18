@@ -1,0 +1,46 @@
+@page
+@model Storefront.Web.Pages.Notifications.IndexModel
+@{ ViewData["Title"] = "Thông báo"; }
+<section class="max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop py-xl">
+    <div class="flex flex-wrap justify-between items-center gap-md mb-lg">
+        <div><h1 class="text-headline-lg font-bold">Thông báo</h1><p class="text-on-surface-variant">Cập nhật dành cho bạn</p></div>
+        @if (Model.CanSendNotifications) { <a asp-page="/Admin/Notifications/Create" class="text-primary font-semibold">Gửi thông báo (Admin)</a> }
+    </div>
+    @if (Model.Notice is not null) { <p role="status" class="rounded-lg bg-surface-container-low p-md mb-md">@Model.Notice</p> }
+    <form method="get" class="flex flex-wrap gap-md items-end mb-lg">
+        <div><label asp-for="UnreadOnly" class="block font-semibold">Bộ lọc</label>
+            <select asp-for="UnreadOnly" class="rounded-lg border-outline-variant"><option value="false">Tất cả</option><option value="true">Chưa đọc</option></select></div>
+        <div><label asp-for="PageSize" class="block font-semibold">Số thông báo mỗi trang</label><input asp-for="PageSize" type="number" min="1" max="100" class="rounded-lg border-outline-variant w-24" /></div>
+        <button class="rounded-lg bg-primary text-white px-md py-sm" type="submit">Áp dụng / Làm mới</button>
+    </form>
+    @if (Model.Error is not null)
+    {
+        <p role="alert" class="rounded-xl bg-error-container text-on-error-container p-lg">@Model.Error</p>
+    }
+    else if (Model.Notifications is { } resultPage)
+    {
+        @if (resultPage.Items.Count == 0) { <p class="rounded-xl bg-surface-container-lowest p-lg border border-outline-variant/30">Chưa có thông báo trong trang này.</p> }
+        <div class="flex flex-col gap-md">
+        @foreach (var item in resultPage.Items)
+        {
+            <article class="rounded-xl bg-surface-container-lowest border border-outline-variant/30 p-lg shadow-sm">
+                <div class="flex flex-wrap justify-between gap-sm"><h2 class="text-headline-sm font-semibold break-words">@item.Title</h2><span class="text-body-sm text-primary">@(item.IsRead ? "Đã đọc" : "Chưa đọc")</span></div>
+                <p class="text-body-sm text-on-surface-variant my-sm">@item.Type · <time datetime="@item.CreatedAt.ToString("O")">@item.CreatedAt.ToOffset(TimeSpan.FromHours(7)).ToString("dd/MM/yyyy HH:mm") (UTC+7)</time></p>
+                <p class="whitespace-pre-wrap break-words">@item.Content</p>
+                <div class="flex flex-wrap gap-md mt-md">
+                    @if (!item.IsRead)
+                    {
+                        <form method="post" asp-page-handler="Read"><input type="hidden" name="id" value="@item.Id" /><input type="hidden" asp-for="PageIndex" /><input type="hidden" asp-for="PageSize" /><input type="hidden" asp-for="UnreadOnly" /><button type="submit" class="rounded-lg bg-primary text-white px-md py-sm">Đánh dấu đã đọc</button></form>
+                    }
+                    <form method="post" asp-page-handler="Delete" onsubmit="return confirm('Xóa thông báo khỏi danh sách cá nhân?');"><input type="hidden" name="id" value="@item.Id" /><input type="hidden" asp-for="PageIndex" /><input type="hidden" asp-for="PageSize" /><input type="hidden" asp-for="UnreadOnly" /><button type="submit" class="rounded-lg border border-outline-variant text-error px-md py-sm">Xóa</button></form>
+                </div>
+            </article>
+        }
+        </div>
+        <nav aria-label="Phân trang thông báo" class="flex flex-wrap gap-md items-center mt-lg">
+            @if (resultPage.PageIndex > 1) { <a asp-route-pageIndex="@(resultPage.PageIndex - 1)" asp-route-pageSize="@resultPage.PageSize" asp-route-unreadOnly="@Model.UnreadOnly" class="text-primary">Trang trước</a> }
+            <span>Trang @resultPage.PageIndex / @Math.Max(1, resultPage.TotalPages) · @resultPage.TotalCount thông báo</span>
+            @if (resultPage.PageIndex < resultPage.TotalPages) { <a asp-route-pageIndex="@(resultPage.PageIndex + 1)" asp-route-pageSize="@resultPage.PageSize" asp-route-unreadOnly="@Model.UnreadOnly" class="text-primary">Trang sau</a> }
+        </nav>
+    }
+</section>

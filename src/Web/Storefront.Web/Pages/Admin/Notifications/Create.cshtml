@@ -1,0 +1,22 @@
+@page
+@model Storefront.Web.Pages.Admin.Notifications.CreateModel
+@{ ViewData["Title"] = "Gửi thông báo"; }
+<section class="max-w-3xl mx-auto px-margin-mobile md:px-margin-desktop py-xl">
+    <a asp-page="/Notifications/Index" class="text-primary">← Danh sách thông báo</a>
+    <h1 class="text-headline-lg font-bold my-lg">Gửi thông báo hệ thống</h1>
+    @if (Model.Notice is not null) { <p role="status" class="rounded-lg bg-tertiary-container text-on-tertiary-container p-md mb-md">@Model.Notice</p> }
+    @if (Model.Error is not null) { <p role="alert" class="rounded-lg bg-error-container text-on-error-container p-md mb-md">@Model.Error</p> }
+    <form method="post" id="notification-create" class="rounded-xl bg-surface-container-lowest border border-outline-variant/30 p-lg shadow-sm flex flex-col gap-md">
+        <div asp-validation-summary="All" class="text-error" role="alert"></div>
+        <div><label asp-for="Input.Title" class="block font-semibold mb-sm"></label><input asp-for="Input.Title" class="w-full rounded-lg border-outline-variant" /><span asp-validation-for="Input.Title" class="text-error text-body-sm"></span></div>
+        <div><label asp-for="Input.Content" class="block font-semibold mb-sm"></label><textarea asp-for="Input.Content" rows="7" class="w-full rounded-lg border-outline-variant"></textarea><span asp-validation-for="Input.Content" class="text-error text-body-sm"></span><p class="text-body-sm text-on-surface-variant">Nội dung được hiển thị dạng văn bản.</p></div>
+        <div><label asp-for="Input.Audience" class="block font-semibold mb-sm"></label><select asp-for="Input.Audience" class="w-full rounded-lg border-outline-variant"><option value="All">Tất cả</option><option value="User">Một người dùng</option><option value="Learner">Learner</option><option value="Moderator">Moderator</option></select><span asp-validation-for="Input.Audience" class="text-error text-body-sm"></span></div>
+        <div><label asp-for="Input.TargetUserId" class="block font-semibold mb-sm"></label><input asp-for="Input.TargetUserId" aria-describedby="target-help" class="w-full rounded-lg border-outline-variant" /><span asp-validation-for="Input.TargetUserId" class="text-error text-body-sm"></span><p id="target-help" class="text-body-sm text-on-surface-variant">Chỉ nhập GUID khi chọn một người dùng. Các đối tượng khác phải để trống.</p></div>
+        <button type="submit" class="rounded-lg bg-primary text-white font-semibold px-lg py-sm self-start">Gửi thông báo</button>
+    </form>
+</section>
+@section Scripts {
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/notification-validation.js" asp-append-version="true"></script>
+}

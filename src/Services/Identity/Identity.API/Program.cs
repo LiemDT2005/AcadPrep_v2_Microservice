@@ -58,19 +58,22 @@ var rsaSecurityKey = new RsaSecurityKey(rsaVerify) { KeyId = "acadprep-rsa-key-1
 
 // Redis Configuration (with graceful fallback if offline)
 var redisConn = builder.Configuration["Redis:ConnectionString"] ?? "localhost:6379";
-try
+if (builder.Configuration.GetValue<bool>("Redis:Enabled", true))
 {
-    var redis = StackExchange.Redis.ConnectionMultiplexer.Connect(new StackExchange.Redis.ConfigurationOptions
+    try
     {
-        EndPoints = { redisConn },
-        AbortOnConnectFail = false,
-        ConnectTimeout = 2000
-    });
-    builder.Services.AddSingleton<StackExchange.Redis.IConnectionMultiplexer>(redis);
-}
-catch (Exception ex)
-{
-    Console.WriteLine($"[Redis Notice] Redis not connected ({redisConn}): {ex.Message}. Using in-memory fallback.");
+        var redis = StackExchange.Redis.ConnectionMultiplexer.Connect(new StackExchange.Redis.ConfigurationOptions
+        {
+            EndPoints = { redisConn },
+            AbortOnConnectFail = false,
+            ConnectTimeout = 2000
+        });
+        builder.Services.AddSingleton<StackExchange.Redis.IConnectionMultiplexer>(redis);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[Redis Notice] Redis not connected ({redisConn}): {ex.Message}. Using in-memory fallback.");
+    }
 }
 
 builder.Services.AddSingleton<ITokenBlacklistService, TokenBlacklistService>();
@@ -140,8 +143,9 @@ builder.Services.AddCors(o => o.AddDefaultPolicy(p => p.AllowAnyOrigin().AllowAn
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
+if (builder.Configuration.GetValue<bool>("DatabaseInitialization:Enabled", true))
 {
+    using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
     await db.Database.MigrateAsync();
     await IdentityDbInitializer.SeedAsync(scope.ServiceProvider);
