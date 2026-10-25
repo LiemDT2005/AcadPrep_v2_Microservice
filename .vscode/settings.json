@@ -1,0 +1,7 @@
+{
+    "csharpSolutionExplorer.languageServer.enabled": false,
+    "vssolution.showMode": "explorer",
+    "vssolution.openSolutions.inRootFolder": true,
+    "vssolution.openSolutions.inFoldersAndSubfolders": true,
+    "vssolution.trackActiveItem": true
+}
