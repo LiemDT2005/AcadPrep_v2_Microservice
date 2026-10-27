@@ -44,7 +44,10 @@ run() {
   pids+=("$!")
 }
 
-run "Exam.API" "src/Services/Exam/Exam.API"
+run "Identity.API" "src/Services/Identity/Identity.API"
+run "Exam" "src/Services/Exam"
+run "Learning.API" "src/Services/Learning/Learning.API"
+run "Content" "src/Services/Content"
 run "ApiGateway" "src/ApiGateways/ApiGateway"
 run "Storefront.Web" "src/Web/Storefront.Web"
 
@@ -53,6 +56,8 @@ echo "Services starting..."
 echo "  Web UI:     http://localhost:5100"
 echo "  Gateway:    http://localhost:5080"
 echo "  Exam:       http://localhost:5003/swagger"
+echo "  Learning:   http://localhost:5005/swagger"
+echo "  Content:    http://localhost:5006/swagger"
 echo "  RabbitMQ:   http://localhost:15672 (guest/guest)"
 echo ""
 echo "Press Ctrl+C to stop all."

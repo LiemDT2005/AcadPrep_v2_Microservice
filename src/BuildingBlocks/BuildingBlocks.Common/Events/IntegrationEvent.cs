@@ -15,3 +15,16 @@ public record ExamCompletedEvent(
     int TotalQuestions,
     int CorrectAnswers
 ) : IntegrationEvent;
+
+public record TestSubmittedEvent(
+    Guid AttemptId,
+    string UserId,
+    Guid ExamId,
+    string ExamTitle,
+    int Score,
+    int ListeningScore,
+    int ReadingScore,
+    int TotalQuestions,
+    int CorrectAnswers,
+    Dictionary<int, int>? PartBreakdown = null
+) : IntegrationEvent;

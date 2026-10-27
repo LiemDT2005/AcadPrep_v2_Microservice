@@ -4,17 +4,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - AcadPrep</title>
-    <!-- MDB / Bootstrap & FontAwesome for styling -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/7.1.0/mdb.min.css" rel="stylesheet" />
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
-    <style>
-        body { background-color: #f8f9fa; font-family: 'Inter', sans-serif; }
-        .navbar { box-shadow: 0 2px 4px rgba(0,0,0,.08); }
-    </style>
-    <!-- Tailwind CSS -->
+    <!-- Tailwind CSS with Monolith Custom Palette -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <script id="tailwind-config">
         tailwind.config = {
           darkMode: "class",
@@ -22,7 +16,7 @@
             extend: {
               colors: {
                   "background": "#fcf8ff",
-                  "primary": "#1e00a9",
+                  "primary": "#4840E4",
                   "primary-container": "#3525cd",
                   "on-primary": "#ffffff",
                   "on-surface": "#1b1b24",
@@ -81,18 +75,19 @@
         }
     </script>
 </head>
-<body class="bg-background text-on-surface min-h-screen flex flex-col">
+<body class="bg-background text-on-surface min-h-screen flex flex-col font-[Inter]">
     @{
         var userName = Context.Session.GetString("name");
+        var userAvatar = Context.Session.GetString("avatar");
         var hasUser = !string.IsNullOrEmpty(Context.Session.GetString("jwt"));
         var currentPage = ViewContext.RouteData.Values["page"]?.ToString();
         string NavClass(string page) => currentPage == page || (page != "/Index" && currentPage?.StartsWith(page.Replace("/Index", "") + "/") == true)
-            ? "text-primary-container font-semibold border-b-2 border-primary-container"
-            : "text-on-surface-variant font-medium";
+            ? "text-primary font-semibold border-b-2 border-primary"
+            : "text-on-surface-variant font-medium hover:text-primary";
     }
 
     <!-- Sticky Header -->
-    <header class="sticky top-0 z-50 bg-surface-container-lowest border-b border-outline-variant/30 w-full h-[64px] font-[Inter]">
+    <header class="sticky top-0 z-50 bg-surface-container-lowest border-b border-outline-variant/30 w-full h-[64px] shadow-sm">
         <div class="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop max-w-7xl mx-auto h-full">
             <!-- Brand Logo -->
             <a class="flex items-center gap-sm group" asp-page="/Index" style="text-decoration:none;">
@@ -101,37 +96,57 @@
             </a>
 
             <!-- Navigation Links -->
-            <nav class="hidden md:flex items-center h-full gap-lg">
-                <a class="h-full flex items-center px-sm text-[15px] @NavClass("/Index") hover:text-primary transition-colors" asp-page="/Index" style="text-decoration:none;">Home</a>
-                <a class="h-full flex items-center px-sm text-[15px] @NavClass("/Courses/Index") hover:text-primary transition-colors" asp-page="/Courses/Index" style="text-decoration:none;">Courses</a>
-                <a class="h-full flex items-center px-sm text-[15px] @NavClass("/Exams/Index") hover:text-primary transition-colors" asp-page="/Exams/Index" style="text-decoration:none;">Exams</a>
-                <a class="h-full flex items-center px-sm text-[15px] @NavClass("/Progress/Index") hover:text-primary transition-colors" asp-page="/Progress/Index" style="text-decoration:none;">Progress</a>
+            <nav class="hidden lg:flex items-center h-full gap-md">
+                <a class="h-full flex items-center px-sm text-[14px] @NavClass("/Index") transition-colors" asp-page="/Index" style="text-decoration:none;">Trang chủ</a>
+                <a class="h-full flex items-center px-sm text-[14px] @NavClass("/Courses/Index") transition-colors" asp-page="/Courses/Index" style="text-decoration:none;">Khóa học</a>
+                <a class="h-full flex items-center px-sm text-[14px] @NavClass("/Exams/Index") transition-colors" asp-page="/Exams/Index" style="text-decoration:none;">Luyện đề</a>
+                <a class="h-full flex items-center px-sm text-[14px] @NavClass("/Progress/Index") transition-colors" asp-page="/Progress/Index" style="text-decoration:none;">Tiến độ</a>
+                <a class="h-full flex items-center px-sm text-[14px] @NavClass("/Vocabulary/Notebook") transition-colors" asp-page="/Vocabulary/Notebook" style="text-decoration:none;">Sổ từ</a>
+                <a class="h-full flex items-center px-sm text-[14px] @NavClass("/Vocabulary/Review") transition-colors" asp-page="/Vocabulary/Review" style="text-decoration:none;">Flashcards</a>
+                <a class="h-full flex items-center px-sm text-[14px]" asp-page="/Performance/StudyHistory" style="text-decoration:none;">Lịch sử học</a>
+                <a class="h-full flex items-center px-sm text-[14px]" asp-page="/Performance/PerformanceAnalysis" style="text-decoration:none;">Phân tích</a>
+                <a class="h-full flex items-center px-sm text-[14px] @NavClass("/Performance/Leaderboard") transition-colors" asp-page="/Performance/Leaderboard" style="text-decoration:none;">BXH</a>
+                <a href="/Admin/Exams" class="inline-flex items-center px-2.5 py-1 text-xs font-bold uppercase rounded bg-purple-100 text-purple-700 hover:bg-purple-200 transition" style="text-decoration:none;">
+                    CMS Đề Thi
+                </a>
             </nav>
 
             <!-- Trailing Actions -->
             <div class="flex items-center gap-md">
                 @if (hasUser)
                 {
-                    <span class="text-sm font-semibold text-primary">Hello, @userName</span>
+                    <a asp-page="/Account/Profile" class="flex items-center gap-2 hover:opacity-80 transition" style="text-decoration:none;">
+                        @if (!string.IsNullOrEmpty(userAvatar))
+                        {
+                            <img src="@userAvatar" alt="@userName" class="w-8 h-8 rounded-full object-cover border border-primary/20" />
+                        }
+                        else
+                        {
+                            <span class="w-8 h-8 rounded-full bg-primary text-white font-bold text-xs flex items-center justify-center">
+                                @(string.IsNullOrWhiteSpace(userName) ? "U" : userName.Substring(0, 1).ToUpper())
+                            </span>
+                        }
+                        <span class="text-sm font-semibold text-on-surface hidden sm:inline">@userName</span>
+                    </a>
                     <a asp-page="/Account/Logout"
                        class="inline-flex items-center justify-center px-md py-sm rounded-lg border border-outline-variant text-on-surface text-[14px] font-medium hover:bg-surface-container-low transition-colors duration-100"
-                       style="text-decoration:none;">Logout</a>
+                       style="text-decoration:none;">Đăng xuất</a>
                 }
                 else
                 {
                     <a asp-page="/Account/Login"
                        class="inline-flex items-center justify-center px-md py-sm rounded-lg border border-outline-variant text-on-surface text-[14px] font-medium hover:bg-surface-container-low transition-colors duration-100"
-                       style="text-decoration:none;">Login</a>
+                       style="text-decoration:none;">Đăng nhập</a>
                     <a asp-page="/Account/Register"
                        class="inline-flex items-center justify-center px-md py-sm rounded-lg bg-primary text-white text-[14px] font-medium hover:opacity-90 active:scale-95 transition-all duration-100 shadow-sm border-0"
-                       style="text-decoration:none;">Register</a>
+                       style="text-decoration:none;">Đăng ký</a>
                 }
             </div>
         </div>
     </header>
 
     <!-- Main Content -->
-    <main role="main" class="flex-grow w-full font-[Inter] @ViewData["ContentClass"]">
+    <main role="main" class="flex-grow w-full @ViewData["ContentClass"]">
         @RenderBody()
     </main>
 
@@ -142,16 +157,18 @@
     }
     else
     {
-    <footer class="bg-surface-container border-t border-outline-variant/30 pt-xl pb-lg font-[Inter] mt-auto">
+    <footer class="bg-surface-container border-t border-outline-variant/30 pt-xl pb-lg mt-auto">
         <div class="max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop flex flex-col md:flex-row justify-between items-center gap-md">
             <div>
                 <p class="font-extrabold text-primary text-lg">AcadPrep</p>
-                <p class="text-body-sm text-on-surface-variant">Practice smarter and reach your TOEIC goals with AcadPrep.</p>
+                <p class="text-body-sm text-on-surface-variant">Luyện thi TOEIC thông minh cùng AcadPrep.</p>
             </div>
-            <div class="flex gap-lg text-body-sm text-on-surface-variant">
-                <a asp-page="/Courses/Index" class="hover:text-primary transition-colors">Courses</a>
-                <a asp-page="/Exams/Index" class="hover:text-primary transition-colors">Exams</a>
-                <a asp-page="/Progress/Index" class="hover:text-primary transition-colors">Progress</a>
+            <div class="flex flex-wrap gap-lg text-body-sm text-on-surface-variant">
+                <a asp-page="/Courses/Index" class="hover:text-primary transition-colors">Khóa học</a>
+                <a asp-page="/Exams/Index" class="hover:text-primary transition-colors">Luyện đề</a>
+                <a asp-page="/Progress/Index" class="hover:text-primary transition-colors">Tiến độ</a>
+                <a asp-page="/Performance/Leaderboard" class="hover:text-primary transition-colors">Bảng xếp hạng</a>
+                <a href="/Admin/Exams" class="hover:text-primary transition-colors">Quản trị CMS</a>
             </div>
         </div>
     </footer>

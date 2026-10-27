@@ -1,0 +1,88 @@
+@page
+@model Storefront.Web.Pages.Admin.DashboardModel
+@{
+    ViewData["Title"] = "Thống Kê Người Dùng (Admin)";
+}
+
+<div class="max-w-[1200px] mx-auto py-xl px-margin-mobile md:px-margin-desktop">
+    <!-- Header -->
+    <div class="mb-xl flex flex-col md:flex-row md:items-end md:justify-between gap-md mb-6">
+        <div>
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-100 text-purple-800 text-xs font-bold mb-2">
+                <span class="material-symbols-outlined text-[14px]">admin_panel_settings</span> Quản Trị Hệ Thống · TV03 Learning Service
+            </div>
+            <h2 class="font-headline-md text-headline-md text-on-surface mb-xs font-bold text-2xl">Thống Kê Người Dùng & Tỷ Lệ Giữ Chân</h2>
+            <p class="font-body-md text-body-md text-on-surface-variant text-gray-600">Thống kê người dùng tích cực, lượt đăng ký mới trong 30 ngày và tỷ lệ Retention (Cache Redis ≥ 1 giờ).</p>
+        </div>
+        <div class="flex gap-2">
+            <a href="/Admin/Exams" class="inline-flex items-center gap-xs px-md py-xs rounded-xl bg-indigo-600 text-white font-semibold text-xs p-2.5 shadow-sm hover:bg-indigo-700 transition">
+                <span class="material-symbols-outlined text-[16px]">quiz</span> Quản lý đề thi (CMS)
+            </a>
+            <a href="/Admin/Report" class="inline-flex items-center gap-xs px-md py-xs rounded-xl border border-gray-300 bg-white text-gray-700 font-semibold text-xs p-2.5 shadow-sm hover:bg-gray-50 transition">
+                <span class="material-symbols-outlined text-[16px]">monitoring</span> Báo cáo tiến độ
+            </a>
+            <a href="/Admin/ExamStats" class="inline-flex items-center gap-xs px-md py-xs rounded-xl border border-gray-300 bg-white text-gray-700 font-semibold text-xs p-2.5 shadow-sm hover:bg-gray-50 transition">
+                <span class="material-symbols-outlined text-[16px]">bar_chart</span> Thống kê đề thi
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Cards Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-bold uppercase text-gray-400">Tổng người dùng</span>
+                <span class="material-symbols-outlined text-primary text-[24px]">group</span>
+            </div>
+            <p class="text-3xl font-black text-indigo-950">@Model.Stats.TotalUsers</p>
+            <span class="text-xs text-gray-500">Tài khoản trong hệ thống</span>
+        </div>
+
+        <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-bold uppercase text-gray-400">Đăng ký mới (30 ngày)</span>
+                <span class="material-symbols-outlined text-green-600 text-[24px]">person_add</span>
+            </div>
+            <p class="text-3xl font-black text-green-700">@Model.Stats.NewRegistrations</p>
+            <span class="text-xs text-gray-500">Tăng trưởng tháng gần nhất</span>
+        </div>
+
+        <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-bold uppercase text-gray-400">Người dùng tích cực (7 ngày)</span>
+                <span class="material-symbols-outlined text-orange-500 text-[24px]">local_fire_department</span>
+            </div>
+            <p class="text-3xl font-black text-orange-600">@Model.Stats.ActiveUsers</p>
+            <span class="text-xs text-gray-500">Có học bài / thi trong 7 ngày</span>
+        </div>
+
+        <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-bold uppercase text-gray-400">Tỷ lệ giữ chân (Retention)</span>
+                <span class="material-symbols-outlined text-purple-600 text-[24px]">replay</span>
+            </div>
+            <p class="text-3xl font-black text-purple-700">@Model.Stats.RetentionRate.ToString("F1")%</p>
+            <div class="w-full bg-gray-100 rounded-full h-2 mt-2">
+                <div class="bg-purple-600 h-2 rounded-full" style="width: @Math.Min(100, Model.Stats.RetentionRate)%"></div>
+            </div>
+        </div>
+
+        <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-bold uppercase text-gray-400">Tổng bài thi đã nộp</span>
+                <span class="material-symbols-outlined text-blue-600 text-[24px]">assignment_turned_in</span>
+            </div>
+            <p class="text-3xl font-black text-blue-800">@Model.Stats.TotalExamsTaken</p>
+            <span class="text-xs text-gray-500">Lượt thi toàn hệ thống</span>
+        </div>
+
+        <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-bold uppercase text-gray-400">Điểm TOEIC trung bình</span>
+                <span class="material-symbols-outlined text-emerald-600 text-[24px]">school</span>
+            </div>
+            <p class="text-3xl font-black text-emerald-700">@Model.Stats.AverageToeicScore.ToString("F0")</p>
+            <span class="text-xs text-gray-500">Thang điểm 0 - 990</span>
+        </div>
+    </div>
+</div>

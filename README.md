@@ -9,7 +9,8 @@ Project học TOEIC theo kiến trúc **microservices + Clean Architecture + Raz
 | Frontend | ASP.NET Core **Razor Pages** |
 | API Gateway | **YARP** Reverse Proxy |
 | Auth | ASP.NET Identity + **JWT** |
-| Catalog / Exam / Progress | **Clean Architecture** (Domain → Application → Infrastructure → API) |
+| Catalog / Progress | **Clean Architecture** (Domain → Application → Infrastructure → API) |
+| Content / Exam | Một project/service, chia folder Controllers → Services → Repositories → Data |
 | Database | **SQL Server 2022** + EF Core |
 | Message bus | **RabbitMQ** (`ExamCompletedEvent`) |
 | Cache | **Redis** (Progress summary) |
@@ -21,7 +22,7 @@ Project học TOEIC theo kiến trúc **microservices + Clean Architecture + Raz
 ToeicLearning.Microservices/
 ├── ToeicLearning.sln
 ├── docker-compose.yml          # SQL Server + RabbitMQ + Redis và một số app
-├── scripts/run-all.sh
+├── scripts/run-all.sh / run-all.ps1
 ├── src/
 │   ├── BuildingBlocks/
 │   │   ├── BuildingBlocks.Common      # Result, IntegrationEvent
@@ -29,8 +30,10 @@ ToeicLearning.Microservices/
 │   ├── Services/
 │   │   ├── Identity/Identity.API
 │   │   ├── Catalog/   (Domain, Application, Infrastructure, API)
-│   │   ├── Exam/      (Domain, Application, Infrastructure, API)
-│   │   └── Progress/  (Domain, Application, Infrastructure, API)
+│   │   ├── Exam/      (một project: sessions, attempts)
+│   │   ├── Content/   (một project: CMS và xem đề Learner)
+│   │   ├── Progress/  (Domain, Application, Infrastructure, API)
+│   │   └── Learning/  (Domain, Application, Infrastructure, API - TV03)
 │   ├── ApiGateways/ApiGateway
 │   └── Web/Storefront.Web             # Razor Pages UI
 ```
@@ -44,13 +47,27 @@ ToeicLearning.Microservices/
 2. Xem khóa học
       → Web → YARP `/catalog/*` → Catalog.API (Clean Arch + SQL Server seed)
 
-3. Luyện đề → Chi tiết đề → Start Full Test / Start Practice
-      → Web → YARP `/exam/*` → Exam.API
+3. Luyện đề → Chi tiết đề
+      → Web → YARP `/content/api/exams` → Content (metadata, Part, tags)
+      → lịch sử cá nhân: Web → `/exam/api/exams/{id}/attempts/me` → Exam (JWT)
+   Start Full Test / Start Practice
+      → Web → YARP `/exam/*` → Exam
       → lưu ExamAttempt / PracticeSession → trang làm bài
       → chọn đáp án, chuyển câu, bảng câu hỏi, đếm ngược tùy chế độ
+      → chấm điểm, lưu kết quả, publish TestSubmittedEvent lên RabbitMQ
 
-4. Progress.API vẫn có consumer ExamCompletedEvent và API summary;
-   luồng làm bài hiện tại chưa submit nên chưa phát event hoàn thành.
+4. CMS Đề thi (Admin / Content Moderator)
+      → Web → YARP `/content/*` → Content (/api/cms/exams)
+      → CRUD đề thi, câu hỏi, bài đọc, series, publish / soft delete
+
+5. Learning.API subscribe event TestSubmitted / ExamCompletedEvent
+      → ghi ExamAttemptRecord
+      → cập nhật StudyStreak (chuỗi ngày học theo UTC+7)
+      → tự động đánh giá & mở khóa danh hiệu (Achievements)
+      → invalidate / cache trên Redis
+
+6. Xem Bảng xếp hạng & Tiến độ & Từ vựng Flashcards
+      → Web → YARP `/learning/*` → Learning.API (đọc DB + Redis)
 ```
 
 ## Ports
@@ -61,8 +78,10 @@ ToeicLearning.Microservices/
 | ApiGateway | http://localhost:5080 |
 | Identity.API | http://localhost:5001/swagger |
 | Catalog.API | http://localhost:5002/swagger |
-| Exam.API | http://localhost:5003/swagger |
+| Exam | http://localhost:5003/swagger |
+| Content | http://localhost:5006/swagger |
 | Progress.API | http://localhost:5004/swagger |
+| Learning.API (TV03) | http://localhost:5005/swagger |
 | RabbitMQ UI | http://localhost:15672 (`guest` / `guest`) |
 | Redis | localhost:6379 |
 
@@ -117,8 +136,10 @@ Hoặc chạy từng project trong terminal riêng (thêm `--no-launch-profile` 
 ```bash
 dotnet run --project src/Services/Identity/Identity.API --no-launch-profile
 dotnet run --project src/Services/Catalog/Catalog.API --no-launch-profile
-dotnet run --project src/Services/Exam/Exam.API --no-launch-profile
+dotnet run --project src/Services/Exam --no-launch-profile
+dotnet run --project src/Services/Content --no-launch-profile
 dotnet run --project src/Services/Progress/Progress.API --no-launch-profile
+dotnet run --project src/Services/Learning/Learning.API --no-launch-profile
 dotnet run --project src/ApiGateways/ApiGateway --no-launch-profile
 dotnet run --project src/Web/Storefront.Web --no-launch-profile
 ```
@@ -138,24 +159,22 @@ Practice lọc theo Part và, nếu có chọn topic, chỉ lấy các câu kh�
 Giữ thứ tự nhóm câu hỏi và hiển thị ảnh, bài đọc chung (kể cả bộ nhiều bài đọc).
 Khi hết giờ, UI khóa chọn đáp án. Mỗi lần Start tạo một phiên mới.
 
-**Phạm vi hiện tại:** chưa play audio, submit/chấm điểm, lưu đáp án hoặc resume.
-Đáp án chỉ nằm trong bộ nhớ trang, sẽ mất khi tải lại/rời trang. Không ghi đáp án đúng
-hoặc giải thích trong response API làm bài.
+Đáp án tự lưu vào Exam DB; trạng thái `Saved`/lỗi kết nối hiển thị ngay trên trang.
+Có thể tiếp tục qua **Lịch sử học**. Deadline do server quản lý và tiếp tục khi đóng trang;
+worker tự nộp bài hết hạn, kể cả khi trình duyệt không còn mở.
+Full Test phát audio từng câu/nhóm một lần, không có nút pause/tua; Practice hỗ trợ phát lại và tua trong đoạn.
+Nộp bài mở trang Results và Review với đáp án, lời giải, bộ lọc đúng/sai/chưa trả lời.
+Giao diện Results, Review, StudyHistory, ExamAttempts, IncorrectAnswers được chuyển từ monolith;
+PageModel gọi HTTP qua Gateway, không tham chiếu DbContext hoặc MediatR của monolith.
 
-Giao diện chi tiết đề, Full Test và Practice dùng lại Razor markup từ monolith.
-Trang làm bài dùng riêng `_FullTestSession` / `_PracticeSession` với `_ExamTestAssets`
-(font, màu, Tailwind, sidebar), không bọc bằng navbar/footer Storefront.
-Bài đọc/ảnh nằm bên trái, đáp án bên phải; nhóm Part 3–4, Part 6 theo passage,
-Part 7 theo question group hiển thị cùng bộ. Điều hướng dùng Prev/Next hoặc drawer.
-Nút Submit giữ vị trí của bản gốc nhưng bị vô hiệu hóa; audio không hiển thị.
-Full Test có thẻ giới thiệu, dùng bộ đếm giờ toàn đề và chuyển câu thủ công trong
-phiên bản chưa có audio. Thoát trang có hộp thoại xác nhận mất đáp án.
+Xem phạm vi 12 UC của **Đặng Thanh Liêm**, contract API và cách kiểm tra tại
+[Migration Thanh Liêm](docs/Migration_ThanhLiem.md).
 
 
 Identity dùng UserId chuỗi. Exam đồng bộ UserId chuỗi cho `EXAM_ATTEMPTS` và
 `PRACTICE_SESSIONS`; khi khởi động, seeder tự đổi cột legacy `int` sang `nvarchar(450)`
 nếu cần, giữ dữ liệu cũ. ID mẫu `1/2/3` không đại diện cho tài khoản Identity thực.
-Sau khi cập nhật source, khởi động lại Exam.API và Storefront.Web để dùng code mới.
+Sau khi cập nhật source, khởi động lại Content, Exam và Storefront.Web để dùng code mới.
 
 ## Gateway routing
 
@@ -163,8 +182,10 @@ Sau khi cập nhật source, khởi động lại Exam.API và Storefront.Web đ
 |---|---|
 | `/identity/*` | Identity `:5001` |
 | `/catalog/*` | Catalog `:5002` |
-| `/exam/*` | Exam `:5003` |
+| `/exam/*` | Exam `:5003` (sessions/attempts) |
+| `/content/*` | Content `:5006` (CMS và danh sách/chi tiết đề Learner) |
 | `/progress/*` | Progress `:5004` |
+| `/learning/*` | Learning `:5005` |
 
 Ví dụ: `GET http://localhost:5080/catalog/api/courses`
 
@@ -189,9 +210,18 @@ Audience: ToeicLearning.Clients
 ```
 
 
+## API xem danh sách và chi tiết đề (UC-3.1–3.4)
+
+- `GET /content/api/exams?search=TOEIC&seriesName=ETS&year=2024&pageIndex=1&pageSize=8`
+- `GET /content/api/exams/{id}`
+
+Hai API đọc cùng database với CMS, chỉ trả đề Published chưa xóa. Các trường metadata, tổng số câu, Part và tags do Content quản lý. Tổng lượt thi lấy từ Exam qua HTTP; lịch sử cá nhân được Web ghép từ `GET /exam/api/exams/{id}/attempts/me` với JWT. CMS vẫn dùng `/content/api/cms/exams`.
+
+Khi bắt đầu bài thi, Exam lấy bản chụp đề Published từ Content qua API nội bộ có khóa dịch vụ. Câu hỏi, đáp án, audio, passages và thời lượng trong bản chụp được giữ nguyên cho phiên đó. Không cần đồng bộ ID câu hỏi giữa hai database. Đổi đề trong CMS chỉ tác động các phiên bắt đầu sau lần đổi đó.
+
 ## API bắt đầu phiên và tải câu hỏi
 
-Mặc định bật `ExamSessions:AllowGuests` trong Exam.API. UI tự tạo mã khách ngẫu nhiên
+Mặc định bật `ExamSessions:AllowGuests` trong Exam. UI tự tạo mã khách ngẫu nhiên
 và giữ trong Session của trình duyệt; không cần chạy Identity.API để làm bài.
 Khi gọi API trực tiếp, gửi header `X-Exam-Guest-Key` với một UUID dạng 32 ký tự hex
 (ví dụ tạo bằng `python3 -c 'import uuid; print(uuid.uuid4().hex)'`). Giữ nguyên mã
@@ -224,14 +254,16 @@ Phải chọn ít nhất một Part trong 1–7. `selectedTags: []` bỏ lọc t
 `timeLimitMinutes: null` không giới hạn; nếu đặt, nhận số nguyên 1–120 phút.
 Đề chưa publish, không có câu hỏi, lựa chọn không hợp lệ hoặc không khớp câu hỏi trả 400.
 GET trả `examTitle`, `startedAt`, `expiresAt` (UTC/null), `questions` kèm options,
-ảnh và passages; không có đáp án đúng/giải thích/audio. GET phục vụ tải trang ban đầu,
-chưa có khôi phục đáp án hay vị trí câu hỏi.
+ảnh, passages và metadata audio; không trả đáp án đúng hoặc lời giải. GET khôi phục đáp án đã lưu và vị trí phát audio. Chỉ API review sau khi đã nộp mới trả đáp án/lời giải.
 
 ## Kiểm tra chức năng làm bài
 
 ```bash
-dotnet test tests/Exam.Application.Tests
-# Sau khi đã chạy Exam, Gateway và Web (không cần Identity):
+dotnet test tests/Content.Tests
+dotnet test tests/Exam.Tests
+# Tự chạy 4 service với SQLite tạm, kiểm tra HTTP và Razor rồi dừng:
+python3 scripts/verify-exam-migration.py
+# Sau khi đã chạy Content, Exam, Gateway và Web (không cần Identity cho phiên khách):
 python3 scripts/smoke-exam-sessions.py
 # Hoặc chỉ định URL gateway và web riêng:
 python3 scripts/smoke-exam-sessions.py http://localhost:5080 http://localhost:5100
@@ -242,3 +274,7 @@ thời hạn UTC, bộ lọc Part/topic, bài đọc chung và không lộ đáp
 Smoke test tạo phiên khách thử trong DB local; không gọi Identity.API.
 Kiểm tra API qua gateway, quyền sở hữu mã khách, Razor Pages không đăng nhập,
 antiforgery token và render trang câu hỏi của cả hai chế độ.
+
+Các API lưu phiên/nộp/review và lịch sử được mô tả trong [Migration Thanh Liêm](docs/Migration_ThanhLiem.md).
+Để chạy toàn bộ các service cần cho task này bằng Docker: `docker compose up --build`.
+Quota Billing hiện dùng `PendingBillingQuotaPolicy` theo phạm vi đã thống nhất; adapter thực tế sẽ thay registration `IExamQuotaPolicy`.

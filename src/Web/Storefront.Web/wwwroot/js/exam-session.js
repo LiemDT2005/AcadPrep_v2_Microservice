@@ -1,13 +1,31 @@
 /**
  * Monolith exam workspace presentation, backed by microservice session data.
- * Answers stay in page memory. Audio, submission and resume are not enabled.
+ * Checkpoints and submission are proxied by Razor Pages through the API gateway.
  */
 (function () {
     const config = window.examSessionConfig || {};
     const mode = config.mode || 'full';
     const questions = config.questions || [];
     if (!questions.length) return;
-    const answers = {};
+    const answers = { ...(config.answers || {}) };
+    const audioProgress = { ...(config.audioProgress || {}) };
+    const apiMode = mode === 'practice' ? 'practice' : 'full-test';
+    const storageKey = `acadprep:${apiMode}:${config.sessionId}:${config.expiresAt || config.examId}`;
+    try {
+        const pending = JSON.parse(sessionStorage.getItem(storageKey) || 'null');
+        if (pending) Object.assign(answers, pending.answers);
+    } catch { /* Storage can be disabled by browser settings. */ }
+    let saving = Promise.resolve(true);
+    let saveTimer;
+    let submitting = false;
+    const audio = new Audio();
+    audio.preload = 'metadata';
+    let audioKey = null;
+    let audioStart = 0;
+    let audioEnd = null;
+    let audioPosition = 0;
+    let changingAudio = false;
+    let autoplayNext = false;
     let currentIndex = 0;
     let expired = false;
     let leaving = false;
@@ -89,7 +107,15 @@
     function isReadingGroupPart(part) { return part === 6 || part === 7; }
     function getCurrentUnit() { return getUnitRange(currentIndex); }
     function snapToUnitStart(index) { return getUnitRange(index).start; }
-    function canNavigateTo(index) { return index >= 0 && index < questions.length; }
+    function canNavigateTo(index) {
+        if (index < 0 || index >= questions.length) return false;
+        if (mode !== 'full') return true;
+        const current = questions[currentIndex];
+        const target = questions[index];
+        if (sameGroup(current, target) || index === currentIndex) return true;
+        if (current.part <= 4 && current.audioUrl && !audioProgress[getUnitRange(currentIndex).key]?.completed) return false;
+        return !(target.part <= 4 && target.audioUrl && audioProgress[getUnitRange(index).key]?.completed);
+    }
     function goToIndex(index) {
         if (!canNavigateTo(index)) return;
         currentIndex = snapToUnitStart(index);
@@ -110,8 +136,9 @@
         }
     }
     function selectAnswer(questionId, letter) {
-        if (expired) return;
+        if (expired || submitting) return;
         answers[questionId] = letter;
+        scheduleSave();
         updateAnsweredCount();
         // Update only option styles, so passage and question scroll positions stay put.
         const block = optionsEl.querySelector(`[data-question-id="${questionId}"]`);
@@ -144,6 +171,8 @@
             document.getElementById('section-intro')?.classList.add('hidden');
             document.getElementById('exam-workspace')?.classList.remove('hidden');
             renderQuestion();
+            audio.pause();
+            submitSession();
             if (document.getElementById('modal-timeout')) showModal('modal-timeout');
             else {
                 const notice = document.createElement('p');
@@ -247,6 +276,7 @@
             }
         }
 
+        configureAudio(head, unit);
         updatePaletteHighlight();
         updateNavButtons();
 
@@ -344,6 +374,162 @@
     }
 
 
+    const statusEl = document.getElementById('save-status');
+    function status(message, error = false) {
+        if (!statusEl) return;
+        statusEl.textContent = message;
+        statusEl.classList.toggle('text-error', error);
+    }
+    function rememberPending() {
+        try { sessionStorage.setItem(storageKey, JSON.stringify({ answers })); } catch { }
+    }
+    function checkpointBody() {
+        return { answers: { ...answers }, audioProgress: { ...audioProgress } };
+    }
+    async function request(handler, body) {
+        const response = await fetch(`/Exams/Take/${config.sessionId}?mode=${apiMode}&handler=${handler}`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value },
+            body: JSON.stringify(body), keepalive: true
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || 'Unable to save. Retry when connected.');
+        return result;
+    }
+    function saveCheckpoint() {
+        if (expired || submitting) return saving;
+        const body = checkpointBody();
+        status('Saving…');
+        saving = saving.then(async () => {
+            try {
+                await request('Checkpoint', body);
+                if (JSON.stringify(body.answers) === JSON.stringify(answers)) {
+                    try { sessionStorage.removeItem(storageKey); } catch { }
+                }
+                status('Saved');
+                return true;
+            } catch (error) { rememberPending(); status(error.message, true); return false; }
+        });
+        return saving;
+    }
+    function scheduleSave() {
+        rememberPending();
+        status('Saving…');
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(saveCheckpoint, 300);
+    }
+    async function submitSession() {
+        if (submitting) return;
+        clearTimeout(saveTimer);
+        // Finish all queued checkpoints before grading.
+        if (!expired) await saveCheckpoint(); else await saving;
+        submitting = true;
+        audio.pause();
+        status('Submitting…');
+        try {
+            const result = await request('Submit', checkpointBody());
+            leaving = true;
+            try { sessionStorage.removeItem(storageKey); } catch { }
+            window.location.assign(result.redirectUrl);
+        } catch (error) {
+            submitting = false;
+            hideModal('modal-timeout');
+            status(error.message + ' Press Submit to retry.', true);
+        }
+    }
+    function audioStamp(seconds) {
+        return `${Math.floor(seconds / 60).toString().padStart(2, '0')}:${Math.floor(seconds % 60).toString().padStart(2, '0')}`;
+    }
+    function saveAudio(completed = false) {
+        if (!audioKey) return;
+        audioProgress[audioKey] = { position: Math.max(audioStart, audio.currentTime || audioStart),
+            completed: completed || !!audioProgress[audioKey]?.completed };
+    }
+    function configureAudio(head, unit) {
+        const section = document.getElementById('audio-section');
+        section?.classList.toggle('hidden', !head.audioUrl || expired);
+        if (audioKey === unit.key) return;
+        changingAudio = true;
+        saveAudio();
+        audio.pause();
+        audioKey = unit.key;
+        audioStart = head.audioStartSecond ?? 0;
+        audioEnd = head.audioEndSecond ?? null;
+        audioPosition = mode === 'full' ? Math.max(audioStart, audioProgress[audioKey]?.position || audioStart) : audioStart;
+        if (!head.audioUrl || expired) { changingAudio = false; return; }
+        audio.src = head.audioUrl;
+        audio.onloadedmetadata = () => {
+            audio.currentTime = Math.min(audioPosition, Number.isFinite(audio.duration) ? audio.duration : audioPosition);
+            if (audioEnd === null && Number.isFinite(audio.duration)) audioEnd = audio.duration;
+            changingAudio = false;
+            if (autoplayNext) { autoplayNext = false; playAudio(); }
+        };
+        const btn = document.getElementById('audio-play-btn');
+        if (btn) { btn.disabled = false; btn.textContent = mode === 'full' ? '▶' : '▶ / Ⅱ'; }
+        document.getElementById('audio-locked-row')?.classList.toggle('hidden', mode !== 'full');
+        const oldButton = document.getElementById('full-audio-start');
+        if (oldButton) oldButton.remove();
+        if (mode === 'full') {
+            const play = document.createElement('button');
+            play.id = 'full-audio-start'; play.type = 'button'; play.className = 'px-4 py-2 rounded-lg bg-primary text-on-primary';
+            play.textContent = audioProgress[audioKey]?.completed ? 'Audio completed' : 'Start / resume audio';
+            play.disabled = !!audioProgress[audioKey]?.completed;
+            play.addEventListener('click', playAudio);
+            section?.appendChild(play);
+        }
+    }
+    function playAudio() {
+        if (expired || submitting || !audio.src || (mode === 'full' && audioProgress[audioKey]?.completed)) return;
+        if (mode === 'practice' && !audio.paused) { audio.pause(); return; }
+        if (audioEnd !== null && audio.currentTime >= audioEnd) audio.currentTime = audioStart;
+        audio.play().catch(() => status('Audio could not play. Check the media URL and press play again.', true));
+    }
+    function finishAudio() {
+        if (!audioKey || audioProgress[audioKey]?.completed && mode === 'full') return;
+        saveAudio(true);
+        changingAudio = true;
+        audio.pause();
+        changingAudio = false;
+        scheduleSave();
+        if (mode === 'full') {
+            autoplayNext = true;
+            const next = getCurrentUnit().end + 1;
+            if (next < questions.length) goToIndex(next);
+        }
+    }
+    audio.addEventListener('ended', finishAudio);
+    audio.addEventListener('timeupdate', () => {
+        if (changingAudio) return;
+        if (audioEnd !== null && audio.currentTime >= audioEnd) { finishAudio(); return; }
+        audioPosition = audio.currentTime;
+        saveAudio();
+        const duration = (audioEnd ?? audio.duration) - audioStart;
+        const elapsed = Math.max(0, audio.currentTime - audioStart);
+        const fill = document.getElementById('audio-progress-fill');
+        if (fill && duration > 0) fill.style.width = `${Math.min(100, elapsed / duration * 100)}%`;
+        const current = document.getElementById('audio-time-current') || document.getElementById('audio-time');
+        if (current) current.textContent = audioStamp(elapsed);
+        const end = document.getElementById('audio-time-duration');
+        if (end && Number.isFinite(duration)) end.textContent = audioStamp(duration);
+    });
+    audio.addEventListener('seeking', () => {
+        if (mode === 'full' && !changingAudio && Math.abs(audio.currentTime - audioPosition) > 1)
+            audio.currentTime = audioPosition;
+    });
+    audio.addEventListener('error', () => status('Audio unavailable. Check your connection or contact the content moderator.', true));
+    document.getElementById('audio-play-btn')?.addEventListener('click', playAudio);
+    document.getElementById('audio-progress-track')?.addEventListener('click', event => {
+        if (mode !== 'practice' || audioEnd === null) return;
+        const bounds = event.currentTarget.getBoundingClientRect();
+        audio.currentTime = audioStart + Math.max(0, Math.min(1, (event.clientX - bounds.left) / bounds.width)) * (audioEnd - audioStart);
+    });
+    document.getElementById('btn-submit')?.addEventListener('click', () => showModal('modal-submit'));
+    document.querySelectorAll('[data-close-submit]').forEach(b => b.addEventListener('click', () => hideModal('modal-submit')));
+    document.querySelector('[data-confirm-submit]')?.addEventListener('click', submitSession);
+    window.addEventListener('online', () => { if (expired) submitSession(); else saveCheckpoint(); });
+    window.addEventListener('pagehide', () => { if (!expired && !submitting) saveCheckpoint(); });
+    window.setInterval(() => { if (!expired && !submitting) { saveAudio(); saveCheckpoint(); } }, 5000);
+
     document.getElementById('btn-sidebar-toggle')?.addEventListener('click', toggleSidebar);
     document.getElementById('btn-sidebar-close')?.addEventListener('click', closeSidebar);
     sidebarBackdrop?.addEventListener('click', closeSidebar);
@@ -352,13 +538,16 @@
     document.getElementById('btn-prev')?.addEventListener('click', () => goToIndex(getCurrentUnit().start - 1));
     document.getElementById('btn-exit')?.addEventListener('click', () => showModal('modal-leave'));
     document.querySelectorAll('[data-close-leave]').forEach(button => button.addEventListener('click', () => hideModal('modal-leave')));
-    document.querySelector('[data-confirm-leave]')?.addEventListener('click', () => {
+    document.querySelector('[data-confirm-leave]')?.addEventListener('click', async () => {
+        if (!expired && !await saveCheckpoint()) return;
         leaving = true;
+        audio.pause();
         window.location.assign(`/Exams/Detail/${config.examId}`);
     });
     document.getElementById('btn-section-start')?.addEventListener('click', () => {
         hideModal('section-intro');
         document.getElementById('exam-workspace')?.classList.remove('hidden');
+        if (questions[currentIndex].audioUrl && !expired) playAudio();
     });
     document.querySelector('[data-close-timeout]')?.addEventListener('click', () => hideModal('modal-timeout'));
     window.addEventListener('beforeunload', event => {
@@ -376,7 +565,7 @@
         if (description) description.textContent = `${questions.length} questions · Parts ${[...new Set(questions.map(q => q.part))].join(', ')}`;
         const rules = document.getElementById('section-intro-rules');
         if (rules) {
-            for (const text of ['Use Prev/Next or the question list to navigate.', 'Answers are kept only while this page stays open.', 'Audio and submission are not available yet.']) {
+            for (const text of ['Answers are saved automatically. Check the save status before leaving.', 'The server deadline continues while the page is closed.', 'Full-test audio plays once per question or group. Practice allows replay and seeking.']) {
                 const item = document.createElement('li');
                 item.textContent = text;
                 rules.appendChild(item);

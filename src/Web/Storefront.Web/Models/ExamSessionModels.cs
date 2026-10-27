@@ -15,10 +15,13 @@ public class ExamSessionDto
     public string Mode { get; set; } = string.Empty;
     public DateTime StartedAt { get; set; }
     public DateTime? ExpiresAt { get; set; }
+    public Dictionary<int, string> Answers { get; set; } = [];
+    public Dictionary<string, AudioCheckpointDto> AudioProgress { get; set; } = [];
+    public bool IsSubmitted { get; set; }
     public List<SessionQuestionDto> Questions { get; set; } = [];
 }
 
-// Deliberately excludes correct answers, explanations and audio playback data.
+// Active session payload excludes correct answers and explanations.
 public class SessionQuestionDto
 {
     public int Id { get; set; }
@@ -26,6 +29,9 @@ public class SessionQuestionDto
     public int Part { get; set; }
     public string? QuestionText { get; set; }
     public string? ImageUrl { get; set; }
+    public string? AudioUrl { get; set; }
+    public int? AudioStartSecond { get; set; }
+    public int? AudioEndSecond { get; set; }
     public int? QuestionGroupId { get; set; }
     public int? PassageId { get; set; }
     public string? GroupImageUrl { get; set; }
@@ -42,3 +48,6 @@ public class SessionPassageDto
 }
 
 public record SessionOptionDto(string Letter, string Text);
+
+public record AudioCheckpointDto(double Position, bool Completed);
+public record SaveSessionRequest(Dictionary<int, string?> Answers, Dictionary<string, AudioCheckpointDto>? AudioProgress = null);

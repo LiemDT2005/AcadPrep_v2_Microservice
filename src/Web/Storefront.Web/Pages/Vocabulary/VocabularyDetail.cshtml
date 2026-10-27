@@ -1,0 +1,60 @@
+@page "{vocabularyId:int}"
+@model Storefront.Web.Pages.Vocabulary.VocabularyDetailModel
+@{
+    ViewData["Title"] = $"{Model.Context?.Word ?? "Từ vựng"} — Ngữ cảnh đoạn văn";
+    var context = Model.Context!;
+}
+
+<div class="max-w-[900px] mx-auto py-xl px-margin-mobile md:px-margin-desktop">
+    <div class="mb-lg mb-4">
+        <a href="/Vocabulary/Notebook" class="inline-flex items-center gap-xs text-sm font-semibold text-gray-500 hover:text-primary transition">
+            <span class="material-symbols-outlined text-[18px]">arrow_back</span> Quay lại Sổ tay
+        </a>
+    </div>
+
+    <div class="mb-xl mb-6 bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+        <span class="inline-flex items-center gap-xs px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold mb-2">
+            <span class="material-symbols-outlined text-[14px]">article</span> Đoạn văn TOEIC thực tế
+        </span>
+        <h2 class="text-3xl font-black text-indigo-900 mb-1">@context.Word</h2>
+        @if (!string.IsNullOrEmpty(context.Phonetic))
+        {
+            <p class="font-mono text-gray-500 text-sm italic mb-2">@context.Phonetic</p>
+        }
+        <p class="text-lg font-semibold text-gray-800">@context.Meaning</p>
+        @if (!string.IsNullOrEmpty(context.Example))
+        {
+            <p class="text-sm text-gray-600 italic bg-gray-50 p-3 rounded-xl mt-3 border border-gray-100">
+                "@context.Example"
+            </p>
+        }
+    </div>
+
+    @if (!context.Passages.Any())
+    {
+        <div class="bg-gray-50 border border-gray-200 rounded-2xl p-8 text-center">
+            <span class="material-symbols-outlined text-[40px] text-gray-400 mb-2">description</span>
+            <h3 class="font-bold text-gray-700">Chưa có đoạn văn nào liên kết</h3>
+            <p class="text-sm text-gray-500 mt-1">Từ vựng này chưa được gắn kèm đoạn văn đọc hiểu trong ngân hàng câu hỏi đề thi.</p>
+        </div>
+    }
+    else
+    {
+        <h3 class="font-bold text-lg text-gray-800 mb-3">Đoạn văn đọc hiểu chứa từ trong đề thi:</h3>
+        <div class="space-y-4 mb-6">
+            @for (var i = 0; i < context.Passages.Count; i++)
+            {
+                var passage = context.Passages[i];
+                <article class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+                    <div class="px-4 py-2 bg-gray-50 border-b border-gray-200 flex items-center gap-2 text-xs font-semibold text-gray-600">
+                        <span class="material-symbols-outlined text-[16px] text-primary">format_quote</span>
+                        <span>Đoạn văn mẫu @(i + 1)</span>
+                    </div>
+                    <div class="p-5">
+                        <p class="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap font-serif">@passage.Content</p>
+                    </div>
+                </article>
+            }
+        </div>
+    }
+</div>

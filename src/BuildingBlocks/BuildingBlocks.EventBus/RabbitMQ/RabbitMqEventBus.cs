@@ -18,6 +18,7 @@ public class RabbitMqEventBus : IEventBus, IDisposable
     private readonly ILogger<RabbitMqEventBus> _logger;
     private readonly ConcurrentDictionary<string, List<Type>> _handlers = new();
     private readonly ConcurrentDictionary<string, Type> _eventTypes = new();
+    private readonly HashSet<string> _consumerQueues = [];
     private IConnection? _connection;
     private IModel? _channel;
     private bool _disposed;
@@ -47,12 +48,13 @@ public class RabbitMqEventBus : IEventBus, IDisposable
             };
             _connection = factory.CreateConnection();
             _channel = _connection.CreateModel();
+            _consumerQueues.Clear();
             _channel.ExchangeDeclare(_options.ExchangeName, ExchangeType.Topic, durable: true);
             _logger.LogInformation("Connected to RabbitMQ at {Host}:{Port}", _options.Host, _options.Port);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "RabbitMQ not available yet. Events will be logged locally until broker is up.");
+            _logger.LogWarning(ex, "RabbitMQ not available yet. Pending publishers and subscriptions will retry when the broker is available.");
         }
     }
 
@@ -68,9 +70,7 @@ public class RabbitMqEventBus : IEventBus, IDisposable
 
         if (_channel is null || _connection is null || !_connection.IsOpen)
         {
-            _logger.LogWarning("Publish skipped (no RabbitMQ). Event={Event} Payload={Payload}",
-                eventName, Encoding.UTF8.GetString(body));
-            return Task.CompletedTask;
+            throw new InvalidOperationException("RabbitMQ is unavailable. Keep the event pending and retry.");
         }
 
         var props = _channel.CreateBasicProperties();
@@ -78,7 +78,25 @@ public class RabbitMqEventBus : IEventBus, IDisposable
         props.DeliveryMode = 2;
         props.MessageId = @event.Id.ToString();
 
-        _channel.BasicPublish(_options.ExchangeName, eventName, props, body);
+        // IModel is shared by publishers; confirm broker acceptance before the outbox marks delivery.
+        lock (_channel)
+        {
+            _channel.ConfirmSelect();
+            var returned = 0;
+            void OnReturn(object? sender, BasicReturnEventArgs args)
+            {
+                if (args.BasicProperties.MessageId == props.MessageId) Interlocked.Exchange(ref returned, 1);
+            }
+            _channel.BasicReturn += OnReturn;
+            try
+            {
+                _channel.BasicPublish(_options.ExchangeName, eventName, mandatory: true, props, body);
+                _channel.WaitForConfirmsOrDie(TimeSpan.FromSeconds(5));
+                if (Volatile.Read(ref returned) != 0)
+                    throw new InvalidOperationException($"No subscriber queue is bound for {eventName}. Retry after consumers connect.");
+            }
+            finally { _channel.BasicReturn -= OnReturn; }
+        }
         _logger.LogInformation("Published {Event} Id={Id}", eventName, @event.Id);
         return Task.CompletedTask;
     }
@@ -97,12 +115,14 @@ public class RabbitMqEventBus : IEventBus, IDisposable
         if (_channel is null) return;
 
         var queueName = $"toeic_{eventName}_{typeof(TH).Name}";
+        if (_consumerQueues.Contains(queueName)) return;
         _channel.QueueDeclare(queueName, durable: true, exclusive: false, autoDelete: false);
         _channel.QueueBind(queueName, _options.ExchangeName, eventName);
 
         var consumer = new AsyncEventingBasicConsumer(_channel);
         consumer.Received += OnReceivedAsync;
         _channel.BasicConsume(queueName, autoAck: false, consumer);
+        _consumerQueues.Add(queueName);
         _logger.LogInformation("Subscribed {Handler} to {Event}", typeof(TH).Name, eventName);
     }
 
@@ -126,7 +146,7 @@ public class RabbitMqEventBus : IEventBus, IDisposable
             {
                 var handler = scope.ServiceProvider.GetService(handlerType);
                 if (handler is null) continue;
-                var method = handlerType.GetMethod("HandleAsync");
+                var method = handlerType.GetMethod("HandleAsync", [eventType, typeof(CancellationToken)]);
                 if (method is null) continue;
                 var task = (Task?)method.Invoke(handler, [@event, CancellationToken.None]);
                 if (task is not null) await task;
