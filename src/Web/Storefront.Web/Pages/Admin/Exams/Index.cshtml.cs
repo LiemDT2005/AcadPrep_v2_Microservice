@@ -111,7 +111,13 @@ public class IndexModel(ToeicApiClient api) : PageModel
 
     private async Task LoadPageDataAsync()
     {
-        var paged = await api.GetAdminExamsPagedAsync(Keyword, Status, ExamType, PageNumber, PageSize);
+        var pagedTask = api.GetAdminExamsPagedAsync(Keyword, Status, ExamType, PageNumber, PageSize);
+        var seriesTask = api.GetExamSeriesAsync();
+        var statsTask = api.GetCmsExamStatsAsync();
+
+        await Task.WhenAll(pagedTask, seriesTask, statsTask);
+
+        var paged = await pagedTask;
         if (paged != null)
         {
             Exams = paged.Items;
@@ -121,22 +127,34 @@ public class IndexModel(ToeicApiClient api) : PageModel
             PageSize = paged.PageSize;
         }
 
-        await LoadMetadataAsync();
+        ExamSeries = await seriesTask;
+
+        var stats = await statsTask;
+        if (stats != null)
+        {
+            TotalExams = stats.TotalExams;
+            ActiveExams = stats.ActiveExams;
+            HiddenExams = stats.HiddenExams;
+            TotalAttempts = stats.TotalAttempts;
+        }
     }
 
     private async Task LoadMetadataAsync()
     {
-        ExamSeries = await api.GetExamSeriesAsync();
+        var seriesTask = api.GetExamSeriesAsync();
+        var statsTask = api.GetCmsExamStatsAsync();
 
-        // Calculate summary counts from all exams if available or approximate
-        var allExamsResult = await api.GetAdminExamsPagedAsync(null, "All", null, 1, 1000);
-        if (allExamsResult != null)
+        await Task.WhenAll(seriesTask, statsTask);
+
+        ExamSeries = await seriesTask;
+
+        var stats = await statsTask;
+        if (stats != null)
         {
-            var all = allExamsResult.Items;
-            TotalExams = all.Count;
-            ActiveExams = all.Count(e => !e.IsDeleted && e.Status == "Published");
-            HiddenExams = all.Count(e => e.IsDeleted || e.Status == "Hidden");
-            TotalAttempts = all.Sum(e => e.AttemptCount);
+            TotalExams = stats.TotalExams;
+            ActiveExams = stats.ActiveExams;
+            HiddenExams = stats.HiddenExams;
+            TotalAttempts = stats.TotalAttempts;
         }
     }
 }

@@ -1,7 +1,9 @@
 @model Storefront.Web.Pages.Admin.Exams.ExamStructureViewModel
 @{
     var exam = Model.Exam;
+    var isExamActive = !exam.IsDeleted && exam.Status == "Published";
 }
+
 <!-- Part Picker Modal -->
 <div id="partPickerModal" class="qc-modal hidden">
     <div class="qc-modal__backdrop" onclick="closePartPicker()"></div>
@@ -9,7 +11,7 @@
         <div class="flex justify-between items-center border-b border-outline-variant/30 pb-xs">
             <div>
                 <h3 class="font-headline-sm text-headline-sm text-on-surface font-bold">Add Content to Exam</h3>
-                <p class="font-body-sm text-body-sm text-on-surface-variant mt-2xs">Select which Part you want to configure</p>
+                <p class="font-body-sm text-body-sm text-on-surface-variant mt-2xs">Select which TOEIC Part you want to create content for</p>
             </div>
             <button type="button" onclick="closePartPicker()" class="hover:bg-surface-container-high p-2 rounded-full transition-colors flex items-center justify-center">
                 <span class="material-symbols-outlined text-on-surface-variant">close</span>
@@ -17,74 +19,127 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-sm py-xs">
-            <div class="qc-part-picker-card">
-                <div class="qc-part-picker-icon">
-                    <span class="material-symbols-outlined">image</span>
-                </div>
-                <div>
-                    <h5 class="font-title-sm text-title-sm font-bold text-on-surface">Part 1: Photographs</h5>
-                    <p class="font-body-xs text-body-xs text-on-surface-variant mt-3xs">Current: @Model.Part1Count/@Storefront.Web.Pages.Admin.Exams.ExamStructureViewModel.TargetP1</p>
-                </div>
-            </div>
-            <div class="qc-part-picker-card">
-                <div class="qc-part-picker-icon">
-                    <span class="material-symbols-outlined">hearing</span>
-                </div>
-                <div>
-                    <h5 class="font-title-sm text-title-sm font-bold text-on-surface">Part 2: Question-Response</h5>
-                    <p class="font-body-xs text-body-xs text-on-surface-variant mt-3xs">Current: @Model.Part2Count/@Storefront.Web.Pages.Admin.Exams.ExamStructureViewModel.TargetP2</p>
-                </div>
-            </div>
-            <div class="qc-part-picker-card">
-                <div class="qc-part-picker-icon">
-                    <span class="material-symbols-outlined">forum</span>
-                </div>
-                <div>
-                    <h5 class="font-title-sm text-title-sm font-bold text-on-surface">Part 3: Conversations</h5>
-                    <p class="font-body-xs text-body-xs text-on-surface-variant mt-3xs">Current: @Model.Part3Count/@Storefront.Web.Pages.Admin.Exams.ExamStructureViewModel.TargetP3</p>
-                </div>
-            </div>
-            <div class="qc-part-picker-card">
-                <div class="qc-part-picker-icon">
-                    <span class="material-symbols-outlined">record_voice_over</span>
-                </div>
-                <div>
-                    <h5 class="font-title-sm text-title-sm font-bold text-on-surface">Part 4: Talks</h5>
-                    <p class="font-body-xs text-body-xs text-on-surface-variant mt-3xs">Current: @Model.Part4Count/@Storefront.Web.Pages.Admin.Exams.ExamStructureViewModel.TargetP4</p>
-                </div>
-            </div>
-            <div class="qc-part-picker-card">
-                <div class="qc-part-picker-icon">
-                    <span class="material-symbols-outlined">description</span>
-                </div>
-                <div>
-                    <h5 class="font-title-sm text-title-sm font-bold text-on-surface">Part 5: Incomplete Sentences</h5>
-                    <p class="font-body-xs text-body-xs text-on-surface-variant mt-3xs">Current: @Model.Part5Count/@Storefront.Web.Pages.Admin.Exams.ExamStructureViewModel.TargetP5</p>
-                </div>
-            </div>
-            <div class="qc-part-picker-card">
-                <div class="qc-part-picker-icon">
-                    <span class="material-symbols-outlined">article</span>
-                </div>
-                <div>
-                    <h5 class="font-title-sm text-title-sm font-bold text-on-surface">Part 6: Text Completion</h5>
-                    <p class="font-body-xs text-body-xs text-on-surface-variant mt-3xs">Current: @Model.Part6Count/@Storefront.Web.Pages.Admin.Exams.ExamStructureViewModel.TargetP6</p>
-                </div>
-            </div>
-            <div class="qc-part-picker-card">
-                <div class="qc-part-picker-icon">
-                    <span class="material-symbols-outlined">menu_book</span>
-                </div>
-                <div>
-                    <h5 class="font-title-sm text-title-sm font-bold text-on-surface">Part 7: Reading Comprehension</h5>
-                    <p class="font-body-xs text-body-xs text-on-surface-variant mt-3xs">Current: @Model.Part7Count/@Storefront.Web.Pages.Admin.Exams.ExamStructureViewModel.TargetP7</p>
-                </div>
-            </div>
+            @if (Model.CanAddP1)
+            {
+                <a href="/Admin/Exams/@exam.Id/Questions/Create/ListeningQuestion?part=1" class="qc-part-picker-card">
+                    <div class="qc-part-picker-icon"><span class="material-symbols-outlined">image</span></div>
+                    <div class="flex-1">
+                        <h5 class="font-title-sm text-title-sm font-bold text-on-surface">Part 1: Photographs</h5>
+                        <p class="font-body-xs text-body-xs text-on-surface-variant mt-3xs">1 Photograph + 4 Audio Statements (@Model.Part1Count/@Storefront.Web.Pages.Admin.Exams.ExamStructureViewModel.TargetP1)</p>
+                    </div>
+                    <span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+                </a>
+            }
+            @if (Model.CanAddP2)
+            {
+                <a href="/Admin/Exams/@exam.Id/Questions/Create/ListeningQuestion?part=2" class="qc-part-picker-card">
+                    <div class="qc-part-picker-icon"><span class="material-symbols-outlined">hearing</span></div>
+                    <div class="flex-1">
+                        <h5 class="font-title-sm text-title-sm font-bold text-on-surface">Part 2: Question-Response</h5>
+                        <p class="font-body-xs text-body-xs text-on-surface-variant mt-3xs">1 Audio Question + 3 Options A/B/C (@Model.Part2Count/@Storefront.Web.Pages.Admin.Exams.ExamStructureViewModel.TargetP2)</p>
+                    </div>
+                    <span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+                </a>
+            }
+            @if (Model.CanAddP3)
+            {
+                <a href="/Admin/Exams/@exam.Id/Questions/Create/Listening?part=3" class="qc-part-picker-card">
+                    <div class="qc-part-picker-icon"><span class="material-symbols-outlined">forum</span></div>
+                    <div class="flex-1">
+                        <h5 class="font-title-sm text-title-sm font-bold text-on-surface">Part 3: Conversations</h5>
+                        <p class="font-body-xs text-body-xs text-on-surface-variant mt-3xs">Listening Group of 3 Questions (@Model.Part3Count/@Storefront.Web.Pages.Admin.Exams.ExamStructureViewModel.TargetP3)</p>
+                    </div>
+                    <span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+                </a>
+            }
+            @if (Model.CanAddP4)
+            {
+                <a href="/Admin/Exams/@exam.Id/Questions/Create/Listening?part=4" class="qc-part-picker-card">
+                    <div class="qc-part-picker-icon"><span class="material-symbols-outlined">record_voice_over</span></div>
+                    <div class="flex-1">
+                        <h5 class="font-title-sm text-title-sm font-bold text-on-surface">Part 4: Short Talks</h5>
+                        <p class="font-body-xs text-body-xs text-on-surface-variant mt-3xs">Listening Group of 3 Questions (@Model.Part4Count/@Storefront.Web.Pages.Admin.Exams.ExamStructureViewModel.TargetP4)</p>
+                    </div>
+                    <span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+                </a>
+            }
+            @if (Model.CanAddP5)
+            {
+                <a href="/Admin/Exams/@exam.Id/Questions/Create/Part5" class="qc-part-picker-card">
+                    <div class="qc-part-picker-icon"><span class="material-symbols-outlined">description</span></div>
+                    <div class="flex-1">
+                        <h5 class="font-title-sm text-title-sm font-bold text-on-surface">Part 5: Incomplete Sentences</h5>
+                        <p class="font-body-xs text-body-xs text-on-surface-variant mt-3xs">Standalone Grammar/Vocab Question (@Model.Part5Count/@Storefront.Web.Pages.Admin.Exams.ExamStructureViewModel.TargetP5)</p>
+                    </div>
+                    <span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+                </a>
+            }
+            @if (Model.CanAddP6)
+            {
+                <a href="/Admin/Exams/@exam.Id/Questions/Create/Part6" class="qc-part-picker-card">
+                    <div class="qc-part-picker-icon"><span class="material-symbols-outlined">article</span></div>
+                    <div class="flex-1">
+                        <h5 class="font-title-sm text-title-sm font-bold text-on-surface">Part 6: Text Completion</h5>
+                        <p class="font-body-xs text-body-xs text-on-surface-variant mt-3xs">1 Passage with 4 Blank Questions (@Model.Part6Count/@Storefront.Web.Pages.Admin.Exams.ExamStructureViewModel.TargetP6)</p>
+                    </div>
+                    <span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+                </a>
+            }
+            @if (Model.CanAddP7)
+            {
+                <a href="/Admin/Exams/@exam.Id/Questions/Create/Part7" class="qc-part-picker-card md:col-span-2">
+                    <div class="qc-part-picker-icon"><span class="material-symbols-outlined">menu_book</span></div>
+                    <div class="flex-1">
+                        <h5 class="font-title-sm text-title-sm font-bold text-on-surface">Part 7: Reading Comprehension</h5>
+                        <p class="font-body-xs text-body-xs text-on-surface-variant mt-3xs">1–3 Passages + 2–5 Questions (@Model.Part7Count/@Storefront.Web.Pages.Admin.Exams.ExamStructureViewModel.TargetP7)</p>
+                    </div>
+                    <span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+                </a>
+            }
         </div>
 
         <div class="flex justify-end pt-sm border-t border-outline-variant/30">
             <button type="button" onclick="closePartPicker()" class="qc-btn-ghost">Close</button>
         </div>
+    </div>
+</div>
+
+<!-- Delete Content Confirmation Modal (UC-17.5 with Active Exam Warning) -->
+<div id="deleteConfirmModal" class="qc-modal hidden">
+    <div class="qc-modal__backdrop" onclick="closeDeleteModal()"></div>
+    <div class="qc-modal__panel">
+        <div class="flex items-start gap-md">
+            <div class="w-12 h-12 rounded-full bg-error-container text-on-error-container flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-error">warning</span>
+            </div>
+            <div class="flex-1">
+                <h4 class="font-title-lg text-title-lg font-bold text-on-surface">Confirm Delete</h4>
+                <p class="font-body-md text-body-md text-on-surface-variant mt-xs">
+                    Are you sure you want to permanently delete <strong id="deleteTargetName" class="text-on-surface">this item</strong>?
+                </p>
+
+                @if (isExamActive)
+                {
+                    <div class="mt-md p-3 rounded-xl bg-error-container/40 border border-error/40 text-on-error-container flex items-start gap-xs">
+                        <span class="material-symbols-outlined text-error text-base mt-0.5">report</span>
+                        <div class="text-xs leading-relaxed">
+                            <strong>Warning (Active Exam):</strong> This question belongs to <strong>@exam.Title</strong> which is currently <strong>Published (Active)</strong>. Deleting it will immediately affect learners taking this exam.
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <form method="post" asp-page-handler="Delete" class="flex justify-end gap-sm pt-md border-t border-outline-variant/30 mt-md">
+            <input type="hidden" name="id" value="@exam.Id" />
+            <input type="hidden" name="contentType" id="deleteContentTypeInput" value="" />
+            <input type="hidden" name="targetId" id="deleteTargetIdInput" value="0" />
+            <button type="button" onclick="closeDeleteModal()" class="qc-btn-ghost">Cancel</button>
+            <button type="submit" class="bg-error text-on-error hover:opacity-90 font-label-lg text-label-lg px-5 py-2.5 rounded-xl font-semibold transition-all flex items-center gap-xs shadow-sm">
+                <span class="material-symbols-outlined text-sm">delete</span>
+                Delete Permanently
+            </button>
+        </form>
     </div>
 </div>
 
@@ -94,5 +149,14 @@
     }
     function closePartPicker() {
         document.getElementById('partPickerModal')?.classList.add('hidden');
+    }
+    function confirmDelete(contentType, targetId, displayName) {
+        document.getElementById('deleteContentTypeInput').value = contentType;
+        document.getElementById('deleteTargetIdInput').value = targetId;
+        document.getElementById('deleteTargetName').textContent = displayName || 'this item';
+        document.getElementById('deleteConfirmModal')?.classList.remove('hidden');
+    }
+    function closeDeleteModal() {
+        document.getElementById('deleteConfirmModal')?.classList.add('hidden');
     }
 </script>

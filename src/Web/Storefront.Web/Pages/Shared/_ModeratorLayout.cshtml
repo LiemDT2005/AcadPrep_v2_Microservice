@@ -135,18 +135,48 @@
             
             <div class="px-md mt-sm mb-xs font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Content Management</div>
             
-            <!-- Exams Group -->
+            <!-- Exams Group (UC-16.1 - UC-16.7) -->
             <div class="group">
                 <button type="button" onclick="toggleDropdown('exams-submenu', 'exams-arrow')" class="w-full flex items-center justify-between px-md py-sm text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 cursor-pointer focus:outline-none">
                     <div class="flex items-center gap-sm">
                         <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">quiz</span>
-                        <span class="font-label-md text-label-md">Exams</span>
+                        <span class="font-label-md text-label-md">Exams (UC-16)</span>
                     </div>
                     <span id="exams-arrow" class="material-symbols-outlined text-sm transition-transform duration-200">expand_more</span>
                 </button>
                 <div id="exams-submenu" class="pl-[44px] pr-md pb-sm flex flex-col gap-xs transition-all duration-300">
                     <a class="block py-xs text-on-surface-variant hover:text-primary font-body-sm text-body-sm" href="/Admin/Exams">All Exams</a>
                     <button type="button" onclick="if(typeof openCreateExamModal === 'function') openCreateExamModal(); else window.location.href='/Admin/Exams'" class="block py-xs text-on-surface-variant hover:text-primary font-body-sm text-body-sm text-left w-full cursor-pointer">+ Create Exam</button>
+                </div>
+            </div>
+
+            <!-- Question Bank Dropdown (UC-17.1 - UC-17.7) -->
+            <div>
+                <button type="button" onclick="toggleDropdown('questions-submenu', 'questions-arrow')" class="w-full flex items-center justify-between px-md py-sm text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 cursor-pointer focus:outline-none">
+                    <div class="flex items-center gap-sm">
+                        <span class="material-symbols-outlined">help_center</span>
+                        <span class="font-label-md text-label-md">Question Bank (UC-17)</span>
+                    </div>
+                    <span id="questions-arrow" class="material-symbols-outlined text-sm transition-transform duration-200">expand_more</span>
+                </button>
+                <div id="questions-submenu" class="pl-[44px] pr-md pb-sm flex flex-col gap-xs transition-all duration-300">
+                    <a class="block py-xs text-on-surface-variant hover:text-primary font-body-sm text-body-sm" href="/Admin/Questions">All Questions</a>
+                    <a class="block py-xs text-on-surface-variant hover:text-primary font-body-sm text-body-sm" href="/Admin/Questions?create=true">+ Add Question</a>
+                </div>
+            </div>
+
+            <!-- Reading Passages Dropdown (UC-18.1 - UC-18.5) -->
+            <div>
+                <button type="button" onclick="toggleDropdown('passages-submenu', 'passages-arrow')" class="w-full flex items-center justify-between px-md py-sm text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 cursor-pointer focus:outline-none">
+                    <div class="flex items-center gap-sm">
+                        <span class="material-symbols-outlined">menu_book</span>
+                        <span class="font-label-md text-label-md">Passages (UC-18)</span>
+                    </div>
+                    <span id="passages-arrow" class="material-symbols-outlined text-sm transition-transform duration-200">expand_more</span>
+                </button>
+                <div id="passages-submenu" class="pl-[44px] pr-md pb-sm flex flex-col gap-xs transition-all duration-300">
+                    <a class="block py-xs text-on-surface-variant hover:text-primary font-body-sm text-body-sm" href="/Admin/Passages">All Passages</a>
+                    <button type="button" onclick="if(typeof openCreatePassageModal === 'function') openCreatePassageModal(); else window.location.href='/Admin/Passages'" class="block py-xs text-on-surface-variant hover:text-primary font-body-sm text-body-sm text-left w-full cursor-pointer">+ Create Passage</button>
                 </div>
             </div>
 
@@ -157,7 +187,7 @@
             </a>
             <a class="flex items-center gap-sm px-md py-sm text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 cursor-pointer" href="/Exams">
                 <span class="material-symbols-outlined">visibility</span>
-                <span class="font-label-md text-label-md">Learner Portal</span>
+                <span class="font-label-md text-label-md">Learner Portal (UC-3)</span>
             </a>
             <a class="flex items-center gap-sm px-md py-sm text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 cursor-pointer" href="/">
                 <span class="material-symbols-outlined">arrow_back</span>
@@ -179,7 +209,11 @@
                 <div class="flex items-center gap-sm">
                     <a href="/Admin/Exams" class="font-label-md text-label-md text-primary font-semibold hover:underline">Exams</a>
                     <span class="text-outline-variant">•</span>
-                    <a href="/Admin/Dashboard" class="font-label-md text-label-md text-on-surface-variant hover:text-primary font-semibold">Reports</a>
+                    <a href="/Admin/Questions" class="font-label-md text-label-md text-primary font-semibold hover:underline">Question Bank</a>
+                    <span class="text-outline-variant">•</span>
+                    <a href="/Admin/Passages" class="font-label-md text-label-md text-primary font-semibold hover:underline">Passages</a>
+                    <span class="text-outline-variant">•</span>
+                    <a href="/Exams" class="font-label-md text-label-md text-on-surface-variant hover:text-primary font-semibold">Learner Exams</a>
                     <span class="text-outline-variant">•</span>
                     <a href="/" class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer p-1" title="Back to site">
                         <span class="material-symbols-outlined text-[20px]">home</span>

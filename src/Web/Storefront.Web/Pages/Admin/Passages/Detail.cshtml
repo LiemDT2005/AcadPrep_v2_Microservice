@@ -1,0 +1,196 @@
+@page
+@model Storefront.Web.Pages.Admin.Passages.DetailModel
+@{
+    Layout = "_ModeratorLayout";
+    var p = Model.Passage!;
+    ViewData["Title"] = $"Passage #{p.Id} Detail & Edit";
+}
+
+<div class="flex flex-col gap-lg">
+    @if (TempData["SuccessMessage"] is string successMsg)
+    {
+        <div class="p-md rounded-xl bg-tertiary-fixed/40 border border-tertiary text-on-tertiary-fixed font-label-md flex items-center justify-between">
+            <div class="flex items-center gap-sm">
+                <span class="material-symbols-outlined text-tertiary">check_circle</span>
+                <span>@successMsg</span>
+            </div>
+        </div>
+    }
+
+    <!-- Breadcrumb & Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-md bg-surface-container-lowest p-lg rounded-2xl border border-outline-variant/40 shadow-sm">
+        <div>
+            <div class="flex items-center gap-xs text-xs font-semibold text-on-surface-variant mb-1">
+                <a href="/Admin/Passages" class="hover:text-primary hover:underline">Reading Passages</a>
+                <span>/</span>
+                <span class="text-primary">Passage #@p.Id</span>
+            </div>
+            <div class="flex items-center gap-sm">
+                <h2 class="font-headline-md text-headline-md font-bold text-on-surface">Reading Passage #@p.Id</h2>
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold @(p.Part == 6 ? "bg-secondary-fixed text-on-secondary-fixed" : "bg-tertiary-fixed text-on-tertiary-fixed")">
+                    Part @p.Part
+                </span>
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold @(p.IsExamActive ? "bg-tertiary-fixed text-tertiary" : "bg-surface-variant text-on-surface-variant")">
+                    @p.ExamStatus
+                </span>
+            </div>
+            <p class="text-body-sm text-on-surface-variant mt-1">
+                Embedded in Exam: <a href="/Admin/Exams/Detail?id=@p.ExamId" class="font-semibold text-primary hover:underline">@(p.ExamTitle ?? $"Exam #{p.ExamId}")</a>
+                @if (!string.IsNullOrWhiteSpace(p.QuestionGroupName))
+                {
+                    <span> • Group: <strong>@p.QuestionGroupName</strong></span>
+                }
+            </p>
+        </div>
+        <div class="flex items-center gap-sm">
+            <a href="/Admin/Passages" class="border border-outline-variant hover:bg-surface-container text-on-surface-variant font-label-md px-4 py-2 rounded-xl transition-colors">
+                Back to Passages
+            </a>
+            <a href="/Admin/Exams/Edit?id=@p.ExamId" class="bg-primary hover:bg-primary/90 text-on-primary font-label-md px-4 py-2 rounded-xl transition-colors">
+                Open in Exam Builder
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-lg">
+        <!-- Left Column: Passage View (UC-18.3) & Edit Form (UC-18.4) -->
+        <div class="lg:col-span-7 flex flex-col gap-lg">
+            <!-- Passage Content Preview Card -->
+            <div class="bg-surface-container-lowest p-lg rounded-2xl border border-outline-variant/40 shadow-sm flex flex-col gap-md">
+                <div class="flex items-center justify-between border-b border-outline-variant/30 pb-sm">
+                    <h3 class="font-headline-sm text-headline-sm font-bold text-on-surface flex items-center gap-xs">
+                        <span class="material-symbols-outlined text-primary">article</span>
+                        <span>Passage Content (UC-18.3)</span>
+                    </h3>
+                    <span class="text-xs font-semibold text-on-surface-variant">Display Order: #@p.DisplayOrder</span>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(p.Content))
+                {
+                    <div class="p-md rounded-xl bg-surface-container-low border border-outline-variant/30 font-body-md text-on-surface whitespace-pre-line leading-relaxed">@p.Content</div>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(p.ImageUrl))
+                {
+                    <div>
+                        <div class="text-xs font-bold uppercase text-on-surface-variant mb-1">Passage Image</div>
+                        <img src="@p.ImageUrl" alt="Passage Image" class="max-h-80 rounded-xl border border-outline-variant/40" />
+                    </div>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(p.Explanation))
+                {
+                    <div class="p-sm rounded-lg bg-primary-fixed/30 border border-primary/20 text-body-sm text-on-surface">
+                        <span class="font-bold text-primary">Explanation / Notes:</span> @p.Explanation
+                    </div>
+                }
+            </div>
+
+            <!-- Update Passage Form (UC-18.4) -->
+            <div class="bg-surface-container-lowest p-lg rounded-2xl border border-outline-variant/40 shadow-sm flex flex-col gap-md">
+                <div class="border-b border-outline-variant/30 pb-sm">
+                    <h3 class="font-headline-sm text-headline-sm font-bold text-on-surface flex items-center gap-xs">
+                        <span class="material-symbols-outlined text-primary">edit_note</span>
+                        <span>Update Reading Passage (UC-18.4)</span>
+                    </h3>
+                </div>
+
+                @if (Model.FormErrors.Count > 0)
+                {
+                    <div class="p-sm rounded-lg bg-error-container text-on-error-container text-body-sm">
+                        @foreach (var err in Model.FormErrors)
+                        {
+                            <div>• @err</div>
+                        }
+                    </div>
+                }
+
+                <form method="post" asp-page-handler="Update" asp-route-id="@p.Id" class="flex flex-col gap-md">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-md">
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-bold uppercase text-on-surface-variant mb-1">Target Exam *</label>
+                            <select asp-for="EditForm.ExamId" class="w-full rounded-lg border border-outline-variant py-2 px-3 text-body-sm" required>
+                                @foreach (var ex in Model.AvailableExams)
+                                {
+                                    <option value="@ex.Id">@ex.Title (@ex.Status)</option>
+                                }
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-on-surface-variant mb-1">Display Order</label>
+                            <input type="number" asp-for="EditForm.DisplayOrder" min="1" class="w-full rounded-lg border border-outline-variant py-2 px-3 text-body-sm" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-on-surface-variant mb-1">Passage Content *</label>
+                        <textarea asp-for="EditForm.Content" rows="7" class="w-full rounded-lg border border-outline-variant p-3 text-body-sm"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-on-surface-variant mb-1">Image URL</label>
+                        <input type="text" asp-for="EditForm.ImageUrl" class="w-full rounded-lg border border-outline-variant py-2 px-3 text-body-sm" />
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-on-surface-variant mb-1">Explanation / Translation Notes</label>
+                        <textarea asp-for="EditForm.Explanation" rows="3" class="w-full rounded-lg border border-outline-variant p-3 text-body-sm"></textarea>
+                    </div>
+
+                    <div class="flex justify-end">
+                        <button type="submit" class="bg-primary hover:bg-primary/90 text-on-primary font-label-md px-5 py-2.5 rounded-xl shadow-sm transition-colors cursor-pointer">
+                            Save Passage Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Right Column: Attached Part 6-7 Questions -->
+        <div class="lg:col-span-5 flex flex-col gap-md">
+            <div class="bg-surface-container-lowest p-lg rounded-2xl border border-outline-variant/40 shadow-sm flex flex-col gap-md">
+                <div class="flex items-center justify-between border-b border-outline-variant/30 pb-sm">
+                    <h3 class="font-headline-sm text-headline-sm font-bold text-on-surface flex items-center gap-xs">
+                        <span class="material-symbols-outlined text-primary">quiz</span>
+                        <span>Attached Questions (@p.Questions.Count)</span>
+                    </h3>
+                    <span class="text-xs font-semibold text-on-surface-variant">Non-Orphan Linked</span>
+                </div>
+
+                @if (p.Questions.Count == 0)
+                {
+                    <div class="p-lg text-center text-on-surface-variant text-body-sm bg-surface-container-low rounded-xl">
+                        No questions are attached to this passage yet. You can add Part 6/7 questions in the Exam Builder or Question Bank.
+                    </div>
+                }
+                else
+                {
+                    <div class="flex flex-col gap-sm">
+                        @foreach (var q in p.Questions)
+                        {
+                            <div class="p-md rounded-xl border border-outline-variant/40 bg-surface-container-low/40 flex flex-col gap-xs">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-xs">
+                                        <span class="px-2 py-0.5 rounded bg-primary text-on-primary text-xs font-bold">Q.@q.QuestionNumber</span>
+                                        <span class="text-xs font-semibold text-on-surface-variant">Part @q.Part • @q.Difficulty</span>
+                                    </div>
+                                    <a href="/Admin/Questions/Detail?id=@q.Id" class="text-xs font-semibold text-primary hover:underline">View Question →</a>
+                                </div>
+                                <div class="font-medium text-body-sm text-on-surface mt-1">@q.QuestionText</div>
+                                <div class="grid grid-cols-1 gap-1 mt-1 text-xs">
+                                    @foreach (var opt in q.Options)
+                                    {
+                                        var isCorrect = opt.OptionLetter == q.CorrectOption;
+                                        <div class="px-2.5 py-1 rounded @(isCorrect ? "bg-tertiary-fixed/60 text-on-tertiary-fixed font-bold" : "text-on-surface-variant")">
+                                            (@opt.OptionLetter) @opt.OptionText @(isCorrect ? "✓" : "")
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

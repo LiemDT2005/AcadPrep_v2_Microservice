@@ -304,7 +304,7 @@ public partial class ToeicApiClient(HttpClient http, IHttpContextAccessor httpCo
         return await res.Content.ReadFromJsonAsync<PaginatedListDto<ExamStatsItemDto>>(JsonOpts);
     }
 
-    // ==================== CONTENT SERVICE APIs (CMS EXAM) ====================
+    // ==================== CONTENT SERVICE APIs (CMS EXAM - UC-16) ====================
     public async Task<PagedResult<AdminExamListItem>?> GetAdminExamsPagedAsync(
         string? search = null,
         string? status = null,
@@ -342,7 +342,7 @@ public partial class ToeicApiClient(HttpClient http, IHttpContextAccessor httpCo
         var res = await http.PostAsJsonAsync("/content/api/cms/exams", request);
         if (!res.IsSuccessStatusCode)
         {
-            var err = await res.Content.ReadAsStringAsync();
+            var err = await ExtractErrorMessageAsync(res);
             return (null, err);
         }
         var created = await res.Content.ReadFromJsonAsync<AdminExamDetail>(JsonOpts);
@@ -354,7 +354,7 @@ public partial class ToeicApiClient(HttpClient http, IHttpContextAccessor httpCo
         AttachToken();
         var res = await http.PutAsJsonAsync($"/content/api/cms/exams/{id}", request);
         if (!res.IsSuccessStatusCode)
-            return (false, await res.Content.ReadAsStringAsync());
+            return (false, await ExtractErrorMessageAsync(res));
         return (true, null);
     }
 
@@ -363,7 +363,7 @@ public partial class ToeicApiClient(HttpClient http, IHttpContextAccessor httpCo
         AttachToken();
         var res = await http.PostAsJsonAsync($"/content/api/cms/exams/{id}/status", new AdminChangeExamStatusRequest(status));
         if (!res.IsSuccessStatusCode)
-            return (false, await res.Content.ReadAsStringAsync());
+            return (false, await ExtractErrorMessageAsync(res));
         return (true, null);
     }
 
@@ -372,7 +372,7 @@ public partial class ToeicApiClient(HttpClient http, IHttpContextAccessor httpCo
         AttachToken();
         var res = await http.DeleteAsync($"/content/api/cms/exams/{id}");
         if (!res.IsSuccessStatusCode)
-            return (null, await res.Content.ReadAsStringAsync());
+            return (null, await ExtractErrorMessageAsync(res));
         return (await res.Content.ReadFromJsonAsync<DeleteExamApiResponse>(JsonOpts), null);
     }
 
@@ -381,7 +381,7 @@ public partial class ToeicApiClient(HttpClient http, IHttpContextAccessor httpCo
         AttachToken();
         var res = await http.PostAsync($"/content/api/cms/exams/{id}/restore", null);
         if (!res.IsSuccessStatusCode)
-            return (false, await res.Content.ReadAsStringAsync());
+            return (false, await ExtractErrorMessageAsync(res));
         return (true, null);
     }
 
@@ -391,5 +391,253 @@ public partial class ToeicApiClient(HttpClient http, IHttpContextAccessor httpCo
         var res = await http.GetAsync("/content/api/cms/exams/series");
         if (!res.IsSuccessStatusCode) return [];
         return await res.Content.ReadFromJsonAsync<List<AdminExamSeries>>(JsonOpts) ?? [];
+    }
+
+    public async Task<ExamStatsSummary?> GetCmsExamStatsAsync()
+    {
+        AttachToken();
+        var res = await http.GetAsync("/content/api/cms/exams/stats");
+        if (!res.IsSuccessStatusCode) return null;
+        return await res.Content.ReadFromJsonAsync<ExamStatsSummary>(JsonOpts);
+    }
+
+    public async Task<QuestionStatsSummary?> GetQuestionStatsAsync()
+    {
+        AttachToken();
+        var res = await http.GetAsync("/content/api/cms/questions/stats");
+        if (!res.IsSuccessStatusCode) return null;
+        return await res.Content.ReadFromJsonAsync<QuestionStatsSummary>(JsonOpts);
+    }
+
+    // ==================== CONTENT SERVICE APIs (CMS QUESTIONS & EXAM CONTENT - UC-17) ====================
+    public async Task<PagedResult<AdminQuestionListItem>?> GetAdminQuestionsPagedAsync(
+        string? keyword = null,
+        int? part = null,
+        string? difficulty = null,
+        int? examId = null,
+        int page = 1,
+        int pageSize = 15)
+    {
+        AttachToken();
+        var q = new List<string>
+        {
+            $"page={page}",
+            $"pageSize={pageSize}"
+        };
+        if (!string.IsNullOrWhiteSpace(keyword)) q.Add($"keyword={Uri.EscapeDataString(keyword.Trim())}");
+        if (part.HasValue && part.Value >= 1 && part.Value <= 7) q.Add($"part={part.Value}");
+        if (!string.IsNullOrWhiteSpace(difficulty) && difficulty != "All") q.Add($"difficulty={Uri.EscapeDataString(difficulty)}");
+        if (examId.HasValue && examId.Value > 0) q.Add($"examId={examId.Value}");
+
+        var queryString = string.Join("&", q);
+        var res = await http.GetAsync($"/content/api/cms/questions?{queryString}");
+        if (!res.IsSuccessStatusCode) return new PagedResult<AdminQuestionListItem>([], 0, page, pageSize, 0);
+        return await res.Content.ReadFromJsonAsync<PagedResult<AdminQuestionListItem>>(JsonOpts);
+    }
+
+    public async Task<AdminQuestionBankDetail?> GetAdminQuestionDetailAsync(int id)
+    {
+        AttachToken();
+        var res = await http.GetAsync($"/content/api/cms/questions/{id}");
+        if (!res.IsSuccessStatusCode) return null;
+        return await res.Content.ReadFromJsonAsync<AdminQuestionBankDetail>(JsonOpts);
+    }
+
+    public async Task<(int? Id, string? Error)> CreateAdminQuestionAsync(AdminUpsertQuestionRequest request)
+    {
+        AttachToken();
+        var res = await http.PostAsJsonAsync("/content/api/cms/questions", request);
+        if (!res.IsSuccessStatusCode)
+        {
+            return (null, await ExtractErrorMessageAsync(res));
+        }
+        var data = await res.Content.ReadFromJsonAsync<IdApiResponse>(JsonOpts);
+        return (data?.Id, null);
+    }
+
+    public async Task<(bool Success, string? Error)> UpdateAdminQuestionAsync(int id, AdminUpsertQuestionRequest request)
+    {
+        AttachToken();
+        var res = await http.PutAsJsonAsync($"/content/api/cms/questions/{id}", request);
+        if (!res.IsSuccessStatusCode)
+        {
+            return (false, await ExtractErrorMessageAsync(res));
+        }
+        return (true, null);
+    }
+
+    public async Task<(DeleteQuestionApiResponse? Data, string? Error)> DeleteAdminQuestionAsync(int id)
+    {
+        AttachToken();
+        var res = await http.DeleteAsync($"/content/api/cms/questions/{id}");
+        if (!res.IsSuccessStatusCode)
+        {
+            return (null, await ExtractErrorMessageAsync(res));
+        }
+        return (await res.Content.ReadFromJsonAsync<DeleteQuestionApiResponse>(JsonOpts), null);
+    }
+
+    public async Task<(int? Id, string? Error)> SaveListeningQuestionAsync(int examId, AdminSaveListeningQuestionRequest request)
+    {
+        AttachToken();
+        var res = await http.PostAsJsonAsync($"/content/api/cms/exams/{examId}/content/listening-question", request);
+        if (!res.IsSuccessStatusCode)
+        {
+            return (null, await ExtractErrorMessageAsync(res));
+        }
+        var data = await res.Content.ReadFromJsonAsync<IdApiResponse>(JsonOpts);
+        return (data?.Id, null);
+    }
+
+    public async Task<(int? Id, string? Error)> SaveListeningGroupAsync(int examId, AdminSaveListeningGroupRequest request)
+    {
+        AttachToken();
+        var res = await http.PostAsJsonAsync($"/content/api/cms/exams/{examId}/content/listening-group", request);
+        if (!res.IsSuccessStatusCode)
+        {
+            return (null, await ExtractErrorMessageAsync(res));
+        }
+        var data = await res.Content.ReadFromJsonAsync<IdApiResponse>(JsonOpts);
+        return (data?.Id, null);
+    }
+
+    public async Task<(int? Id, string? Error)> SavePart5QuestionAsync(int examId, AdminSavePart5QuestionRequest request)
+    {
+        AttachToken();
+        var res = await http.PostAsJsonAsync($"/content/api/cms/exams/{examId}/content/part5", request);
+        if (!res.IsSuccessStatusCode)
+        {
+            return (null, await ExtractErrorMessageAsync(res));
+        }
+        var data = await res.Content.ReadFromJsonAsync<IdApiResponse>(JsonOpts);
+        return (data?.Id, null);
+    }
+
+    public async Task<(int? Id, string? Error)> SavePart6SetAsync(int examId, AdminSavePart6SetRequest request)
+    {
+        AttachToken();
+        var res = await http.PostAsJsonAsync($"/content/api/cms/exams/{examId}/content/part6", request);
+        if (!res.IsSuccessStatusCode)
+        {
+            return (null, await ExtractErrorMessageAsync(res));
+        }
+        var data = await res.Content.ReadFromJsonAsync<IdApiResponse>(JsonOpts);
+        return (data?.Id, null);
+    }
+
+    public async Task<(int? Id, string? Error)> SavePart7SetAsync(int examId, AdminSavePart7SetRequest request)
+    {
+        AttachToken();
+        var res = await http.PostAsJsonAsync($"/content/api/cms/exams/{examId}/content/part7", request);
+        if (!res.IsSuccessStatusCode)
+        {
+            return (null, await ExtractErrorMessageAsync(res));
+        }
+        var data = await res.Content.ReadFromJsonAsync<IdApiResponse>(JsonOpts);
+        return (data?.Id, null);
+    }
+
+    public async Task<(DeleteQuestionApiResponse? Data, string? Error)> DeleteExamContentAsync(int examId, string contentType, int targetId)
+    {
+        AttachToken();
+        var res = await http.DeleteAsync($"/content/api/cms/exams/{examId}/content/{Uri.EscapeDataString(contentType)}/{targetId}");
+        if (!res.IsSuccessStatusCode)
+        {
+            return (null, await ExtractErrorMessageAsync(res));
+        }
+        return (await res.Content.ReadFromJsonAsync<DeleteQuestionApiResponse>(JsonOpts), null);
+    }
+
+    // ==================== CONTENT SERVICE APIs (CMS PASSAGES - UC-18) ====================
+    public async Task<PagedResult<AdminPassageListItem>?> GetAdminPassagesPagedAsync(
+        string? keyword = null,
+        int? examId = null,
+        int? part = null,
+        int page = 1,
+        int pageSize = 12)
+    {
+        AttachToken();
+        var q = new List<string>
+        {
+            $"page={page}",
+            $"pageSize={pageSize}"
+        };
+        if (!string.IsNullOrWhiteSpace(keyword)) q.Add($"keyword={Uri.EscapeDataString(keyword.Trim())}");
+        if (examId.HasValue && examId.Value > 0) q.Add($"examId={examId.Value}");
+        if (part.HasValue && (part.Value == 6 || part.Value == 7)) q.Add($"part={part.Value}");
+
+        var queryString = string.Join("&", q);
+        var res = await http.GetAsync($"/content/api/cms/passages?{queryString}");
+        if (!res.IsSuccessStatusCode) return new PagedResult<AdminPassageListItem>([], 0, page, pageSize, 0);
+        return await res.Content.ReadFromJsonAsync<PagedResult<AdminPassageListItem>>(JsonOpts);
+    }
+
+    public async Task<PassageStatsSummary?> GetPassageStatsAsync()
+    {
+        AttachToken();
+        var res = await http.GetAsync("/content/api/cms/passages/stats");
+        if (!res.IsSuccessStatusCode) return null;
+        return await res.Content.ReadFromJsonAsync<PassageStatsSummary>(JsonOpts);
+    }
+
+    public async Task<AdminPassageCmsDetail?> GetAdminPassageDetailAsync(int id)
+    {
+        AttachToken();
+        var res = await http.GetAsync($"/content/api/cms/passages/{id}");
+        if (!res.IsSuccessStatusCode) return null;
+        return await res.Content.ReadFromJsonAsync<AdminPassageCmsDetail>(JsonOpts);
+    }
+
+    public async Task<(int? Id, string? Error)> CreateAdminPassageAsync(AdminUpsertPassageRequest request)
+    {
+        AttachToken();
+        var res = await http.PostAsJsonAsync("/content/api/cms/passages", request);
+        if (!res.IsSuccessStatusCode)
+        {
+            return (null, await ExtractErrorMessageAsync(res));
+        }
+        var data = await res.Content.ReadFromJsonAsync<IdApiResponse>(JsonOpts);
+        return (data?.Id, null);
+    }
+
+    public async Task<(bool Success, string? Error)> UpdateAdminPassageAsync(int id, AdminUpsertPassageRequest request)
+    {
+        AttachToken();
+        var res = await http.PutAsJsonAsync($"/content/api/cms/passages/{id}", request);
+        if (!res.IsSuccessStatusCode)
+        {
+            return (false, await ExtractErrorMessageAsync(res));
+        }
+        return (true, null);
+    }
+
+    public async Task<(DeletePassageApiResponse? Data, string? Error)> DeleteAdminPassageAsync(int id, bool deleteWithQuestions = false)
+    {
+        AttachToken();
+        var res = await http.DeleteAsync($"/content/api/cms/passages/{id}?deleteWithQuestions={deleteWithQuestions.ToString().ToLowerInvariant()}");
+        if (!res.IsSuccessStatusCode)
+        {
+            return (null, await ExtractErrorMessageAsync(res));
+        }
+        return (await res.Content.ReadFromJsonAsync<DeletePassageApiResponse>(JsonOpts), null);
+    }
+
+    private static async Task<string> ExtractErrorMessageAsync(HttpResponseMessage res)
+    {
+        var raw = await res.Content.ReadAsStringAsync();
+        if (string.IsNullOrWhiteSpace(raw)) return $"Request failed with status {(int)res.StatusCode}.";
+        try
+        {
+            using var doc = JsonDocument.Parse(raw);
+            if (doc.RootElement.TryGetProperty("error", out var errProp) && errProp.ValueKind == JsonValueKind.String)
+            {
+                return errProp.GetString() ?? raw;
+            }
+        }
+        catch
+        {
+            // ignore JSON parse errors
+        }
+        return raw;
     }
 }
