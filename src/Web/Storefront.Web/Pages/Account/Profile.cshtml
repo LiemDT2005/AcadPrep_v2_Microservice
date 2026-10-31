@@ -1,88 +1,563 @@
 @page
 @model Storefront.Web.Pages.Account.ProfileModel
 @{
-    ViewData["Title"] = "Hồ sơ cá nhân - AcadPrep";
+    ViewData["Title"] = "User Profile - AcadPrep";
     var user = Model.UserProfile;
+    var name = user?.FullName ?? HttpContext.Session.GetString("name") ?? "Student";
+    var email = user?.Email ?? HttpContext.Session.GetString("email") ?? "user@acadprep.com";
+    var avatar = user?.Avatar ?? HttpContext.Session.GetString("avatar");
+    var roles = user?.Roles ?? [HttpContext.Session.GetString("roles") ?? "Learner"];
+    var status = user?.Status ?? "Active";
 }
 
-<div class="container" style="max-width: 760px; margin-top: 1rem;">
-    <div class="profile-card">
-        @if (user is not null)
-        {
-            <div class="profile-hero">
-                <div class="profile-avatar-wrap">
-                    @if (!string.IsNullOrEmpty(user.Avatar))
+<div class="container" style="max-width: 820px; margin-top: 1.5rem; margin-bottom: 3.5rem;">
+
+    <!-- TOP ALERT MESSAGES -->
+    @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+    {
+        <div class="alert alert-success" style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.65rem; background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; padding: 0.9rem 1.25rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(16,185,129,0.08);">
+            <span style="font-weight: bold; font-size: 1.2rem;">✓</span>
+            <strong>@Model.SuccessMessage</strong>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-error" style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.65rem; background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; padding: 0.9rem 1.25rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(239,68,68,0.08);">
+            <span style="font-weight: bold; font-size: 1.2rem;">✕</span>
+            <strong>@Model.ErrorMessage</strong>
+        </div>
+    }
+
+    <!-- ======================================================== -->
+    <!-- PROFILE OVERVIEW HUB CARD                                -->
+    <!-- ======================================================== -->
+    <div style="background: white; border-radius: 18px; padding: 2.25rem; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06); border: 1px solid var(--line, #e2e8f0); position: relative; overflow: hidden;">
+        <!-- Top decorative banner -->
+        <div style="position: absolute; top: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #3b82f6, #1d4ed8, #8b5cf6);"></div>
+
+        <div style="display: flex; gap: 1.75rem; align-items: center; flex-wrap: wrap;">
+            <div id="cardUserAvatarWrap" style="position: relative;">
+                @if (!string.IsNullOrEmpty(avatar))
+                {
+                    <img id="cardUserAvatarImg" src="@avatar" alt="@name" style="width: 96px; height: 96px; border-radius: 50%; object-fit: cover; border: 4px solid #3b82f6; box-shadow: 0 6px 16px rgba(59, 130, 246, 0.25);" />
+                }
+                else
+                {
+                    <div id="cardUserAvatarPlaceholder" style="width: 96px; height: 96px; border-radius: 50%; background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: bold; box-shadow: 0 6px 16px rgba(59, 130, 246, 0.25);">
+                        @(string.IsNullOrWhiteSpace(name) ? "U" : name.Substring(0, 1).ToUpper())
+                    </div>
+                }
+            </div>
+
+            <div style="flex: 1; min-width: 260px;">
+                <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+                    <h2 id="cardUserName" style="margin: 0; font-size: 1.6rem; color: var(--ink, #0f172a); font-weight: 800; letter-spacing: -0.01em;">@name</h2>
+                    @if (status == "Active")
                     {
-                        <img src="@user.Avatar" alt="@user.FullName" class="profile-avatar" />
+                        <span class="badge" style="background: #dcfce7; color: #166534; font-size: 0.8rem; font-weight: 700; padding: 0.25rem 0.65rem; border-radius: 999px;">Active</span>
+                    }
+                    else if (status == "PendingVerification")
+                    {
+                        <span class="badge" style="background: #fef9c3; color: #854d0e; font-size: 0.8rem; font-weight: 700; padding: 0.25rem 0.65rem; border-radius: 999px;">Pending OTP</span>
                     }
                     else
                     {
-                        <div class="profile-avatar-placeholder">
-                            @(string.IsNullOrWhiteSpace(user.FullName) ? "U" : user.FullName.Substring(0, 1).ToUpper())
-                        </div>
+                        <span class="badge" style="background: #fee2e2; color: #991b1b; font-size: 0.8rem; font-weight: 700; padding: 0.25rem 0.65rem; border-radius: 999px;">Banned</span>
                     }
                 </div>
 
-                <div class="profile-hero-info">
-                    <h2>@user.FullName</h2>
-                    <p>@user.Email</p>
-                    <div style="margin-top: 0.6rem; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-                        @if (user.Status == "Active")
-                        {
-                            <span class="badge badge-active">● Đã kích hoạt</span>
-                        }
-                        else if (user.Status == "PendingVerification")
-                        {
-                            <span class="badge badge-pending"> Chờ xác thực OTP</span>
-                        }
-                        else
-                        {
-                            <span class="badge badge-banned"> Đã bị khóa</span>
-                        }
+                <p style="margin: 0.35rem 0 0.75rem; color: #64748b; font-size: 1rem;">@email</p>
 
-                        @foreach (var role in user.Roles)
-                        {
-                            <span class="badge badge-role">Vai trò: @role</span>
-                        }
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    @foreach (var r in roles)
+                    {
+                        <span class="badge" style="background: #eff6ff; color: #1e40af; font-size: 0.82rem; font-weight: 700; padding: 0.25rem 0.75rem; border-radius: 8px; border: 1px solid #bfdbfe;">
+                            Role: @r
+                        </span>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Detail Information Grid -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.25rem; margin-top: 2rem; padding-top: 1.75rem; border-top: 1px solid var(--line, #e2e8f0);">
+            <div style="background: #f8fafc; padding: 1rem; border-radius: 10px; border: 1px solid #e2e8f0;">
+                <span style="font-size: 0.8rem; color: #64748b; display: block; margin-bottom: 0.25rem;">User ID</span>
+                <strong style="font-family: monospace; font-size: 0.82rem; word-break: break-all; color: var(--ink, #0f172a);">@(user?.Id ?? "N/A")</strong>
+            </div>
+
+            <div style="background: #f8fafc; padding: 1rem; border-radius: 10px; border: 1px solid #e2e8f0;">
+                <span style="font-size: 0.8rem; color: #64748b; display: block; margin-bottom: 0.25rem;">Member Since</span>
+                <strong style="font-size: 0.92rem; color: var(--ink, #0f172a);">@(user?.CreatedAt.ToString("MM/dd/yyyy HH:mm") ?? "N/A")</strong>
+            </div>
+
+            <div style="background: #f8fafc; padding: 1rem; border-radius: 10px; border: 1px solid #e2e8f0;">
+                <span style="font-size: 0.8rem; color: #64748b; display: block; margin-bottom: 0.25rem;">Last Login</span>
+                <strong style="font-size: 0.92rem; color: var(--ink, #0f172a);">@(user?.LastLoginAt.HasValue == true ? user.LastLoginAt.Value.ToString("MM/dd/yyyy HH:mm") : "First time")</strong>
+            </div>
+        </div>
+
+        <!-- ACTION BUTTONS -->
+        <div style="margin-top: 2rem; display: flex; gap: 0.85rem; flex-wrap: wrap;">
+            <button type="button" class="btn btn-outline" style="padding: 0.7rem 1.4rem; font-size: 0.95rem; font-weight: 700; border-radius: 10px; border-width: 1.5px; display: inline-flex; align-items: center; gap: 0.5rem;" onclick="openProfileModal()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                </svg>
+                View Profile Popup
+            </button>
+            <button type="button" class="btn btn-outline" style="padding: 0.7rem 1.4rem; font-size: 0.95rem; font-weight: 700; border-radius: 10px; border-width: 1.5px; display: inline-flex; align-items: center; gap: 0.5rem;" onclick="switchToEditProfileModal()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20h9"/>
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                </svg>
+                Edit Information
+            </button>
+            <button type="button" class="btn" style="padding: 0.7rem 1.4rem; font-size: 0.95rem; font-weight: 700; border-radius: 10px; background: #0f172a; color: white; display: inline-flex; align-items: center; gap: 0.5rem;" onclick="switchToChangePasswordModal()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                Change Password
+            </button>
+            <a asp-page="/Account/Logout" class="btn btn-outline" style="margin-left: auto; color: #dc2626 !important; border-color: #fca5a5; padding: 0.7rem 1.25rem; font-size: 0.92rem; border-radius: 10px;">
+                Sign Out
+            </a>
+        </div>
+    </div>
+
+</div>
+
+<!-- ========================================================================== -->
+<!-- POP-UP CHAIN: 3 MODALS                                                     -->
+<!-- ========================================================================== -->
+
+<!-- 1. POP-UP: VIEW PROFILE (#profileModalBackdrop) -->
+<div id="profileModalBackdrop" class="modal-backdrop" onclick="handleBackdropClick(event, 'profileModalBackdrop')">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 class="modal-title">Personal Profile Details</h3>
+            <button type="button" class="modal-close-btn" onclick="closeAllModals()">✕</button>
+        </div>
+
+        <div class="modal-body">
+            <div style="text-align: center; margin-bottom: 1.5rem;">
+                @if (!string.IsNullOrEmpty(avatar))
+                {
+                    <img src="@avatar" alt="@name" style="width: 84px; height: 84px; border-radius: 50%; object-fit: cover; border: 3px solid #3b82f6; margin: 0 auto 0.75rem; box-shadow: 0 4px 12px rgba(59,130,246,0.25);" />
+                }
+                else
+                {
+                    <div style="width: 84px; height: 84px; border-radius: 50%; background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; display: flex; align-items: center; justify-content: center; font-size: 2.2rem; font-weight: bold; margin: 0 auto 0.75rem;">
+                        @(string.IsNullOrWhiteSpace(name) ? "U" : name.Substring(0, 1).ToUpper())
                     </div>
+                }
+                <h3 style="margin: 0; font-size: 1.3rem; color: #0f172a;">@name</h3>
+                <p style="margin: 0.25rem 0 0.5rem; color: #64748b; font-size: 0.95rem;">@email</p>
+                <div style="display: flex; gap: 0.4rem; justify-content: center;">
+                    <span class="badge" style="background: #dcfce7; color: #166534; padding: 0.2rem 0.65rem; border-radius: 999px; font-size: 0.78rem; font-weight: 700;">
+                        @status
+                    </span>
+                    @foreach (var r in roles)
+                    {
+                        <span class="badge" style="background: #e0e7ff; color: #3730a3; padding: 0.2rem 0.65rem; border-radius: 999px; font-size: 0.78rem; font-weight: 700;">
+                            @r
+                        </span>
+                    }
                 </div>
             </div>
 
-            <h3 style="font-size: 1.15rem; margin: 1.5rem 0 1rem; color: var(--ink);">Chi tiết thông tin tài khoản</h3>
-
-            <div class="profile-info-grid">
-                <div class="info-item">
-                    <span>Mã định danh (User ID)</span>
-                    <strong style="font-family: monospace; font-size: 0.85rem; word-break: break-all;">@user.Id</strong>
+            <div style="background: #f8fafc; padding: 1rem 1.25rem; border-radius: 12px; border: 1px solid #e2e8f0; font-size: 0.88rem; display: flex; flex-direction: column; gap: 0.65rem;">
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: #64748b;">User ID:</span>
+                    <strong style="font-family: monospace; font-size: 0.8rem;">@(user?.Id ?? "N/A")</strong>
                 </div>
-
-                <div class="info-item">
-                    <span>Địa chỉ Email</span>
-                    <strong>@user.Email</strong>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: #64748b;">Date Joined:</span>
+                    <strong>@(user?.CreatedAt.ToString("MM/dd/yyyy HH:mm") ?? "N/A")</strong>
                 </div>
-
-                <div class="info-item">
-                    <span>Ngày tham gia</span>
-                    <strong>@user.CreatedAt.ToString("dd/MM/yyyy HH:mm")</strong>
-                </div>
-
-                <div class="info-item">
-                    <span>Đăng nhập gần nhất</span>
-                    <strong>@(user.LastLoginAt.HasValue ? user.LastLoginAt.Value.ToString("dd/MM/yyyy HH:mm") : "Lần đầu")</strong>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: #64748b;">Last Login:</span>
+                    <strong>@(user?.LastLoginAt.HasValue == true ? user.LastLoginAt.Value.ToString("MM/dd/yyyy HH:mm") : "First time")</strong>
                 </div>
             </div>
+        </div>
 
-            <div style="margin-top: 2rem; display: flex; gap: 1rem; flex-wrap: wrap; border-top: 1px solid var(--line); padding-top: 1.5rem;">
-                <a asp-page="/Exams/Index" class="btn">Bắt đầu Luyện đề TOEIC</a>
-                <a asp-page="/Courses/Index" class="btn btn-outline">Xem Khóa học</a>
-                <a asp-page="/Account/Logout" class="btn btn-outline" style="margin-left: auto; color: #b91c1c !important; border-color: #fca5a5;">Đăng xuất</a>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline" style="padding: 0.6rem 1rem;" onclick="closeAllModals()">
+                Close
+            </button>
+            <div style="display: flex; gap: 0.5rem;">
+                <button type="button" class="btn btn-outline" style="padding: 0.6rem 1.1rem; font-weight: 700;" onclick="switchToEditProfileModal()">
+                    Edit Profile
+                </button>
+                <button type="button" class="btn" style="padding: 0.6rem 1.1rem; background: #0f172a; color: white; font-weight: 700;" onclick="switchToChangePasswordModal()">
+                    Change Password
+                </button>
             </div>
-        }
-        else
-        {
-            <div class="alert alert-error">
-                Không thể tải thông tin hồ sơ người dùng.
-            </div>
-        }
+        </div>
     </div>
 </div>
+
+<!-- 2. POP-UP: EDIT PROFILE (#editProfileModalBackdrop) -->
+<div id="editProfileModalBackdrop" class="modal-backdrop" onclick="handleBackdropClick(event, 'editProfileModalBackdrop')">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 class="modal-title">Edit Profile</h3>
+            <button type="button" class="modal-close-btn" onclick="closeAllModals()">✕</button>
+        </div>
+
+        <form id="userEditProfileForm" method="post" asp-page-handler="UpdateProfile">
+            @Html.AntiForgeryToken()
+            <div class="modal-body">
+                <div id="userEditProfileAlert" style="display: none; padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.88rem;"></div>
+
+                <div class="form-group" style="margin-bottom: 1.1rem;">
+                    <label style="display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 0.4rem; color: #0f172a;">Display Name</label>
+                    <input type="text" id="userInputFullName" asp-for="FullName" value="@name" class="form-control" required minlength="2" maxlength="100" style="width: 100%; padding: 0.7rem 0.9rem; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem;" />
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1.1rem;">
+                    <label style="display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 0.4rem; color: #0f172a;">Avatar Image URL</label>
+                    <input type="url" id="userAvatarInput" asp-for="Avatar" value="@avatar" class="form-control" placeholder="https://example.com/avatar.jpg" style="width: 100%; padding: 0.7rem 0.9rem; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem;" oninput="updateProfileAvatarPreview(this.value)" />
+                    <small style="color: #94a3b8; font-size: 0.78rem; display: block; margin-top: 0.25rem;">Supports direct image links (JPG, PNG, or WebP).</small>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 0.85rem; background: #f8fafc; padding: 0.85rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <img id="userAvatarPreviewImg" src="@(avatar ?? "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44'%3E%3Crect width='44' height='44' fill='%23e2e8f0'/%3E%3C/svg%3E")" alt="Preview" style="width: 46px; height: 46px; border-radius: 50%; object-fit: cover; border: 1px solid #cbd5e1;" />
+                    <span id="userAvatarPreviewText" style="font-size: 0.82rem; color: #64748b;">Avatar preview</span>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" style="padding: 0.65rem 1rem;" onclick="switchToProfileModal()">
+                    ← Back to Profile
+                </button>
+                <button type="submit" id="userEditProfileSubmitBtn" class="btn" style="padding: 0.65rem 1.35rem; background: #3b82f6; color: white; border: none; font-weight: 700; border-radius: 8px; cursor: pointer;">
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 3. POP-UP: CHANGE PASSWORD (#changePasswordModalBackdrop) -->
+<div id="changePasswordModalBackdrop" class="modal-backdrop" onclick="handleBackdropClick(event, 'changePasswordModalBackdrop')">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 class="modal-title">Change Password</h3>
+            <button type="button" class="modal-close-btn" onclick="closeAllModals()">✕</button>
+        </div>
+
+        <form id="userChangePasswordForm" method="post" asp-page-handler="ChangePassword">
+            @Html.AntiForgeryToken()
+            <div class="modal-body">
+                <div id="userChangePassAlert" style="display: none; padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.88rem;"></div>
+
+                <div class="form-group" style="margin-bottom: 1.1rem;">
+                    <label style="display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 0.4rem; color: #0f172a;">Current Password</label>
+                    <input type="password" id="userCurrentPassword" asp-for="CurrentPassword" class="form-control" placeholder="••••••••" required style="width: 100%; padding: 0.7rem 0.9rem; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem;" />
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1.1rem;">
+                    <label style="display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 0.4rem; color: #0f172a;">New Password</label>
+                    <input type="password" id="userNewPassword" asp-for="NewPassword" class="form-control" placeholder="At least 6 characters" required minlength="6" style="width: 100%; padding: 0.7rem 0.9rem; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem;" oninput="checkUserPasswordStrength(this.value)" />
+
+                    <!-- Password strength bar -->
+                    <div style="margin-top: 0.45rem;">
+                        <div style="height: 4px; width: 100%; background: #e2e8f0; border-radius: 2px; overflow: hidden;">
+                            <div id="userStrengthBar" style="height: 100%; width: 0%; transition: all 0.3s ease; background: #ef4444;"></div>
+                        </div>
+                        <small id="userStrengthText" style="display: block; margin-top: 0.25rem; font-size: 0.75rem; color: #94a3b8;">Password strength: Not entered</small>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1.25rem;">
+                    <label style="display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 0.4rem; color: #0f172a;">Confirm New Password</label>
+                    <input type="password" id="userConfirmPassword" asp-for="ConfirmPassword" class="form-control" placeholder="Re-enter new password" required minlength="6" style="width: 100%; padding: 0.7rem 0.9rem; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem;" oninput="checkUserPasswordMatch()" />
+                    <small id="userMatchText" style="display: none; font-size: 0.75rem; margin-top: 0.25rem;"></small>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" style="padding: 0.65rem 1rem;" onclick="switchToProfileModal()">
+                    ← Back to Profile
+                </button>
+                <button type="submit" id="userChangePassSubmitBtn" class="btn" style="padding: 0.65rem 1.35rem; background: #0f172a; color: white; border: none; font-weight: 700; border-radius: 8px; cursor: pointer;">
+                    Update Password
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openProfileModal() {
+            closeAllModals();
+            document.getElementById('profileModalBackdrop')?.classList.add('show');
+        }
+
+        function switchToEditProfileModal() {
+            document.getElementById('profileModalBackdrop')?.classList.remove('show');
+            document.getElementById('editProfileModalBackdrop')?.classList.add('show');
+        }
+
+        function switchToChangePasswordModal() {
+            document.getElementById('profileModalBackdrop')?.classList.remove('show');
+            document.getElementById('changePasswordModalBackdrop')?.classList.add('show');
+        }
+
+        function switchToProfileModal() {
+            document.getElementById('editProfileModalBackdrop')?.classList.remove('show');
+            document.getElementById('changePasswordModalBackdrop')?.classList.remove('show');
+            document.getElementById('profileModalBackdrop')?.classList.add('show');
+        }
+
+        function closeAllModals() {
+            document.querySelectorAll('.modal-backdrop').forEach(m => m.classList.remove('show'));
+        }
+
+        function handleBackdropClick(e, backdropId) {
+            if (e.target.id === backdropId) {
+                closeAllModals();
+            }
+        }
+
+        function updateProfileAvatarPreview(url) {
+            const img = document.getElementById('userAvatarPreviewImg');
+            const text = document.getElementById('userAvatarPreviewText');
+            if (!img || !text) return;
+
+            if (url && url.trim()) {
+                img.src = url.trim();
+                text.textContent = "Verifying image...";
+                img.onload = () => { text.textContent = "Valid image ✓"; text.style.color = "#10b981"; };
+                img.onerror = () => { text.textContent = "Cannot load image from URL"; text.style.color = "#ef4444"; };
+            } else {
+                img.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44'%3E%3Crect width='44' height='44' fill='%23e2e8f0'/%3E%3C/svg%3E";
+                text.textContent = "No avatar image";
+                text.style.color = "#64748b";
+            }
+        }
+
+        function checkUserPasswordStrength(val) {
+            const bar = document.getElementById('userStrengthBar');
+            const text = document.getElementById('userStrengthText');
+            if (!bar || !text) return;
+
+            let score = 0;
+            if (!val) {
+                bar.style.width = '0%';
+                text.textContent = 'Password strength: Not entered';
+                return;
+            }
+
+            if (val.length >= 6) score += 25;
+            if (val.length >= 8) score += 25;
+            if (/[A-Z]/.test(val) && /[a-z]/.test(val)) score += 25;
+            if (/[0-9]/.test(val) || /[^A-Za-z0-9]/.test(val)) score += 25;
+
+            bar.style.width = score + '%';
+            if (score <= 25) {
+                bar.style.background = '#ef4444';
+                text.textContent = 'Strength: Weak (Min 6 characters)';
+                text.style.color = '#ef4444';
+            } else if (score <= 50) {
+                bar.style.background = '#f59e0b';
+                text.textContent = 'Strength: Medium';
+                text.style.color = '#f59e0b';
+            } else if (score <= 75) {
+                bar.style.background = '#3b82f6';
+                text.textContent = 'Strength: Good';
+                text.style.color = '#3b82f6';
+            } else {
+                bar.style.background = '#10b981';
+                text.textContent = 'Strength: Strong ✓';
+                text.style.color = '#10b981';
+            }
+
+            checkUserPasswordMatch();
+        }
+
+        function checkUserPasswordMatch() {
+            const p1 = document.getElementById('userNewPassword')?.value;
+            const p2 = document.getElementById('userConfirmPassword')?.value;
+            const matchText = document.getElementById('userMatchText');
+            if (!matchText) return;
+
+            if (!p2) {
+                matchText.style.display = 'none';
+                return;
+            }
+
+            matchText.style.display = 'block';
+            if (p1 === p2) {
+                matchText.textContent = '✓ Passwords match.';
+                matchText.style.color = '#10b981';
+            } else {
+                matchText.textContent = '✕ Passwords do not match.';
+                matchText.style.color = '#ef4444';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            // Edit Profile Form AJAX
+            const editForm = document.getElementById('userEditProfileForm');
+            if (editForm) {
+                editForm.addEventListener('submit', async function (e) {
+                    e.preventDefault();
+                    const alertBox = document.getElementById('userEditProfileAlert');
+                    const submitBtn = document.getElementById('userEditProfileSubmitBtn');
+                    if (alertBox) alertBox.style.display = 'none';
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.textContent = 'Saving...';
+                    }
+
+                    try {
+                        const formData = new FormData(editForm);
+                        const res = await fetch('/Account/Profile?handler=UpdateProfile', {
+                            method: 'POST',
+                            body: formData,
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
+
+                        const result = await res.json();
+                        if (res.ok && result.success) {
+                            if (alertBox) {
+                                alertBox.textContent = result.message || 'Profile updated successfully!';
+                                alertBox.style.background = '#dcfce7';
+                                alertBox.style.color = '#15803d';
+                                alertBox.style.border = '1px solid #bbf7d0';
+                                alertBox.style.display = 'block';
+                            }
+
+                            const newName = formData.get('FullName');
+                            const newAvatar = formData.get('Avatar');
+
+                            const cardName = document.getElementById('cardUserName');
+                            if (cardName && newName) cardName.textContent = newName;
+
+                            const cardWrap = document.getElementById('cardUserAvatarWrap');
+                            if (cardWrap) {
+                                if (newAvatar && newAvatar.trim()) {
+                                    cardWrap.innerHTML = `<img id="cardUserAvatarImg" src="${newAvatar.trim()}" alt="${newName}" style="width: 96px; height: 96px; border-radius: 50%; object-fit: cover; border: 4px solid #3b82f6; box-shadow: 0 6px 16px rgba(59, 130, 246, 0.25);" />`;
+                                } else {
+                                    const letter = (newName && newName.trim().length > 0) ? newName.trim()[0].toUpperCase() : 'U';
+                                    cardWrap.innerHTML = `<div id="cardUserAvatarPlaceholder" style="width: 96px; height: 96px; border-radius: 50%; background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: bold; box-shadow: 0 6px 16px rgba(59, 130, 246, 0.25);">${letter}</div>`;
+                                }
+                            }
+
+                            setTimeout(() => {
+                                switchToProfileModal();
+                                if (alertBox) alertBox.style.display = 'none';
+                            }, 1000);
+                        } else {
+                            if (alertBox) {
+                                alertBox.textContent = result.error || result.message || 'An error occurred.';
+                                alertBox.style.background = '#fee2e2';
+                                alertBox.style.color = '#b91c1c';
+                                alertBox.style.border = '1px solid #fecaca';
+                                alertBox.style.display = 'block';
+                            }
+                        }
+                    } catch (err) {
+                        if (alertBox) {
+                            alertBox.textContent = 'Server connection error. Please try again.';
+                            alertBox.style.background = '#fee2e2';
+                            alertBox.style.color = '#b91c1c';
+                            alertBox.style.border = '1px solid #fecaca';
+                            alertBox.style.display = 'block';
+                        }
+                    } finally {
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                            submitBtn.textContent = 'Save Changes';
+                        }
+                    }
+                });
+            }
+
+            // Change Password Form AJAX
+            const passForm = document.getElementById('userChangePasswordForm');
+            if (passForm) {
+                passForm.addEventListener('submit', async function (e) {
+                    e.preventDefault();
+                    const alertBox = document.getElementById('userChangePassAlert');
+                    const submitBtn = document.getElementById('userChangePassSubmitBtn');
+                    const newPass = document.getElementById('userNewPassword')?.value;
+                    const confirmPass = document.getElementById('userConfirmPassword')?.value;
+
+                    if (newPass !== confirmPass) {
+                        if (alertBox) {
+                            alertBox.textContent = 'Passwords do not match.';
+                            alertBox.style.background = '#fee2e2';
+                            alertBox.style.color = '#b91c1c';
+                            alertBox.style.border = '1px solid #fecaca';
+                            alertBox.style.display = 'block';
+                        }
+                        return;
+                    }
+
+                    if (alertBox) alertBox.style.display = 'none';
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.textContent = 'Updating...';
+                    }
+
+                    try {
+                        const formData = new FormData(passForm);
+                        const res = await fetch('/Account/Profile?handler=ChangePassword', {
+                            method: 'POST',
+                            body: formData,
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
+
+                        const result = await res.json();
+                        if (res.ok && result.success) {
+                            if (alertBox) {
+                                alertBox.textContent = result.message || 'Password changed successfully!';
+                                alertBox.style.background = '#dcfce7';
+                                alertBox.style.color = '#15803d';
+                                alertBox.style.border = '1px solid #bbf7d0';
+                                alertBox.style.display = 'block';
+                            }
+                            passForm.reset();
+                            setTimeout(() => {
+                                switchToProfileModal();
+                                if (alertBox) alertBox.style.display = 'none';
+                            }, 1200);
+                        } else {
+                            if (alertBox) {
+                                alertBox.textContent = result.error || result.message || 'Password change failed.';
+                                alertBox.style.background = '#fee2e2';
+                                alertBox.style.color = '#b91c1c';
+                                alertBox.style.border = '1px solid #fecaca';
+                                alertBox.style.display = 'block';
+                            }
+                        }
+                    } catch (err) {
+                        if (alertBox) {
+                            alertBox.textContent = 'Server connection error. Please try again.';
+                            alertBox.style.background = '#fee2e2';
+                            alertBox.style.color = '#b91c1c';
+                            alertBox.style.border = '1px solid #fecaca';
+                            alertBox.style.display = 'block';
+                        }
+                    } finally {
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                            submitBtn.textContent = 'Update Password';
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+}

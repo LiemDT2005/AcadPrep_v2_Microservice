@@ -8,12 +8,12 @@ namespace Storefront.Web.Pages.Account;
 public class LoginModel(ToeicApiClient api, IConfiguration configuration) : PageModel
 {
     [BindProperty]
-    [Required(ErrorMessage = "Vui lòng nhập email.")]
-    [EmailAddress(ErrorMessage = "Email không đúng định dạng.")]
+    [Required(ErrorMessage = "Email is required.")]
+    [EmailAddress(ErrorMessage = "Invalid email format.")]
     public string Email { get; set; } = string.Empty;
 
     [BindProperty]
-    [Required(ErrorMessage = "Vui lòng nhập mật khẩu.")]
+    [Required(ErrorMessage = "Password is required.")]
     public string Password { get; set; } = string.Empty;
 
     [BindProperty]
@@ -38,7 +38,7 @@ public class LoginModel(ToeicApiClient api, IConfiguration configuration) : Page
         var (data, error, requiresOtp, unverifiedEmail) = await api.LoginAsync(Email, Password);
         if (data is null)
         {
-            Error = error ?? "Email hoặc mật khẩu không chính xác.";
+            Error = error ?? "Invalid email or password.";
             RequiresOtp = requiresOtp;
             UnverifiedEmail = unverifiedEmail;
             return Page();
@@ -52,14 +52,14 @@ public class LoginModel(ToeicApiClient api, IConfiguration configuration) : Page
     {
         if (string.IsNullOrWhiteSpace(GoogleIdToken))
         {
-            Error = "Không tìm thấy thông tin đăng nhập Google.";
+            Error = "Google authentication credentials not found.";
             return Page();
         }
 
         var (data, error) = await api.GoogleLoginAsync(GoogleIdToken);
         if (data is null)
         {
-            Error = error ?? "Đăng nhập bằng Google không thành công.";
+            Error = error ?? "Google sign-in was unsuccessful.";
             return Page();
         }
 
@@ -79,6 +79,10 @@ public class LoginModel(ToeicApiClient api, IConfiguration configuration) : Page
         if (!string.IsNullOrEmpty(data.Avatar))
         {
             HttpContext.Session.SetString("avatar", data.Avatar);
+        }
+        if (data.Roles is not null && data.Roles.Count > 0)
+        {
+            HttpContext.Session.SetString("roles", string.Join(",", data.Roles));
         }
     }
 }

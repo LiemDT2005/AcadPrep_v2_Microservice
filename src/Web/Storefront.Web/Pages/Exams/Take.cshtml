@@ -1,22 +1,22 @@
 @page "{id:guid}"
 @model Storefront.Web.Pages.Exams.TakeModel
-@{ ViewData["Title"] = Model.Exam?.Title ?? "Làm bài"; }
+@{ ViewData["Title"] = Model.Exam?.Title ?? "Take Test"; }
 @if (Model.Exam is null)
 {
-    <div class="alert alert-error">Không tìm thấy đề.</div>
+    <div class="alert alert-error">Exam test not found.</div>
 }
 else if (Model.Result is not null)
 {
     <div class="alert alert-ok">
-        <h2>Hoàn thành: @Model.Result.ExamTitle</h2>
-        <p>Điểm: <strong>@Model.Result.Score%</strong> (@Model.Result.CorrectAnswers/@Model.Result.TotalQuestions đúng)</p>
-        <p>Event đã gửi tới Progress service. Xem <a asp-page="/Progress/Index">tiến độ</a>.</p>
+        <h2>Completed: @Model.Result.ExamTitle</h2>
+        <p>Score: <strong>@Model.Result.Score%</strong> (@Model.Result.CorrectAnswers/@Model.Result.TotalQuestions correct)</p>
+        <p>Event has been published to Progress service. View <a asp-page="/Progress/Index">progress</a>.</p>
     </div>
 }
 else
 {
     <h1>@Model.Exam.Title</h1>
-    <p class="meta">@Model.Exam.Part · @Model.Exam.TimeLimitMinutes phút</p>
+    <p class="meta">@Model.Exam.Part · @Model.Exam.TimeLimitMinutes minutes</p>
     @if (!string.IsNullOrEmpty(Model.Error))
     {
         <div class="alert alert-error">@Model.Error</div>
@@ -26,7 +26,7 @@ else
         {
             var q = Model.Exam.Questions[i];
             <div class="question">
-                <h4>Câu @q.Order. @q.Stem</h4>
+                <h4>Question @q.Order. @q.Stem</h4>
                 <input type="hidden" name="Answers[@i].QuestionId" value="@q.Id" />
                 <div class="options">
                     <label><input type="radio" name="Answers[@i].Answer" value="A" required /> A. @q.OptionA</label>
@@ -36,6 +36,6 @@ else
                 </div>
             </div>
         }
-        <button class="btn" type="submit">Nộp bài</button>
+        <button class="btn" type="submit">Submit Test</button>
     </form>
 }

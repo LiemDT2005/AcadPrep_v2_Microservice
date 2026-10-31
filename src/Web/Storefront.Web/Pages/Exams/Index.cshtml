@@ -1,11 +1,11 @@
 @page
 @model Storefront.Web.Pages.Exams.IndexModel
-@{ ViewData["Title"] = "Luyện đề"; }
-<h1>Luyện đề</h1>
-<p class="meta">Exam microservice — nộp bài sẽ publish event tới Progress qua RabbitMQ.</p>
+@{ ViewData["Title"] = "Practice Tests"; }
+<h1>Practice Tests</h1>
+<p class="meta">Exam microservice — submitting test publishes an event to Progress via RabbitMQ.</p>
 @if (string.IsNullOrEmpty(HttpContext.Session.GetString("jwt")))
 {
-    <div class="alert alert-error">Bạn cần <a asp-page="/Account/Login">đăng nhập</a> để nộp bài.</div>
+    <div class="alert alert-error">You must <a asp-page="/Account/Login">sign in</a> to take and submit tests.</div>
 }
 <div class="grid">
 @foreach (var e in Model.Exams)
@@ -13,9 +13,9 @@
     <div class="card">
         <span class="badge">@e.Part</span>
         <h3>@e.Title</h3>
-        <p class="meta">@e.QuestionCount câu · @e.TimeLimitMinutes phút</p>
+        <p class="meta">@e.QuestionCount questions · @e.TimeLimitMinutes min</p>
         <p>@e.Description</p>
-        <a class="btn" asp-page="./Take" asp-route-id="@e.Id">Làm bài</a>
+        <a class="btn" asp-page="./Take" asp-route-id="@e.Id">Take Test</a>
     </div>
 }
 </div>

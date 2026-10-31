@@ -1,52 +1,255 @@
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@{
+    var name = Context.Session.GetString("name");
+    var avatar = Context.Session.GetString("avatar");
+    var jwtToken = Context.Session.GetString("jwt");
+    var roles = Context.Session.GetString("roles") ?? string.Empty;
+    var isAdmin = roles.Split(',').Contains("Admin");
+    var isAuthenticated = !string.IsNullOrEmpty(name);
+
+    var fallbackAvatar = $"https://api.dicebear.com/9.x/initials/svg?seed={Uri.EscapeDataString(string.IsNullOrWhiteSpace(name) ? "AcadPrep" : name)}";
+    var userAvatar = string.IsNullOrWhiteSpace(avatar) ? fallbackAvatar : avatar;
+}
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - TOEIC Learning</title>
+    <title>@ViewData["Title"] - AcadPrep</title>
+
+    <!-- Google Fonts & Material Symbols (AcadPrep Stitch Design) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+
+    <!-- Tailwind CSS with AcadPrep Design Tokens -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                  "background": "#fcf8ff",
+                  "primary": "#1e00a9",
+                  "primary-container": "#3525cd",
+                  "on-primary": "#ffffff",
+                  "on-surface": "#1b1b24",
+                  "on-surface-variant": "#464555",
+                  "surface-container-lowest": "#ffffff",
+                  "surface-container-low": "#f5f2ff",
+                  "surface-container": "#efe9f8",
+                  "surface-container-high": "#e9e4f0",
+                  "surface-variant": "#e5e1ec",
+                  "outline": "#787680",
+                  "outline-variant": "#c7c4d8",
+                  "secondary": "#5e5c71",
+                  "secondary-container": "#e4dffa",
+                  "on-secondary-container": "#1b1a2c",
+                  "tertiary": "#006c4c",
+                  "tertiary-container": "#89f8c7",
+                  "on-tertiary-container": "#002115",
+                  "error": "#ba1a1a",
+                  "error-container": "#ffdad6",
+                  "on-error-container": "#410002"
+              },
+              fontFamily: {
+                  sans: ["Inter", "sans-serif"]
+              }
+            }
+          }
+        }
+    </script>
+
+    <!-- Base stylesheet for modals and component fallbacks -->
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
-<body>
-<header class="topbar">
-    <a class="brand" asp-page="/Index">TOEIC Learning</a>
-    <nav>
-        <a asp-page="/Courses/Index">Khóa học</a>
-        <a asp-page="/Exams/Index">Luyện đề</a>
-        <a asp-page="/Progress/Index">Tiến độ</a>
-        @{
-            var name = Context.Session.GetString("name");
-            var avatar = Context.Session.GetString("avatar");
-        }
-        @if (string.IsNullOrEmpty(name))
-        {
-            <a asp-page="/Account/Login" class="btn">Đăng nhập</a>
-            <a asp-page="/Account/Register" class="btn btn-outline">Đăng ký</a>
-        }
-        else
-        {
-            <a asp-page="/Account/Profile" style="display: flex; align-items: center; gap: 0.5rem; text-decoration: none; color: var(--ink); font-weight: 600;">
-                @if (!string.IsNullOrEmpty(avatar))
-                {
-                    <img src="@avatar" alt="@name" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover;" />
-                }
-                else
-                {
-                    <span style="width: 28px; height: 28px; border-radius: 50%; background: var(--brand); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold;">
-                        @(string.IsNullOrWhiteSpace(name) ? "U" : name.Substring(0, 1).ToUpper())
-                    </span>
-                }
-                <span>@name</span>
+<body class="bg-background text-on-surface font-sans min-h-screen flex flex-col antialiased">
+
+@if (isAuthenticated)
+{
+    <!-- Authenticated Header (Deep Indigo - AcadPrep Stitch) -->
+    <header class="sticky top-0 z-50 w-full bg-primary text-on-primary shadow-md font-sans">
+        <div class="max-w-7xl mx-auto flex justify-between items-center h-16 px-4 md:px-8">
+            <div class="flex items-center gap-8">
+                <!-- Brand Logo -->
+                <a asp-page="/Index" class="flex items-center gap-2 text-white hover:opacity-90 transition-opacity no-underline">
+                    <span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' 1;">school</span>
+                    <span class="text-[20px] font-extrabold tracking-tight">AcadPrep</span>
+                </a>
+
+                <!-- Navigation Links -->
+                <nav class="hidden md:flex items-center gap-6 text-[14px] font-medium">
+                    <a asp-page="/Index" class="text-white hover:text-white/80 transition-opacity no-underline">Home</a>
+                    <a asp-page="/Courses/Index" class="text-white/80 hover:text-white transition-opacity no-underline">Courses</a>
+                    <a asp-page="/Exams/Index" class="text-white/80 hover:text-white transition-opacity no-underline">Practice Tests</a>
+                    <a asp-page="/Progress/Index" class="text-white/80 hover:text-white transition-opacity no-underline">Progress</a>
+                    @if (isAdmin)
+                    {
+                        <a asp-page="/Admin/Users/Index" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary-container text-primary font-bold hover:bg-white transition-colors no-underline text-[13px]">
+                            <span class="material-symbols-outlined text-[16px]">admin_panel_settings</span> Admin CMS
+                        </a>
+                    }
+                </nav>
+            </div>
+
+            <!-- Trailing Actions (Notifications, User Profile, Logout) -->
+            <div class="flex items-center gap-4">
+                <button class="p-2 rounded-full hover:bg-white/10 transition-colors relative bg-transparent border-0 text-white flex items-center" title="Notifications">
+                    <span class="material-symbols-outlined text-[22px]">notifications</span>
+                    <span class="absolute top-2 right-2 w-2 h-2 bg-amber-400 rounded-full border-2 border-primary"></span>
+                </button>
+
+                <div class="flex items-center gap-3 pl-4 border-l border-white/20">
+                    <a asp-page="/Account/Profile" class="flex items-center gap-2.5 text-white hover:opacity-90 transition-opacity no-underline" title="View Profile">
+                        <div class="hidden sm:block text-right">
+                            <p class="m-0 text-[13px] font-semibold leading-tight text-white">@name</p>
+                            <p class="m-0 text-[11px] text-white/70">@(isAdmin ? "Administrator" : "Student")</p>
+                        </div>
+                        <img src="@userAvatar" alt="@name" class="w-9 h-9 rounded-full border-2 border-white/90 object-cover shadow-sm bg-white" />
+                    </a>
+
+                    <form method="post" asp-page="/Account/Logout" class="inline m-0">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="flex items-center border-0 bg-transparent p-2 text-white hover:text-red-200 transition-colors cursor-pointer" title="Sign Out">
+                            <span class="material-symbols-outlined text-[22px]">logout</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </header>
+}
+else
+{
+    <!-- Guest Header (AcadPrep Stitch Clean White) -->
+    <header class="sticky top-0 z-50 bg-surface-container-lowest border-b border-outline-variant w-full h-[64px] font-sans">
+        <div class="flex justify-between items-center w-full px-4 md:px-8 max-w-7xl mx-auto h-full">
+            <!-- Brand Logo -->
+            <a asp-page="/Index" class="flex items-center gap-2 group no-underline">
+                <span class="material-symbols-outlined text-primary text-[28px]" style="font-variation-settings: 'FILL' 1;">school</span>
+                <span class="text-[20px] font-bold text-primary-container leading-[28px]">AcadPrep</span>
             </a>
-            <a asp-page="/Account/Logout" class="btn btn-outline" style="font-size: 0.85rem; padding: 0.45rem 0.85rem;">Đăng xuất</a>
-        }
-    </nav>
-</header>
-<main class="container">
+
+            <!-- Navigation Links -->
+            <nav class="hidden md:flex items-center h-full gap-6 text-[15px] font-medium">
+                <a asp-page="/Index" class="text-primary-container font-semibold border-b-2 border-primary-container py-5 no-underline">Home</a>
+                <a asp-page="/Courses/Index" class="text-on-surface-variant hover:text-primary transition-colors py-5 no-underline">Courses</a>
+                <a asp-page="/Exams/Index" class="text-on-surface-variant hover:text-primary transition-colors py-5 no-underline">Practice Tests</a>
+                <a asp-page="/Progress/Index" class="text-on-surface-variant hover:text-primary transition-colors py-5 no-underline">Progress</a>
+            </nav>
+
+            <!-- Trailing Actions -->
+            <div class="flex items-center gap-3">
+                <a asp-page="/Account/Login"
+                   class="inline-flex items-center justify-center px-4 py-2 rounded-lg border border-outline-variant text-on-surface text-[14px] font-medium hover:bg-surface-container-low transition-colors duration-100 no-underline">
+                   Sign In
+                </a>
+                <a asp-page="/Account/Register"
+                   class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-primary-container text-white text-[14px] font-medium hover:opacity-90 active:scale-95 transition-all duration-100 shadow-sm border-0 no-underline">
+                   Sign Up
+                </a>
+            </div>
+        </div>
+    </header>
+}
+
+<!-- Main Application Content -->
+<main role="main" class="flex-grow w-full max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8 font-sans">
     @RenderBody()
 </main>
-<footer class="footer">
-    <p>Demo microservices · Clean Architecture · YARP · RabbitMQ · Redis · Razor Pages</p>
+
+<!-- Stitch AcadPrep Footer -->
+<footer class="bg-surface-container border-t border-outline-variant pt-10 pb-8 font-sans mt-auto">
+    <div class="max-w-7xl mx-auto px-4 md:px-8 grid grid-cols-2 md:grid-cols-4 gap-8">
+        <div class="col-span-2 md:col-span-1 space-y-3">
+            <h3 class="text-[22px] font-extrabold text-primary flex items-center gap-2">
+                <span class="material-symbols-outlined text-[24px]">school</span> AcadPrep
+            </h3>
+            <p class="text-[13px] text-on-surface-variant leading-relaxed">
+                Smart AI-powered TOEIC test prep platform helping learners optimize study paths and reach high scores efficiently.
+            </p>
+            <div class="flex gap-4 text-outline pt-2">
+                <span class="material-symbols-outlined cursor-pointer hover:text-primary transition-colors">public</span>
+                <span class="material-symbols-outlined cursor-pointer hover:text-primary transition-colors">alternate_email</span>
+                <span class="material-symbols-outlined cursor-pointer hover:text-primary transition-colors">share</span>
+            </div>
+        </div>
+        <div class="space-y-3">
+            <h4 class="text-[13px] font-bold uppercase tracking-wider text-on-surface">About AcadPrep</h4>
+            <nav class="flex flex-col gap-2 text-[13px] text-on-surface-variant">
+                <a asp-page="/Index" class="hover:text-primary transition-colors no-underline">Platform Overview</a>
+                <a href="#" class="hover:text-primary transition-colors no-underline">Team & Instructors</a>
+                <a href="#" class="hover:text-primary transition-colors no-underline">Careers</a>
+            </nav>
+        </div>
+        <div class="space-y-3">
+            <h4 class="text-[13px] font-bold uppercase tracking-wider text-on-surface">Learning</h4>
+            <nav class="flex flex-col gap-2 text-[13px] text-on-surface-variant">
+                <a asp-page="/Courses/Index" class="hover:text-primary transition-colors no-underline">TOEIC Courses</a>
+                <a asp-page="/Exams/Index" class="hover:text-primary transition-colors no-underline">Exam Bank</a>
+                <a asp-page="/Progress/Index" class="hover:text-primary transition-colors no-underline">Track Progress</a>
+            </nav>
+        </div>
+        <div class="space-y-3">
+            <h4 class="text-[13px] font-bold uppercase tracking-wider text-on-surface">Student Support</h4>
+            <nav class="flex flex-col gap-2 text-[13px] text-on-surface-variant">
+                <a href="#" class="hover:text-primary transition-colors no-underline">Help Center</a>
+                <a href="#" class="hover:text-primary transition-colors no-underline">Exam Instructions</a>
+                <a href="#" class="hover:text-primary transition-colors no-underline">Report an Issue</a>
+            </nav>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 md:px-8 mt-8 pt-4 border-t border-outline-variant/60 flex flex-col md:flex-row justify-between items-center gap-4 text-[12px] text-outline">
+        <p class="m-0">© 2026 AcadPrep Platform · PRN232 Microservices Architecture. All rights reserved.</p>
+        <div class="flex gap-6">
+            <a href="#" class="text-outline hover:underline no-underline">Privacy Policy</a>
+            <a href="#" class="text-outline hover:underline no-underline">Terms of Service</a>
+        </div>
+    </div>
 </footer>
+
+<!-- Support Bar -->
+<div class="w-full bg-[#ba1a1a] text-white py-2 px-4 flex justify-center items-center gap-2 text-[13px] font-semibold tracking-wide shadow-inner">
+    <span class="material-symbols-outlined text-[18px]">support_agent</span>
+    <span>24/7 Student Technical Support (Hotline: 1900 xxxx)</span>
+</div>
+
 @await RenderSectionAsync("Scripts", required: false)
+
+@if (!string.IsNullOrEmpty(jwtToken))
+{
+    var gatewayUrl = Configuration["GatewayUrl"] ?? "http://localhost:5080";
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+    <script>
+        (function() {
+            const token = '@jwtToken';
+            const gatewayUrl = '@gatewayUrl';
+            const hubUrl = `${gatewayUrl}/identity/hubs/user`;
+
+            try {
+                const connection = new signalR.HubConnectionBuilder()
+                    .withUrl(hubUrl, {
+                        accessTokenFactory: () => token
+                    })
+                    .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
+                    .build();
+
+                connection.on("ForceLogout", function (reason) {
+                    alert(`⚠️ ACCOUNT LOCKED!\n\nReason: ${reason || 'System policy violation'}\n\nYou will be logged out of the system immediately.`);
+                    window.location.href = '/Account/Logout';
+                });
+
+                connection.start().catch(err => {
+                    console.warn("[SignalR ForceLogout] Hub connection error:", err.toString());
+                });
+            } catch (e) {
+                console.warn("[SignalR ForceLogout] Hub initialization error:", e);
+            }
+        })();
+    </script>
+}
+
 </body>
 </html>

@@ -1,6 +1,6 @@
-using Identity.API.Data;
+using Identity.API.Models;
 
-namespace Identity.API.Services;
+namespace Identity.API.IServices;
 
 public interface IOtpService
 {

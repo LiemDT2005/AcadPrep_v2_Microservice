@@ -1,6 +1,151 @@
-@Identity.API_HostAddress = http://localhost:5145
+@Identity_Host = http://localhost:5001
 
-GET {{Identity.API_HostAddress}}/weatherforecast/
+### 1. Health Check
+GET {{Identity_Host}}/health
 Accept: application/json
 
-###
+### 2. JWKS Public Keys (OIDC / Discovery)
+GET {{Identity_Host}}/.well-known/jwks.json
+Accept: application/json
+
+### 3. UC-1: Register New Account
+# @name register
+POST {{Identity_Host}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "learner_test@acadprep.com",
+  "password": "Password@123",
+  "fullName": "Test Learner",
+  "confirmPassword": "Password@123"
+}
+
+### 4. UC-2: Verify OTP
+POST {{Identity_Host}}/api/auth/verify-otp
+Content-Type: application/json
+
+{
+  "email": "learner_test@acadprep.com",
+  "otp": "123456"
+}
+
+### 5. UC-2: Resend OTP
+POST {{Identity_Host}}/api/auth/resend-otp
+Content-Type: application/json
+
+{
+  "email": "learner_test@acadprep.com"
+}
+
+### 6. UC-5.1: Login (Admin)
+# @name loginAdmin
+POST {{Identity_Host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@acadprep.com",
+  "password": "Admin@123456"
+}
+
+### Save Admin Token
+@adminToken = {{loginAdmin.response.body.token}}
+@adminRefreshToken = {{loginAdmin.response.body.refreshToken}}
+
+### 7. Token Refresh (Rotation)
+POST {{Identity_Host}}/api/auth/refresh-token
+Content-Type: application/json
+
+{
+  "refreshToken": "{{adminRefreshToken}}"
+}
+
+### 8. UC-7.1: View My Profile
+GET {{Identity_Host}}/api/auth/me
+Authorization: Bearer {{adminToken}}
+Accept: application/json
+
+### 9. UC-7.2: Update Profile
+PUT {{Identity_Host}}/api/auth/profile
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "fullName": "System Administrator Updated",
+  "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb"
+}
+
+### 10. UC-7.3: Change Password
+POST {{Identity_Host}}/api/auth/change-password
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "currentPassword": "Admin@123456",
+  "newPassword": "NewAdminPass@123",
+  "confirmPassword": "NewAdminPass@123"
+}
+
+### 11. UC-8: Forgot Password
+POST {{Identity_Host}}/api/auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "learner_test@acadprep.com"
+}
+
+### 12. UC-8: Reset Password
+POST {{Identity_Host}}/api/auth/reset-password
+Content-Type: application/json
+
+{
+  "email": "learner_test@acadprep.com",
+  "otp": "123456",
+  "newPassword": "NewLearnerPass@123",
+  "confirmPassword": "NewLearnerPass@123"
+}
+
+### 13. UC-6: Logout & Revoke Session
+POST {{Identity_Host}}/api/auth/logout
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "refreshToken": "{{adminRefreshToken}}"
+}
+
+### ===================================================================
+### ADMIN CMS ENDPOINTS (Requires Role = "Admin")
+### ===================================================================
+
+### 14. UC-19.1: Get Users List (Pagination, Search, Filter)
+GET {{Identity_Host}}/api/users?pageIndex=1&pageSize=10&search=&role=
+Authorization: Bearer {{adminToken}}
+Accept: application/json
+
+### 15. UC-19.1: Export Users to CSV
+GET {{Identity_Host}}/api/users/export-csv
+Authorization: Bearer {{adminToken}}
+
+### 16. UC-19.2: Get User Details & Recent Sessions
+GET {{Identity_Host}}/api/users/{{loginAdmin.response.body.userId}}
+Authorization: Bearer {{adminToken}}
+Accept: application/json
+
+### 17. UC-19.4: Assign Roles
+PUT {{Identity_Host}}/api/users/{{loginAdmin.response.body.userId}}/roles
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "roles": ["Admin", "Moderator"]
+}
+
+### 18. UC-19.3: Update Account Status (Ban / Unban)
+PUT {{Identity_Host}}/api/users/SOME_USER_ID/status
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "status": 2,
+  "reason": "Suspicious login activity"
+}

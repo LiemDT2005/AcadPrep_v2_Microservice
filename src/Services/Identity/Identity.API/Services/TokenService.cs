@@ -1,18 +1,33 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
-using Identity.API.Data;
+using Identity.API.IRepositories;
+using Identity.API.IServices;
+using Identity.API.Models;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Identity.API.Services;
 
-public class TokenService(IConfiguration configuration, IWebHostEnvironment env, IdentityDbContext dbContext)
+public class TokenService : ITokenService
 {
     private const string KeyId = "acadprep-rsa-key-1";
+    private readonly IConfiguration _configuration;
+    private readonly IWebHostEnvironment _env;
+    private readonly IRefreshTokenRepository _refreshTokenRepository;
+
+    public TokenService(
+        IConfiguration configuration,
+        IWebHostEnvironment env,
+        IRefreshTokenRepository refreshTokenRepository)
+    {
+        _configuration = configuration;
+        _env = env;
+        _refreshTokenRepository = refreshTokenRepository;
+    }
 
     public (string Token, DateTime ExpiresAt) CreateToken(AppUser user, IEnumerable<string> roles)
     {
-        var jwt = configuration.GetSection("Jwt");
+        var jwt = _configuration.GetSection("Jwt");
         var expireHours = double.Parse(jwt["ExpireHours"] ?? "8");
         var expiresUtc = DateTime.UtcNow.AddHours(expireHours);
 
@@ -20,7 +35,7 @@ public class TokenService(IConfiguration configuration, IWebHostEnvironment env,
         string pemContent;
         if (!string.IsNullOrEmpty(keyPath))
         {
-            var fullPath = Path.IsPathRooted(keyPath) ? keyPath : Path.Combine(env.ContentRootPath, keyPath);
+            var fullPath = Path.IsPathRooted(keyPath) ? keyPath : Path.Combine(_env.ContentRootPath, keyPath);
             pemContent = File.Exists(fullPath) ? File.ReadAllText(fullPath) : (jwt["PrivateKey"] ?? string.Empty);
         }
         else
@@ -67,7 +82,7 @@ public class TokenService(IConfiguration configuration, IWebHostEnvironment env,
     {
         var randomBytes = RandomNumberGenerator.GetBytes(64);
         var token = Convert.ToBase64String(randomBytes);
-        var expiresDays = double.Parse(configuration["Jwt:RefreshTokenExpireDays"] ?? "7");
+        var expiresDays = double.Parse(_configuration["Jwt:RefreshTokenExpireDays"] ?? "7");
 
         var refreshToken = new RefreshToken
         {
@@ -78,10 +93,9 @@ public class TokenService(IConfiguration configuration, IWebHostEnvironment env,
             CreatedByIp = ipAddress
         };
 
-        dbContext.RefreshTokens.Add(refreshToken);
-        await dbContext.SaveChangesAsync();
+        await _refreshTokenRepository.AddAsync(refreshToken);
+        await _refreshTokenRepository.SaveChangesAsync();
 
         return refreshToken;
     }
 }
-

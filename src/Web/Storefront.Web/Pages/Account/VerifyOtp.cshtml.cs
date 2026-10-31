@@ -8,13 +8,13 @@ namespace Storefront.Web.Pages.Account;
 public class VerifyOtpModel(ToeicApiClient api) : PageModel
 {
     [BindProperty(SupportsGet = true)]
-    [Required(ErrorMessage = "Email là bắt buộc.")]
+    [Required(ErrorMessage = "Email is required.")]
     [EmailAddress]
     public string Email { get; set; } = string.Empty;
 
     [BindProperty]
-    [Required(ErrorMessage = "Vui lòng nhập mã OTP.")]
-    [RegularExpression(@"^\d{6}$", ErrorMessage = "Mã OTP phải đúng 6 chữ số.")]
+    [Required(ErrorMessage = "OTP code is required.")]
+    [RegularExpression(@"^\d{6}$", ErrorMessage = "OTP code must be exactly 6 digits.")]
     public string Otp { get; set; } = string.Empty;
 
     public string? Error { get; set; }
@@ -32,18 +32,17 @@ public class VerifyOtpModel(ToeicApiClient api) : PageModel
     {
         if (string.IsNullOrWhiteSpace(Otp) || Otp.Length != 6)
         {
-            Error = "Vui lòng nhập đúng 6 chữ số mã OTP.";
+            Error = "Please enter all 6 digits of the OTP code.";
             return Page();
         }
 
         var (data, error) = await api.VerifyOtpAsync(Email, Otp);
         if (data is null)
         {
-            Error = error ?? "Xác thực không thành công. Vui lòng kiểm tra lại mã OTP.";
+            Error = error ?? "Verification failed. Please check the OTP code.";
             return Page();
         }
 
-        // Lưu thông tin phiên đăng nhập
         HttpContext.Session.SetString("jwt", data.Token);
         HttpContext.Session.SetString("name", data.FullName);
         HttpContext.Session.SetString("userId", data.UserId);
@@ -55,6 +54,10 @@ public class VerifyOtpModel(ToeicApiClient api) : PageModel
         {
             HttpContext.Session.SetString("avatar", data.Avatar);
         }
+        if (data.Roles is not null && data.Roles.Count > 0)
+        {
+            HttpContext.Session.SetString("roles", string.Join(",", data.Roles));
+        }
 
         return RedirectToPage("/Index");
     }
@@ -63,14 +66,14 @@ public class VerifyOtpModel(ToeicApiClient api) : PageModel
     {
         if (string.IsNullOrWhiteSpace(Email))
         {
-            Error = "Địa chỉ email không hợp lệ.";
+            Error = "Invalid email address.";
             return Page();
         }
 
         var (success, msg) = await api.ResendOtpAsync(Email);
         if (success)
         {
-            SuccessMessage = "Mã OTP mới đã được gửi! Vui lòng kiểm tra hộp thư email.";
+            SuccessMessage = "A new OTP code has been dispatched! Please check your email inbox.";
             Error = null;
         }
         else

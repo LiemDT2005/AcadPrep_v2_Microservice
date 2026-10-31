@@ -1,11 +1,16 @@
+using Identity.API.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace Identity.API.Data;
 
-public class IdentityDbContext(DbContextOptions<IdentityDbContext> options)
-    : IdentityDbContext<AppUser>(options)
+public class IdentityDbContext : IdentityDbContext<AppUser>
 {
+    public IdentityDbContext(DbContextOptions<IdentityDbContext> options)
+        : base(options)
+    {
+    }
+
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     protected override void OnModelCreating(ModelBuilder builder)

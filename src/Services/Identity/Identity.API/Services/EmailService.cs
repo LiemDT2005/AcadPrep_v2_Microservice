@@ -1,29 +1,37 @@
 using System.Net;
 using System.Net.Mail;
+using Identity.API.IServices;
 
 namespace Identity.API.Services;
 
-public class EmailService(ILogger<EmailService> logger, IConfiguration configuration) : IEmailService
+public class EmailService : IEmailService
 {
+    private readonly ILogger<EmailService> _logger;
+    private readonly IConfiguration _configuration;
+
+    public EmailService(ILogger<EmailService> logger, IConfiguration configuration)
+    {
+        _logger = logger;
+        _configuration = configuration;
+    }
+
     public async Task SendOtpEmailAsync(string toEmail, string otpCode, string recipientName)
     {
-        // 1. Luôn log rõ ràng ra console để dev/tester thấy ngay lập tức
-        logger.LogInformation("=================================================");
-        logger.LogInformation(" [EMAIL SERVICE] OTP DISPATCHED");
-        logger.LogInformation(" Recipient: {Recipient} <{Email}>", recipientName, toEmail);
-        logger.LogInformation(" OTP Code:  >>> {OtpCode} <<< (Expires in 5 minutes)", otpCode);
-        logger.LogInformation("=================================================");
+        _logger.LogInformation("=================================================");
+        _logger.LogInformation(" [EMAIL SERVICE] OTP DISPATCHED");
+        _logger.LogInformation(" Recipient: {Recipient} <{Email}>", recipientName, toEmail);
+        _logger.LogInformation(" OTP Code:  >>> {OtpCode} <<< (Expires in 5 minutes)", otpCode);
+        _logger.LogInformation("=================================================");
 
-        // 2. Nếu có cấu hình SMTP thực tế thì gửi qua SmtpClient
-        var smtpHost = configuration["EmailSettings:SmtpHost"];
+        var smtpHost = _configuration["EmailSettings:SmtpHost"];
         if (!string.IsNullOrEmpty(smtpHost))
         {
             try
             {
-                var smtpPort = int.Parse(configuration["EmailSettings:SmtpPort"] ?? "587");
-                var smtpUser = configuration["EmailSettings:SmtpUser"];
-                var smtpPass = configuration["EmailSettings:SmtpPass"];
-                var fromEmail = configuration["EmailSettings:FromEmail"] ?? "no-reply@acadprep.com";
+                var smtpPort = int.Parse(_configuration["EmailSettings:SmtpPort"] ?? "587");
+                var smtpUser = _configuration["EmailSettings:SmtpUser"];
+                var smtpPass = _configuration["EmailSettings:SmtpPass"];
+                var fromEmail = _configuration["EmailSettings:FromEmail"] ?? "no-reply@acadprep.com";
 
                 using var client = new SmtpClient(smtpHost, smtpPort)
                 {
@@ -34,29 +42,29 @@ public class EmailService(ILogger<EmailService> logger, IConfiguration configura
                 var mailMessage = new MailMessage
                 {
                     From = new MailAddress(fromEmail, "AcadPrep Platform"),
-                    Subject = $"[{otpCode}] Mã xác thực tài khoản AcadPrep của bạn",
+                    Subject = $"[{otpCode}] Your AcadPrep Verification Code",
                     Body = $@"
                         <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;'>
-                            <h2 style='color: #2563eb;'>AcadPrep — Xác thực tài khoản</h2>
-                            <p>Xin chào <strong>{recipientName}</strong>,</p>
-                            <p>Bạn vừa thực hiện thao tác yêu cầu mã xác thực OTP trên nền tảng AcadPrep. Mã của bạn là:</p>
+                            <h2 style='color: #2563eb;'>AcadPrep — Account Verification</h2>
+                            <p>Hello <strong>{recipientName}</strong>,</p>
+                            <p>You recently requested an OTP verification code on the AcadPrep platform. Your verification code is:</p>
                             <div style='text-align: center; margin: 24px 0;'>
                                 <span style='font-size: 32px; font-weight: bold; letter-spacing: 6px; color: #1e40af; background: #eff6ff; padding: 12px 24px; border-radius: 6px; border: 1px dashed #3b82f6;'>{otpCode}</span>
                             </div>
-                            <p style='color: #64748b; font-size: 14px;'>Mã này có hiệu lực trong vòng <strong>5 phút</strong>. Tuyệt đối không chia sẻ mã này cho bất kỳ ai.</p>
+                            <p style='color: #64748b; font-size: 14px;'>This code is valid for <strong>5 minutes</strong>. Do not share this code with anyone.</p>
                             <hr style='border: none; border-top: 1px solid #f1f5f9; margin: 20px 0;' />
-                            <p style='font-size: 12px; color: #94a3b8;'>Đội ngũ phát triển AcadPrep</p>
+                            <p style='font-size: 12px; color: #94a3b8;'>The AcadPrep Team</p>
                         </div>",
                     IsBodyHtml = true
                 };
-                mailMessage.To.Add(toEmail);
 
+                mailMessage.To.Add(toEmail);
                 await client.SendMailAsync(mailMessage);
-                logger.LogInformation("Email OTP sent successfully via SMTP to {Email}", toEmail);
+                _logger.LogInformation("OTP email sent successfully to {Email} via SMTP.", toEmail);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Failed to send OTP email via SMTP to {Email}. Fallback to console log.", toEmail);
+                _logger.LogError(ex, "Failed to send OTP email to {Email} via SMTP. Fallback to console log.", toEmail);
             }
         }
     }
