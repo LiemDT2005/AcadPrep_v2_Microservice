@@ -22,6 +22,23 @@ services:
       ACCEPT_EULA: "Y"
       MSSQL_SA_PASSWORD: "Password123!"
 
+  identity.api:
+    build:
+      context: .
+      dockerfile: src/Services/Identity/Identity.API/Dockerfile
+    container_name: acadprep-identity-api
+    ports:
+      - "5001:5001"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://0.0.0.0:5001
+      - Urls=http://0.0.0.0:5001
+      - ConnectionStrings__Default=Server=sqlserver,1433;Database=AcadPrep_IdentityDb;User Id=sa;Password=Password123!;TrustServerCertificate=True
+      - Redis__ConnectionString=redis:6379
+    depends_on:
+      - sqlserver
+      - redis
+
   exam.api:
     build:
       context: .
@@ -54,10 +71,12 @@ services:
       - ASPNETCORE_URLS=http://0.0.0.0:5080
       - Urls=http://0.0.0.0:5080
       - ReverseProxy__Clusters__exam__Destinations__d1__Address=http://exam.api:5003/
+      - ReverseProxy__Clusters__identity__Destinations__d1__Address=http://identity.api:5001/
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
       - exam.api
+      - identity.api
 
   storefront.web:
     build:
