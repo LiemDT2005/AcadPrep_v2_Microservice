@@ -4,7 +4,10 @@ builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
 
 builder.Services.AddCors(o => o.AddDefaultPolicy(p =>
-    p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
+    p.SetIsOriginAllowed(_ => true)
+     .AllowAnyHeader()
+     .AllowAnyMethod()
+     .AllowCredentials()));
 
 var app = builder.Build();
 app.UseCors();

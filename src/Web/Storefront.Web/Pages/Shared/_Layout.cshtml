@@ -1,13 +1,29 @@
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@{
+    var name = Context.Session.GetString("name");
+    var avatar = Context.Session.GetString("avatar");
+    var jwtToken = Context.Session.GetString("jwt");
+    var roles = Context.Session.GetString("roles") ?? string.Empty;
+    var isAdmin = roles.Split(',').Contains("Admin");
+    var isAuthenticated = !string.IsNullOrEmpty(name);
+
+    var fallbackAvatar = $"https://api.dicebear.com/9.x/initials/svg?seed={Uri.EscapeDataString(string.IsNullOrWhiteSpace(name) ? "AcadPrep" : name)}";
+    var userAvatar = string.IsNullOrWhiteSpace(avatar) ? fallbackAvatar : avatar;
+}
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - AcadPrep</title>
-    <!-- Tailwind CSS with Monolith Custom Palette -->
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+    <!-- Google Fonts & Material Symbols & FontAwesome -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+
+    <!-- Tailwind CSS with Monolith Custom Palette -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <script id="tailwind-config">
         tailwind.config = {
@@ -78,7 +94,6 @@
 <body class="bg-background text-on-surface min-h-screen flex flex-col font-[Inter]">
     @{
         var userName = Context.Session.GetString("name");
-        var userAvatar = Context.Session.GetString("avatar");
         var hasUser = !string.IsNullOrEmpty(Context.Session.GetString("jwt"));
         var currentPage = ViewContext.RouteData.Values["page"]?.ToString();
         string NavClass(string page) => currentPage == page || (page != "/Index" && currentPage?.StartsWith(page.Replace("/Index", "") + "/") == true)
@@ -107,28 +122,28 @@
                 <a href="/Admin/Exams" class="inline-flex items-center px-2.5 py-1 text-xs font-bold uppercase rounded bg-purple-100 text-purple-700 hover:bg-purple-200 transition" style="text-decoration:none;">
                     CMS Đề Thi
                 </a>
+                @if (isAdmin)
+                {
+                    <a asp-page="/Admin/Users/Index" class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold uppercase rounded bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition" style="text-decoration:none;">
+                        <span class="material-symbols-outlined text-[14px]">admin_panel_settings</span> CMS Users
+                    </a>
+                }
             </nav>
 
             <!-- Trailing Actions -->
             <div class="flex items-center gap-md">
                 @if (hasUser)
                 {
-                    <a asp-page="/Account/Profile" class="flex items-center gap-2 hover:opacity-80 transition" style="text-decoration:none;">
-                        @if (!string.IsNullOrEmpty(userAvatar))
-                        {
-                            <img src="@userAvatar" alt="@userName" class="w-8 h-8 rounded-full object-cover border border-primary/20" />
-                        }
-                        else
-                        {
-                            <span class="w-8 h-8 rounded-full bg-primary text-white font-bold text-xs flex items-center justify-center">
-                                @(string.IsNullOrWhiteSpace(userName) ? "U" : userName.Substring(0, 1).ToUpper())
-                            </span>
-                        }
+                    <a asp-page="/Account/Profile" class="flex items-center gap-2 hover:opacity-80 transition" style="text-decoration:none;" title="Tài khoản">
+                        <img src="@userAvatar" alt="@userName" class="w-8 h-8 rounded-full object-cover border border-primary/20 shadow-sm" />
                         <span class="text-sm font-semibold text-on-surface hidden sm:inline">@userName</span>
                     </a>
-                    <a asp-page="/Account/Logout"
-                       class="inline-flex items-center justify-center px-md py-sm rounded-lg border border-outline-variant text-on-surface text-[14px] font-medium hover:bg-surface-container-low transition-colors duration-100"
-                       style="text-decoration:none;">Đăng xuất</a>
+                    <form method="post" asp-page="/Account/Logout" class="inline m-0">
+                        @Html.AntiForgeryToken()
+                        <button type="submit"
+                           class="inline-flex items-center justify-center px-md py-sm rounded-lg border border-outline-variant text-on-surface text-[14px] font-medium hover:bg-surface-container-low transition-colors duration-100 cursor-pointer bg-transparent"
+                           style="text-decoration:none;">Đăng xuất</button>
+                    </form>
                 }
                 else
                 {
@@ -166,12 +181,49 @@
                 <a asp-page="/Exams/Index" class="hover:text-primary transition-colors">Luyện đề</a>
                 <a asp-page="/Progress/Index" class="hover:text-primary transition-colors">Tiến độ</a>
                 <a asp-page="/Performance/Leaderboard" class="hover:text-primary transition-colors">Bảng xếp hạng</a>
-                <a href="/Admin/Exams" class="hover:text-primary transition-colors">Quản trị CMS</a>
+                <a href="/Admin/Exams" class="hover:text-primary transition-colors">CMS Đề Thi</a>
+                @if (isAdmin)
+                {
+                    <a asp-page="/Admin/Users/Index" class="hover:text-primary transition-colors">CMS Users</a>
+                }
             </div>
         </div>
     </footer>
     }
 
     @await RenderSectionAsync("Scripts", required: false)
+
+    @if (!string.IsNullOrEmpty(jwtToken))
+    {
+        var gatewayUrl = Configuration["GatewayUrl"] ?? "http://localhost:5080";
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+        <script>
+            (function() {
+                const token = '@jwtToken';
+                const gatewayUrl = '@gatewayUrl';
+                const hubUrl = `${gatewayUrl}/identity/hubs/user`;
+
+                try {
+                    const connection = new signalR.HubConnectionBuilder()
+                        .withUrl(hubUrl, {
+                            accessTokenFactory: () => token
+                        })
+                        .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
+                        .build();
+
+                    connection.on("ForceLogout", function (reason) {
+                        alert(`⚠️ TÀI KHOẢN ĐÃ BỊ KHÓA!\n\nLý do: ${reason || 'Vi phạm chính sách hệ thống'}\n\nBạn sẽ được đăng xuất ngay lập tức.`);
+                        window.location.href = '/Account/Logout';
+                    });
+
+                    connection.start().catch(err => {
+                        console.warn("[SignalR ForceLogout] Hub connection error:", err.toString());
+                    });
+                } catch (e) {
+                    console.warn("[SignalR ForceLogout] Hub initialization error:", e);
+                }
+            })();
+        </script>
+    }
 </body>
 </html>

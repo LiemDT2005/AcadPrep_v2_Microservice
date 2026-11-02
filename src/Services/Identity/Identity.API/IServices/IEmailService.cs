@@ -1,4 +1,4 @@
-namespace Identity.API.Services;
+namespace Identity.API.IServices;
 
 public interface IEmailService
 {

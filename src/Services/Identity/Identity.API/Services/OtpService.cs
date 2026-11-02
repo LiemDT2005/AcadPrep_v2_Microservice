@@ -1,21 +1,32 @@
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
-using Identity.API.Data;
+using Identity.API.IServices;
+using Identity.API.Models;
 using Microsoft.AspNetCore.Identity;
 using StackExchange.Redis;
 
 namespace Identity.API.Services;
 
-public class OtpService(
-    UserManager<AppUser> userManager,
-    IServiceProvider serviceProvider,
-    ILogger<OtpService> logger) : IOtpService
+public class OtpService : IOtpService
 {
     private const int OtpExpiryMinutes = 5;
     private const int ResendCooldownSeconds = 60;
     private const int MaxFailedAttempts = 5;
 
-    // Bộ nhớ in-memory theo dõi số lần thử sai và cooldown khi Redis chưa chạy
+    private readonly UserManager<AppUser> _userManager;
+    private readonly IServiceProvider _serviceProvider;
+    private readonly ILogger<OtpService> _logger;
+
+    public OtpService(
+        UserManager<AppUser> userManager,
+        IServiceProvider serviceProvider,
+        ILogger<OtpService> logger)
+    {
+        _userManager = userManager;
+        _serviceProvider = serviceProvider;
+        _logger = logger;
+    }
+
     private static readonly ConcurrentDictionary<string, int> LocalFailedAttempts = new();
     private static readonly ConcurrentDictionary<string, DateTime> LocalCooldowns = new();
 
@@ -23,7 +34,7 @@ public class OtpService(
     {
         try
         {
-            return serviceProvider.GetService<IConnectionMultiplexer>();
+            return _serviceProvider.GetService<IConnectionMultiplexer>();
         }
         catch
         {
@@ -36,7 +47,7 @@ public class OtpService(
         var email = user.Email?.Trim().ToLowerInvariant() ?? string.Empty;
         var redis = GetRedis();
 
-        // 1. Kiểm tra Cooldown chống spam gửi mã (60 giây)
+        // 1. Check Resend Cooldown (60 seconds)
         if (redis is not null && redis.IsConnected)
         {
             try
@@ -45,35 +56,35 @@ public class OtpService(
                 if (await db.KeyExistsAsync($"otp_cd:{email}"))
                 {
                     var ttl = await db.KeyTimeToLiveAsync($"otp_cd:{email}");
-                    return (false, $"Vui lòng đợi {ttl?.Seconds ?? ResendCooldownSeconds} giây trước khi yêu cầu mã mới.", null);
+                    return (false, $"Please wait {ttl?.Seconds ?? ResendCooldownSeconds} seconds before requesting a new code.", null);
                 }
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Redis error while checking OTP cooldown");
+                _logger.LogWarning(ex, "Redis error while checking OTP cooldown");
             }
         }
         else if (LocalCooldowns.TryGetValue(email, out var cdEnd) && DateTime.UtcNow < cdEnd)
         {
             var remaining = (int)(cdEnd - DateTime.UtcNow).TotalSeconds;
-            return (false, $"Vui lòng đợi {remaining} giây trước khi yêu cầu mã mới.", null);
+            return (false, $"Please wait {remaining} seconds before requesting a new code.", null);
         }
 
-        // 2. Sinh mã 6 số ngẫu nhiên an toàn (Cryptographically secure)
+        // 2. Generate secure 6-digit OTP
         var otp = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
         var expiry = Common.TimeHelper.Now.AddMinutes(OtpExpiryMinutes);
 
-        // 3. Lưu vào User DB
+        // 3. Save to User DB
         user.OtpCode = otp;
         user.OtpExpiresAt = expiry;
         user.UpdatedAt = Common.TimeHelper.Now;
-        var updateResult = await userManager.UpdateAsync(user);
+        var updateResult = await _userManager.UpdateAsync(user);
         if (!updateResult.Succeeded)
         {
-            return (false, "Không thể lưu mã OTP vào hệ thống.", null);
+            return (false, "Unable to save OTP code to the system.", null);
         }
 
-        // 4. Lưu vào Redis / Memory Cache
+        // 4. Save to Redis / Memory Cache
         if (redis is not null && redis.IsConnected)
         {
             try
@@ -81,19 +92,19 @@ public class OtpService(
                 var db = redis.GetDatabase();
                 await db.StringSetAsync($"otp:{email}", otp, TimeSpan.FromMinutes(OtpExpiryMinutes));
                 await db.StringSetAsync($"otp_cd:{email}", "1", TimeSpan.FromSeconds(ResendCooldownSeconds));
-                await db.KeyDeleteAsync($"otp_fail:{email}"); // reset failed attempts
+                await db.KeyDeleteAsync($"otp_fail:{email}");
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Redis error while saving OTP");
+                _logger.LogWarning(ex, "Redis error while saving OTP");
             }
         }
 
         LocalCooldowns[email] = DateTime.UtcNow.AddSeconds(ResendCooldownSeconds);
         LocalFailedAttempts.TryRemove(email, out _);
 
-        logger.LogInformation("Generated OTP for {Email}: {Otp} (Expires in {Minutes}m)", email, otp, OtpExpiryMinutes);
-        return (true, "Mã OTP đã được tạo thành công.", otp);
+        _logger.LogInformation("Generated OTP for {Email}: {Otp} (Expires in {Minutes}m)", email, otp, OtpExpiryMinutes);
+        return (true, "OTP code generated successfully.", otp);
     }
 
     public async Task<(bool IsValid, string Message)> ValidateOtpAsync(AppUser user, string inputOtp)
@@ -101,19 +112,19 @@ public class OtpService(
         var email = user.Email?.Trim().ToLowerInvariant() ?? string.Empty;
         var redis = GetRedis();
 
-        // 1. Kiểm tra số lần thử sai (Brute-force protection)
+        // 1. Rate Limiting Brute-Force
         int currentFails = 0;
         if (redis is not null && redis.IsConnected)
         {
             try
             {
                 var db = redis.GetDatabase();
-                var val = await db.StringGetAsync($"otp_fail:{email}");
-                if (val.HasValue) int.TryParse(val, out currentFails);
+                var failVal = await db.StringGetAsync($"otp_fail:{email}");
+                if (failVal.HasValue) int.TryParse(failVal, out currentFails);
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Redis error checking failed attempts");
+                _logger.LogWarning(ex, "Redis error while reading OTP failed attempts");
             }
         }
         else
@@ -123,30 +134,34 @@ public class OtpService(
 
         if (currentFails >= MaxFailedAttempts)
         {
-            // Hủy mã OTP luôn
-            user.OtpCode = null;
-            user.OtpExpiresAt = null;
-            await userManager.UpdateAsync(user);
+            return (false, "You have entered an incorrect OTP more than 5 times. Please request a new OTP code.");
+        }
 
-            if (redis is not null && redis.IsConnected)
+        // 2. Validate OTP
+        string? validOtp = null;
+        if (redis is not null && redis.IsConnected)
+        {
+            try
             {
                 var db = redis.GetDatabase();
-                await db.KeyDeleteAsync($"otp:{email}");
-                await db.KeyDeleteAsync($"otp_fail:{email}");
+                validOtp = await db.StringGetAsync($"otp:{email}");
             }
-            LocalFailedAttempts.TryRemove(email, out _);
-
-            return (false, "Bạn đã nhập sai quá 5 lần. Mã OTP đã bị hủy vì lý do bảo mật. Vui lòng yêu cầu gửi lại mã mới.");
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Redis error while fetching OTP");
+            }
         }
 
-        // 2. Kiểm tra hạn OTP
-        if (string.IsNullOrEmpty(user.OtpCode) || !user.OtpExpiresAt.HasValue || user.OtpExpiresAt.Value < Common.TimeHelper.Now)
+        if (string.IsNullOrEmpty(validOtp))
         {
-            return (false, "Mã OTP đã hết hạn hoặc không tồn tại.");
+            if (user.OtpExpiresAt == null || Common.TimeHelper.Now > user.OtpExpiresAt)
+            {
+                return (false, "OTP code has expired. Please request a new OTP code.");
+            }
+            validOtp = user.OtpCode;
         }
 
-        // 3. So khớp mã OTP
-        if (user.OtpCode != inputOtp.Trim())
+        if (string.IsNullOrEmpty(validOtp) || validOtp != inputOtp.Trim())
         {
             currentFails++;
             if (redis is not null && redis.IsConnected)
@@ -156,21 +171,32 @@ public class OtpService(
                     var db = redis.GetDatabase();
                     await db.StringSetAsync($"otp_fail:{email}", currentFails, TimeSpan.FromMinutes(OtpExpiryMinutes));
                 }
-                catch (Exception ex)
-                {
-                    logger.LogWarning(ex, "Redis error recording failed attempt");
-                }
+                catch { }
             }
             LocalFailedAttempts[email] = currentFails;
 
             var remainingTries = MaxFailedAttempts - currentFails;
-            return (false, $"Mã OTP không chính xác. Bạn còn {remainingTries} lần thử.");
+            if (remainingTries <= 0)
+            {
+                user.OtpCode = null;
+                user.OtpExpiresAt = null;
+                await _userManager.UpdateAsync(user);
+
+                if (redis is not null && redis.IsConnected)
+                {
+                    try { await redis.GetDatabase().KeyDeleteAsync($"otp:{email}"); } catch { }
+                }
+
+                return (false, "You have entered an incorrect OTP 5 times. This OTP has been invalidated for security.");
+            }
+
+            return (false, $"Incorrect OTP code. You have {remainingTries} attempts remaining.");
         }
 
-        // 4. Đúng mã -> Xóa OTP ngay lập tức
+        // 3. Valid OTP
         user.OtpCode = null;
         user.OtpExpiresAt = null;
-        await userManager.UpdateAsync(user);
+        await _userManager.UpdateAsync(user);
 
         if (redis is not null && redis.IsConnected)
         {
@@ -180,13 +206,11 @@ public class OtpService(
                 await db.KeyDeleteAsync($"otp:{email}");
                 await db.KeyDeleteAsync($"otp_fail:{email}");
             }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Redis cleanup error");
-            }
+            catch { }
         }
+
         LocalFailedAttempts.TryRemove(email, out _);
 
-        return (true, "Xác thực OTP thành công.");
+        return (true, "OTP code verified successfully.");
     }
 }

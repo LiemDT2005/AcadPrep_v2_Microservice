@@ -1,0 +1,675 @@
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@{
+    var name = Context.Session.GetString("name") ?? "Administrator";
+    var avatar = Context.Session.GetString("avatar");
+    var roles = Context.Session.GetString("roles") ?? "Admin";
+    var jwtToken = Context.Session.GetString("jwt");
+    var gatewayUrl = Configuration["GatewayUrl"] ?? "http://localhost:5080";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
+</head>
+<body class="admin-body">
+
+<div class="admin-wrapper">
+
+    <!-- ======================================================== -->
+    <!-- 1. VERTICAL COLLAPSIBLE SIDEBAR PANEL                    -->
+    <!-- ======================================================== -->
+    <aside id="adminSidebar" class="admin-sidebar">
+        <!-- Sidebar Header & Brand -->
+        <div class="admin-sidebar-header">
+            <a href="/Admin/Users/Index" class="admin-brand">
+                <div class="admin-brand-icon">A</div>
+                <div class="admin-brand-text">
+                    <span class="admin-brand-title">AcadPrep</span>
+                    <span class="admin-brand-badge">ADMIN CMS</span>
+                </div>
+            </a>
+            <button type="button" id="sidebarToggleBtn" class="admin-sidebar-toggle-btn" title="Toggle navigation sidebar" onclick="toggleSidebar()">
+                <span id="toggleIcon">◀</span>
+            </button>
+        </div>
+
+        <!-- Sidebar Navigation Options -->
+        <nav class="admin-nav">
+            <div class="admin-nav-group-title">NAVIGATION</div>
+
+            <a href="/Admin/Users/Index" class="admin-nav-item active" title="User Management">
+                <svg class="admin-nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                <span class="admin-nav-label">User Management</span>
+            </a>
+
+            <a href="/Index" class="admin-nav-item" title="Back to Student Portal">
+                <svg class="admin-nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                    <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+                <span class="admin-nav-label">Student Portal</span>
+            </a>
+
+            <a href="/Account/Logout" class="admin-nav-item" style="color: #fca5a5;" title="Sign out of system">
+                <svg class="admin-nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                    <polyline points="16 17 21 12 16 7"/>
+                    <line x1="21" y1="12" x2="9" y2="12"/>
+                </svg>
+                <span class="admin-nav-label">Sign Out</span>
+            </a>
+        </nav>
+
+        <!-- Sidebar Footer Admin Profile Widget -->
+        <div class="admin-sidebar-footer">
+            <button type="button" class="admin-user-widget" onclick="openProfileModal()" title="View Profile">
+                <div id="adminSidebarAvatarWrap">
+                    @if (!string.IsNullOrEmpty(avatar))
+                    {
+                        <img id="adminSidebarAvatarImg" src="@avatar" alt="@name" class="admin-user-avatar" />
+                    }
+                    else
+                    {
+                        <div id="adminSidebarAvatarPlaceholder" class="admin-user-avatar-placeholder">
+                            @(string.IsNullOrWhiteSpace(name) ? "A" : name.Substring(0, 1).ToUpper())
+                        </div>
+                    }
+                </div>
+                <div class="admin-user-info">
+                    <span id="adminSidebarName" class="admin-user-name">@name</span>
+                    <span class="admin-user-role">@roles</span>
+                </div>
+            </button>
+        </div>
+    </aside>
+
+    <!-- ======================================================== -->
+    <!-- 2. MAIN ADMIN CONTENT CONTAINER                          -->
+    <!-- ======================================================== -->
+    <div class="admin-main">
+        <!-- Topbar -->
+        <header class="admin-topbar">
+            <div class="admin-topbar-left">
+                <button type="button" class="btn btn-outline" style="padding: 0.4rem 0.65rem; font-size: 0.95rem; border-color: var(--admin-border);" onclick="toggleSidebar()" title="Toggle sidebar panel">
+                    ☰
+                </button>
+                <div class="admin-breadcrumb">
+                    <span>Admin</span>
+                    <span>/</span>
+                    <span class="admin-breadcrumb-active">@ViewData["Title"]</span>
+                </div>
+            </div>
+
+            <div class="admin-topbar-right">
+                <div class="admin-pulse-status">
+                    <span class="admin-pulse-dot"></span>
+                    <span>Real-time Active</span>
+                </div>
+
+                <button type="button" onclick="openProfileModal()" class="btn btn-outline" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.35rem 0.75rem; border-radius: 999px; font-size: 0.88rem;">
+                    <span id="adminTopbarAvatarWrap">
+                        @if (!string.IsNullOrEmpty(avatar))
+                        {
+                            <img id="adminTopbarAvatarImg" src="@avatar" alt="@name" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;" />
+                        }
+                        else
+                        {
+                            <span id="adminTopbarAvatarPlaceholder" style="width: 24px; height: 24px; border-radius: 50%; background: #2563eb; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold;">
+                                @(string.IsNullOrWhiteSpace(name) ? "A" : name.Substring(0, 1).ToUpper())
+                            </span>
+                        }
+                    </span>
+                    <span id="adminTopbarName">@name</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Body -->
+        <main class="admin-content">
+            @RenderBody()
+        </main>
+    </div>
+
+</div>
+
+<!-- ========================================================================== -->
+<!-- 3. POP-UP CHAIN: PROFILE ⇄ EDIT PROFILE ⇄ CHANGE PASSWORD                 -->
+<!-- ========================================================================== -->
+
+<!-- POP-UP 1: ADMINISTRATOR PROFILE MODAL -->
+<div id="profileModalBackdrop" class="modal-backdrop" onclick="handleBackdropClick(event, 'profileModalBackdrop')">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 class="modal-title">Administrator Profile</h3>
+            <button type="button" class="modal-close-btn" onclick="closeAllModals()">✕</button>
+        </div>
+
+        <div class="modal-body">
+            <div style="display: flex; align-items: center; gap: 1.25rem; margin-bottom: 1.5rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--admin-border);">
+                <div id="adminPopupAvatarWrap">
+                    @if (!string.IsNullOrEmpty(avatar))
+                    {
+                        <img id="popupAvatarImg" src="@avatar" alt="@name" style="width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 3px solid #2563eb; box-shadow: 0 4px 12px rgba(37,99,235,0.2);" />
+                    }
+                    else
+                    {
+                        <div id="popupAvatarPlaceholder" style="width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: bold;">
+                            @(string.IsNullOrWhiteSpace(name) ? "A" : name.Substring(0, 1).ToUpper())
+                        </div>
+                    }
+                </div>
+
+                <div>
+                    <h3 id="popupFullNameText" style="margin: 0 0 0.25rem; font-size: 1.25rem; color: var(--admin-ink);">@name</h3>
+                    <p style="margin: 0 0 0.5rem; color: var(--admin-muted); font-size: 0.9rem;">System Administrator Account</p>
+                    <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+                        <span class="badge" style="background: #e0e7ff; color: #3730a3; padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.78rem; font-weight: 700;">
+                            @roles
+                        </span>
+                        <span class="badge" style="background: #dcfce7; color: #166534; padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.78rem; font-weight: 700;">
+                            Active
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; background: #f8fafc; padding: 1rem; border-radius: 10px; border: 1px solid var(--admin-border); font-size: 0.88rem;">
+                <div>
+                    <span style="color: var(--admin-muted); display: block; font-size: 0.78rem;">Permissions</span>
+                    <strong style="color: var(--admin-ink);">Full Access (Admin)</strong>
+                </div>
+                <div>
+                    <span style="color: var(--admin-muted); display: block; font-size: 0.78rem;">Security</span>
+                    <strong style="color: #10b981;">2-Factor Token Auth</strong>
+                </div>
+                <div>
+                    <span style="color: var(--admin-muted); display: block; font-size: 0.78rem;">Session</span>
+                    <strong style="color: var(--admin-ink);">SignalR Connected</strong>
+                </div>
+                <div>
+                    <span style="color: var(--admin-muted); display: block; font-size: 0.78rem;">Account Action</span>
+                    <a href="/Account/Logout" style="color: #ef4444; font-weight: 600; text-decoration: none;">Sign Out</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline" style="padding: 0.6rem 1rem; font-size: 0.9rem;" onclick="closeAllModals()">
+                Close
+            </button>
+            <div style="display: flex; gap: 0.5rem;">
+                <button type="button" class="btn btn-outline" style="padding: 0.6rem 1rem; font-size: 0.9rem;" onclick="switchToEditProfileModal()">
+                    Edit Profile
+                </button>
+                <button type="button" class="btn" style="padding: 0.6rem 1rem; font-size: 0.9rem; background: var(--admin-primary); color: white;" onclick="switchToChangePasswordModal()">
+                    Change Password
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- POP-UP 2: EDIT PROFILE MODAL -->
+<div id="editProfileModalBackdrop" class="modal-backdrop" onclick="handleBackdropClick(event, 'editProfileModalBackdrop')">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 class="modal-title">Edit Administrator Profile</h3>
+            <button type="button" class="modal-close-btn" onclick="closeAllModals()">✕</button>
+        </div>
+
+        <form id="adminEditProfileForm" action="/Account/Profile?handler=UpdateProfile" method="post">
+            @Html.AntiForgeryToken()
+            <div class="modal-body">
+                <div id="editProfileAlert" style="display: none; padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.88rem;"></div>
+
+                <div class="form-group" style="margin-bottom: 1.1rem;">
+                    <label style="display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--admin-ink);">Display Full Name</label>
+                    <input type="text" name="FullName" id="modalInputFullName" value="@name" required minlength="2" maxlength="100" style="width: 100%; padding: 0.65rem 0.85rem; border: 1.5px solid var(--admin-border); border-radius: 8px; font-size: 0.95rem;" />
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1.1rem;">
+                    <label style="display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--admin-ink);">Avatar Image URL</label>
+                    <input type="url" name="Avatar" id="modalInputAvatar" value="@avatar" placeholder="https://example.com/avatar.jpg" style="width: 100%; padding: 0.65rem 0.85rem; border: 1.5px solid var(--admin-border); border-radius: 8px; font-size: 0.95rem;" oninput="updateAvatarPreview(this.value)" />
+                    <small style="color: var(--admin-muted); font-size: 0.78rem; display: block; margin-top: 0.25rem;">Supports direct image links (JPG, PNG, or WebP).</small>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 0.75rem; background: #f8fafc; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--admin-border);">
+                    <img id="modalPreviewImg" src="@(avatar ?? "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44'%3E%3Crect width='44' height='44' fill='%23e2e8f0'/%3E%3C/svg%3E")" alt="Preview" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 1px solid #cbd5e1;" />
+                    <span id="modalPreviewText" style="font-size: 0.82rem; color: var(--admin-muted);">Avatar preview</span>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" style="padding: 0.6rem 1rem;" onclick="switchToProfileModal()">
+                    ← Back to Profile
+                </button>
+                <button type="submit" id="adminEditProfileSubmitBtn" class="btn" style="padding: 0.6rem 1.25rem; background: var(--admin-primary); color: white; border: none; font-weight: 600;">
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- POP-UP 3: CHANGE PASSWORD MODAL -->
+<div id="changePasswordModalBackdrop" class="modal-backdrop" onclick="handleBackdropClick(event, 'changePasswordModalBackdrop')">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 class="modal-title">Change Password</h3>
+            <button type="button" class="modal-close-btn" onclick="closeAllModals()">✕</button>
+        </div>
+
+        <form id="adminChangePasswordForm" action="/Account/Profile?handler=ChangePassword" method="post">
+            @Html.AntiForgeryToken()
+            <div class="modal-body">
+                <div id="adminChangePasswordAlert" style="display: none; padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.88rem;"></div>
+
+                <div class="form-group" style="margin-bottom: 1.1rem;">
+                    <label style="display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--admin-ink);">Current Password</label>
+                    <input type="password" id="adminCurrentPass" name="CurrentPassword" required placeholder="••••••••" style="width: 100%; padding: 0.65rem 0.85rem; border: 1.5px solid var(--admin-border); border-radius: 8px; font-size: 0.95rem;" />
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1.1rem;">
+                    <label style="display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--admin-ink);">New Password</label>
+                    <input type="password" id="adminNewPass" name="NewPassword" required minlength="6" placeholder="At least 6 characters" style="width: 100%; padding: 0.65rem 0.85rem; border: 1.5px solid var(--admin-border); border-radius: 8px; font-size: 0.95rem;" oninput="checkAdminPasswordStrength(this.value)" />
+
+                    <!-- Password strength bar -->
+                    <div style="margin-top: 0.4rem;">
+                        <div style="height: 4px; width: 100%; background: #e2e8f0; border-radius: 2px; overflow: hidden;">
+                            <div id="adminStrengthBar" style="height: 100%; width: 0%; transition: all 0.3s ease; background: #ef4444;"></div>
+                        </div>
+                        <small id="adminStrengthText" style="display: block; margin-top: 0.25rem; font-size: 0.75rem; color: var(--admin-muted);">Password strength: Not entered</small>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1.25rem;">
+                    <label style="display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--admin-ink);">Confirm New Password</label>
+                    <input type="password" id="adminConfirmPass" name="ConfirmPassword" required minlength="6" placeholder="Re-enter new password" style="width: 100%; padding: 0.65rem 0.85rem; border: 1.5px solid var(--admin-border); border-radius: 8px; font-size: 0.95rem;" oninput="checkAdminPasswordMatch()" />
+                    <small id="adminMatchText" style="display: none; font-size: 0.75rem; margin-top: 0.25rem;"></small>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" style="padding: 0.6rem 1rem;" onclick="switchToProfileModal()">
+                    ← Back to Profile
+                </button>
+                <button type="submit" id="adminChangePasswordSubmitBtn" class="btn" style="padding: 0.6rem 1.25rem; background: #0f172a; color: white; border: none; font-weight: 600;">
+                    Update Password
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ========================================================================== -->
+<!-- 4. CORE ADMIN JAVASCRIPT: SIDEBAR TOGGLE & POPUP TRANSITIONS               -->
+<!-- ========================================================================== -->
+<script>
+    function toggleSidebar() {
+        const sidebar = document.getElementById('adminSidebar');
+        const icon = document.getElementById('toggleIcon');
+        if (!sidebar) return;
+
+        const isCollapsed = sidebar.classList.toggle('collapsed');
+        if (icon) {
+            icon.textContent = isCollapsed ? '▶' : '◀';
+        }
+        try {
+            localStorage.setItem('acadprep_admin_sidebar_collapsed', isCollapsed ? '1' : '0');
+        } catch {}
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        try {
+            const savedState = localStorage.getItem('acadprep_admin_sidebar_collapsed');
+            const sidebar = document.getElementById('adminSidebar');
+            const icon = document.getElementById('toggleIcon');
+            if (savedState === '1' && sidebar) {
+                sidebar.classList.add('collapsed');
+                if (icon) icon.textContent = '▶';
+            }
+        } catch {}
+    });
+
+    function openProfileModal() {
+        closeAllModals();
+        const pModal = document.getElementById('profileModalBackdrop');
+        if (pModal) pModal.classList.add('show');
+    }
+
+    function switchToEditProfileModal() {
+        const pModal = document.getElementById('profileModalBackdrop');
+        const eModal = document.getElementById('editProfileModalBackdrop');
+        if (pModal) pModal.classList.remove('show');
+        if (eModal) eModal.classList.add('show');
+    }
+
+    function switchToChangePasswordModal() {
+        const pModal = document.getElementById('profileModalBackdrop');
+        const cModal = document.getElementById('changePasswordModalBackdrop');
+        if (pModal) pModal.classList.remove('show');
+        if (cModal) cModal.classList.add('show');
+    }
+
+    function switchToProfileModal() {
+        const eModal = document.getElementById('editProfileModalBackdrop');
+        const cModal = document.getElementById('changePasswordModalBackdrop');
+        const pModal = document.getElementById('profileModalBackdrop');
+        if (eModal) eModal.classList.remove('show');
+        if (cModal) cModal.classList.remove('show');
+        if (pModal) pModal.classList.add('show');
+    }
+
+    function closeAllModals() {
+        document.querySelectorAll('.modal-backdrop').forEach(m => m.classList.remove('show'));
+    }
+
+    function handleBackdropClick(e, backdropId) {
+        if (e.target.id === backdropId) {
+            closeAllModals();
+        }
+    }
+
+    function updateAvatarPreview(url) {
+        const img = document.getElementById('modalPreviewImg');
+        const text = document.getElementById('modalPreviewText');
+        if (!img || !text) return;
+
+        if (url && url.trim()) {
+            img.src = url.trim();
+            text.textContent = "Verifying image...";
+            img.onload = () => { text.textContent = "Valid image ✓"; text.style.color = "#10b981"; };
+            img.onerror = () => { text.textContent = "Cannot load image from URL"; text.style.color = "#ef4444"; };
+        } else {
+            img.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44'%3E%3Crect width='44' height='44' fill='%23e2e8f0'/%3E%3C/svg%3E";
+            text.textContent = "No avatar image";
+            text.style.color = "var(--admin-muted)";
+        }
+    }
+
+    function checkAdminPasswordStrength(val) {
+        const bar = document.getElementById('adminStrengthBar');
+        const text = document.getElementById('adminStrengthText');
+        if (!bar || !text) return;
+
+        let score = 0;
+        if (!val) {
+            bar.style.width = '0%';
+            text.textContent = 'Password strength: Not entered';
+            return;
+        }
+
+        if (val.length >= 6) score += 25;
+        if (val.length >= 8) score += 25;
+        if (/[A-Z]/.test(val) && /[a-z]/.test(val)) score += 25;
+        if (/[0-9]/.test(val) || /[^A-Za-z0-9]/.test(val)) score += 25;
+
+        bar.style.width = score + '%';
+        if (score <= 25) {
+            bar.style.background = '#ef4444';
+            text.textContent = 'Strength: Weak (Min 6 characters)';
+            text.style.color = '#ef4444';
+        } else if (score <= 50) {
+            bar.style.background = '#f59e0b';
+            text.textContent = 'Strength: Medium';
+            text.style.color = '#f59e0b';
+        } else if (score <= 75) {
+            bar.style.background = '#3b82f6';
+            text.textContent = 'Strength: Good';
+            text.style.color = '#3b82f6';
+        } else {
+            bar.style.background = '#10b981';
+            text.textContent = 'Strength: Strong ✓';
+            text.style.color = '#10b981';
+        }
+        checkAdminPasswordMatch();
+    }
+
+    function checkAdminPasswordMatch() {
+        const p1 = document.getElementById('adminNewPass')?.value;
+        const p2 = document.getElementById('adminConfirmPass')?.value;
+        const matchText = document.getElementById('adminMatchText');
+        if (!matchText) return;
+
+        if (!p2) {
+            matchText.style.display = 'none';
+            return;
+        }
+
+        matchText.style.display = 'block';
+        if (p1 === p2) {
+            matchText.textContent = '✓ Passwords match.';
+            matchText.style.color = '#10b981';
+        } else {
+            matchText.textContent = '✕ Passwords do not match.';
+            matchText.style.color = '#ef4444';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // Edit Profile AJAX Handler
+        const editForm = document.getElementById('adminEditProfileForm');
+        if (editForm) {
+            editForm.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                const alertBox = document.getElementById('editProfileAlert');
+                const submitBtn = document.getElementById('adminEditProfileSubmitBtn');
+                if (alertBox) alertBox.style.display = 'none';
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Saving...';
+                }
+
+                try {
+                    const formData = new FormData(editForm);
+                    const res = await fetch('/Account/Profile?handler=UpdateProfile', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+
+                    const result = await res.json();
+                    if (res.ok && result.success) {
+                        if (alertBox) {
+                            alertBox.textContent = result.message || 'Profile updated successfully!';
+                            alertBox.style.background = '#dcfce7';
+                            alertBox.style.color = '#15803d';
+                            alertBox.style.border = '1px solid #bbf7d0';
+                            alertBox.style.display = 'block';
+                        }
+
+                        const newName = formData.get('FullName');
+                        const newAvatar = formData.get('Avatar');
+
+                        if (newName) {
+                            const pName = document.getElementById('popupFullNameText');
+                            if (pName) pName.textContent = newName;
+                            const sName = document.getElementById('adminSidebarName');
+                            if (sName) sName.textContent = newName;
+                            const tName = document.getElementById('adminTopbarName');
+                            if (tName) tName.textContent = newName;
+                        }
+
+                        const initial = (newName && newName.trim().length > 0) ? newName.trim()[0].toUpperCase() : 'A';
+                        
+                        const popupAvatarWrap = document.getElementById('adminPopupAvatarWrap');
+                        if (popupAvatarWrap) {
+                            if (newAvatar && newAvatar.trim()) {
+                                popupAvatarWrap.innerHTML = `<img id="popupAvatarImg" src="${newAvatar.trim()}" alt="${newName}" style="width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 3px solid #2563eb; box-shadow: 0 4px 12px rgba(37,99,235,0.2);" />`;
+                            } else {
+                                popupAvatarWrap.innerHTML = `<div id="popupAvatarPlaceholder" style="width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: bold;">${initial}</div>`;
+                            }
+                        }
+
+                        const sidebarAvatarWrap = document.getElementById('adminSidebarAvatarWrap');
+                        if (sidebarAvatarWrap) {
+                            if (newAvatar && newAvatar.trim()) {
+                                sidebarAvatarWrap.innerHTML = `<img id="adminSidebarAvatarImg" src="${newAvatar.trim()}" alt="${newName}" class="admin-user-avatar" />`;
+                            } else {
+                                sidebarAvatarWrap.innerHTML = `<div id="adminSidebarAvatarPlaceholder" class="admin-user-avatar-placeholder">${initial}</div>`;
+                            }
+                        }
+
+                        const topbarAvatarWrap = document.getElementById('adminTopbarAvatarWrap');
+                        if (topbarAvatarWrap) {
+                            if (newAvatar && newAvatar.trim()) {
+                                topbarAvatarWrap.innerHTML = `<img id="adminTopbarAvatarImg" src="${newAvatar.trim()}" alt="${newName}" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;" />`;
+                            } else {
+                                topbarAvatarWrap.innerHTML = `<span id="adminTopbarAvatarPlaceholder" style="width: 24px; height: 24px; border-radius: 50%; background: #2563eb; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold;">${initial}</span>`;
+                            }
+                        }
+
+                        setTimeout(() => {
+                            switchToProfileModal();
+                            if (alertBox) alertBox.style.display = 'none';
+                        }, 1000);
+                    } else {
+                        if (alertBox) {
+                            alertBox.textContent = result.error || result.message || 'Update failed.';
+                            alertBox.style.background = '#fee2e2';
+                            alertBox.style.color = '#b91c1c';
+                            alertBox.style.border = '1px solid #fecaca';
+                            alertBox.style.display = 'block';
+                        }
+                    }
+                } catch (err) {
+                    if (alertBox) {
+                        alertBox.textContent = 'Server connection error.';
+                        alertBox.style.background = '#fee2e2';
+                        alertBox.style.color = '#b91c1c';
+                        alertBox.style.border = '1px solid #fecaca';
+                        alertBox.style.display = 'block';
+                    }
+                } finally {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Save Changes';
+                    }
+                }
+            });
+        }
+
+        // Change Password AJAX Handler
+        const passForm = document.getElementById('adminChangePasswordForm');
+        if (passForm) {
+            passForm.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                const alertBox = document.getElementById('adminChangePasswordAlert');
+                const submitBtn = document.getElementById('adminChangePasswordSubmitBtn');
+                const newPass = document.getElementById('adminNewPass')?.value;
+                const confirmPass = document.getElementById('adminConfirmPass')?.value;
+
+                if (newPass !== confirmPass) {
+                    if (alertBox) {
+                        alertBox.textContent = 'Passwords do not match.';
+                        alertBox.style.background = '#fee2e2';
+                        alertBox.style.color = '#b91c1c';
+                        alertBox.style.border = '1px solid #fecaca';
+                        alertBox.style.display = 'block';
+                    }
+                    return;
+                }
+
+                if (alertBox) alertBox.style.display = 'none';
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Updating...';
+                }
+
+                try {
+                    const formData = new FormData(passForm);
+                    const res = await fetch('/Account/Profile?handler=ChangePassword', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+
+                    const result = await res.json();
+                    if (res.ok && result.success) {
+                        if (alertBox) {
+                            alertBox.textContent = result.message || 'Password changed successfully!';
+                            alertBox.style.background = '#dcfce7';
+                            alertBox.style.color = '#15803d';
+                            alertBox.style.border = '1px solid #bbf7d0';
+                            alertBox.style.display = 'block';
+                        }
+                        passForm.reset();
+                        setTimeout(() => {
+                            switchToProfileModal();
+                            if (alertBox) alertBox.style.display = 'none';
+                        }, 1200);
+                    } else {
+                        if (alertBox) {
+                            alertBox.textContent = result.error || result.message || 'Password update failed.';
+                            alertBox.style.background = '#fee2e2';
+                            alertBox.style.color = '#b91c1c';
+                            alertBox.style.border = '1px solid #fecaca';
+                            alertBox.style.display = 'block';
+                        }
+                    }
+                } catch (err) {
+                    if (alertBox) {
+                        alertBox.textContent = 'Server connection error.';
+                        alertBox.style.background = '#fee2e2';
+                        alertBox.style.color = '#b91c1c';
+                        alertBox.style.border = '1px solid #fecaca';
+                        alertBox.style.display = 'block';
+                    }
+                } finally {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Update Password';
+                    }
+                }
+            });
+        }
+    });
+</script>
+
+@if (!string.IsNullOrEmpty(jwtToken))
+{
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+    <script>
+        (function() {
+            const token = '@jwtToken';
+            const hubUrl = '@gatewayUrl/identity/hubs/user';
+
+            try {
+                const connection = new signalR.HubConnectionBuilder()
+                    .withUrl(hubUrl, { accessTokenFactory: () => token })
+                    .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
+                    .build();
+
+                connection.on("ForceLogout", function (reason) {
+                    alert(`⚠️ ACCOUNT LOCKED!\n\nReason: ${reason || 'Policy violation'}\n\nLogging out of the system.`);
+                    window.location.href = '/Account/Logout';
+                });
+
+                connection.start().catch(err => {
+                    console.warn("[Admin Hub] Connection error:", err.toString());
+                });
+            } catch (e) {
+                console.warn("[Admin Hub] Initialization error:", e);
+            }
+        })();
+    </script>
+}
+
+@await RenderSectionAsync("Scripts", required: false)
+
+</body>
+</html>

@@ -1,6 +1,10 @@
 using System.Security.Cryptography;
 using System.Text;
 using Identity.API.Data;
+using Identity.API.IRepositories;
+using Identity.API.IServices;
+using Identity.API.Models;
+using Identity.API.Repositories;
 using Identity.API.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -73,10 +77,17 @@ catch (Exception ex)
     Console.WriteLine($"[Redis Notice] Redis not connected ({redisConn}): {ex.Message}. Using in-memory fallback.");
 }
 
+// Repositories
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+
+// Services
 builder.Services.AddSingleton<ITokenBlacklistService, TokenBlacklistService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IOtpService, OtpService>();
-builder.Services.AddScoped<TokenService>();
+builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 builder.Services.AddAuthentication(opt =>
 {
@@ -99,6 +110,16 @@ builder.Services.AddAuthentication(opt =>
 
         opt.Events = new JwtBearerEvents
         {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
+                {
+                    context.Token = accessToken;
+                }
+                return Task.CompletedTask;
+            },
             OnTokenValidated = async context =>
             {
                 var blacklistService = context.HttpContext.RequestServices.GetRequiredService<ITokenBlacklistService>();
@@ -112,6 +133,7 @@ builder.Services.AddAuthentication(opt =>
         };
     });
 
+builder.Services.AddSignalR();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -136,7 +158,11 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
-builder.Services.AddCors(o => o.AddDefaultPolicy(p => p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
+builder.Services.AddCors(o => o.AddDefaultPolicy(p =>
+    p.SetIsOriginAllowed(_ => true)
+     .AllowAnyHeader()
+     .AllowAnyMethod()
+     .AllowCredentials()));
 
 var app = builder.Build();
 
@@ -153,6 +179,7 @@ app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHub<Identity.API.Hubs.UserHub>("/hubs/user");
 app.MapGet("/health", () => Results.Ok(new { status = "Healthy", service = "Identity" }));
 
 // Endpoint OIDC / JWKS công khai cho các microservices hoặc client truy vấn Public Key

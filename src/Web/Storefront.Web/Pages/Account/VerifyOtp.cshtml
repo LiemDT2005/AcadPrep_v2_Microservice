@@ -1,42 +1,118 @@
 @page
 @model Storefront.Web.Pages.Account.VerifyOtpModel
 @{
-    ViewData["Title"] = "Xác thực mã OTP - AcadPrep";
+    ViewData["Title"] = "Verify OTP — AcadPrep";
+    Layout = null;
 }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <meta name="description" content="Enter the 6-digit OTP code to activate your AcadPrep account." />
 
-<div class="auth-wrapper">
-    <div class="auth-card">
-        <div class="auth-header">
-            <div style="font-size: 3rem; margin-bottom: 0.5rem;">📩</div>
-            <h1>Xác thực Email</h1>
-            <p>Mã bảo mật 6 số đã được gửi tới hòm thư:</p>
-            <strong style="color: var(--brand); font-size: 1.05rem;">@Model.Email</strong>
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+
+    <script>
+        tailwind.config = {
+          theme: {
+            extend: {
+              colors: {
+                primary:        "#1e00a9",
+                "primary-dark": "#16007e",
+                accent:         "#3525cd",
+                muted:          "#464555",
+                error:          "#ba1a1a",
+                "error-bg":     "#ffdad6",
+                success:        "#006c4c",
+                "success-bg":   "#89f8c7"
+              },
+              fontFamily: { sans: ["Inter", "sans-serif"] },
+              boxShadow: { card: "0 4px 24px rgba(30,0,169,0.08), 0 1px 4px rgba(30,0,169,0.04)" }
+            }
+          }
+        }
+    </script>
+    <style>
+        body { font-family: "Inter", sans-serif; }
+        .login-bg { background: linear-gradient(135deg, #1e00a9 0%, #3525cd 40%, #6b5fff 100%); }
+        .glass-card { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+        .btn-primary { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(30,0,169,0.35); }
+        .otp-digit {
+            width: 48px;
+            height: 56px;
+            font-size: 24px;
+            font-weight: 700;
+            text-align: center;
+            border-radius: 12px;
+            border: 2px solid #cbd5e1;
+            transition: all 0.15s ease;
+            outline: none;
+        }
+        .otp-digit:focus {
+            border-color: #1e00a9;
+            box-shadow: 0 0 0 3px rgba(30,0,169,0.15);
+        }
+    </style>
+</head>
+<body class="min-h-screen login-bg flex items-center justify-center p-4">
+
+<div class="w-full max-w-md">
+
+    <!-- Logo / Brand -->
+    <div class="text-center mb-6">
+        <a href="/" class="inline-flex items-center justify-center w-16 h-16 bg-white/20 rounded-2xl mb-3 backdrop-blur-sm shadow-md text-white no-underline hover:scale-105 transition-transform">
+            <span class="material-symbols-outlined text-[36px]" style="font-variation-settings: 'FILL' 1;">school</span>
+        </a>
+        <h1 class="text-3xl font-extrabold text-white tracking-tight">AcadPrep</h1>
+        <p class="text-white/80 text-sm mt-1">Verify Your Account</p>
+    </div>
+
+    <!-- Verify OTP Card -->
+    <div class="glass-card bg-white rounded-3xl shadow-card p-7 sm:p-8">
+        <div class="text-center mb-6">
+            <div class="w-14 h-14 bg-indigo-50 text-primary rounded-full flex items-center justify-center mx-auto mb-3 shadow-inner">
+                <span class="material-symbols-outlined text-[28px]">mark_email_read</span>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-900 mb-1">Verify Email</h2>
+            <p class="text-muted text-xs sm:text-sm">A 6-digit security code has been sent to:</p>
+            <p class="font-bold text-primary text-sm mt-1 break-all">@Model.Email</p>
         </div>
 
         @if (!string.IsNullOrEmpty(Model.SuccessMessage))
         {
-            <div class="alert alert-ok">
-                @Model.SuccessMessage
+            <div role="alert" class="flex items-start gap-3 rounded-xl p-4 mb-5 bg-green-50 text-green-800 text-sm border border-green-200">
+                <i class="fa-solid fa-circle-check mt-0.5 shrink-0 text-base"></i>
+                <p class="m-0 font-medium">@Model.SuccessMessage</p>
             </div>
         }
 
         @if (!string.IsNullOrEmpty(Model.Error))
         {
-            <div class="alert alert-error">
-                <strong>Lỗi:</strong> @Model.Error
+            <div role="alert" class="flex items-start gap-3 rounded-xl p-4 mb-5 bg-error-bg text-error text-sm">
+                <i class="fa-solid fa-circle-exclamation mt-0.5 shrink-0 text-base"></i>
+                <p class="m-0 font-medium">@Model.Error</p>
             </div>
         }
 
         <!-- Form Verify OTP -->
-        <form method="post" asp-page-handler="Verify" id="verifyForm">
+        <form method="post" asp-page-handler="Verify" id="verifyForm" novalidate>
+            @Html.AntiForgeryToken()
             <input type="hidden" asp-for="Email" />
             <input type="hidden" asp-for="Otp" id="fullOtp" />
 
-            <div style="text-align: center; margin-bottom: 0.5rem;">
-                <label style="font-weight: 600; font-size: 0.9rem;">Nhập mã 6 chữ số:</label>
+            <div class="text-center mb-3">
+                <label class="text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    Enter 6-digit verification code:
+                </label>
             </div>
 
-            <div class="otp-input-container">
+            <div class="flex justify-center gap-2 sm:gap-3 mb-6">
                 <input type="text" maxlength="1" class="otp-digit" data-index="0" autofocus inputmode="numeric" />
                 <input type="text" maxlength="1" class="otp-digit" data-index="1" inputmode="numeric" />
                 <input type="text" maxlength="1" class="otp-digit" data-index="2" inputmode="numeric" />
@@ -45,25 +121,32 @@
                 <input type="text" maxlength="1" class="otp-digit" data-index="5" inputmode="numeric" />
             </div>
 
-            <button class="btn btn-block" type="submit" style="margin-top: 1rem;">Xác nhận kích hoạt tài khoản</button>
-        </form>
-
-        <!-- Form Resend OTP -->
-        <form method="post" asp-page-handler="Resend" style="margin-top: 1.25rem; text-align: center;">
-            <input type="hidden" asp-for="Email" />
-            <p style="font-size: 0.9rem; color: var(--muted); margin-bottom: 0.5rem;">Chưa nhận được mã?</p>
-            <button class="btn btn-outline" type="submit" id="resendBtn" style="font-size: 0.9rem; padding: 0.5rem 1rem;">
-                Gửi lại mã OTP (<span id="countdown">60</span>s)
+            <button type="submit"
+                    class="btn-primary w-full h-12 bg-primary hover:bg-primary-dark text-white font-semibold rounded-xl text-sm cursor-pointer shadow-md border-0 transition-colors">
+                Confirm Account Activation
             </button>
         </form>
 
-        <div class="auth-footer">
-            <a asp-page="/Account/Login">Quay lại trang Đăng nhập</a>
-        </div>
+        <!-- Form Resend OTP -->
+        <form method="post" asp-page-handler="Resend" class="mt-6 text-center pt-5 border-t border-gray-100">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Email" />
+            <p class="text-xs text-gray-500 mb-2">Didn't receive the OTP code?</p>
+            <button type="submit"
+                    id="resendBtn"
+                    class="text-xs font-semibold text-accent hover:underline bg-transparent border-0 cursor-pointer p-1">
+                Resend OTP code (<span id="countdown">60</span>s)
+            </button>
+        </form>
+
+        <p class="text-center text-sm text-gray-600 mt-5 mb-0">
+            <a asp-page="/Account/Login" class="text-muted hover:text-gray-900 text-xs inline-flex items-center gap-1 no-underline">
+                <span class="material-symbols-outlined text-[14px]">arrow_back</span> Back to Sign In
+            </a>
+        </p>
     </div>
 </div>
 
-@section Scripts {
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         const digits = document.querySelectorAll(".otp-digit");
@@ -119,11 +202,12 @@
             if (seconds <= 0) {
                 clearInterval(timer);
                 btn.disabled = false;
-                btn.textContent = "Gửi lại mã OTP ngay";
+                btn.textContent = "Resend OTP code now";
             } else {
                 countdownSpan.textContent = seconds;
             }
         }, 1000);
     });
 </script>
-}
+</body>
+</html>

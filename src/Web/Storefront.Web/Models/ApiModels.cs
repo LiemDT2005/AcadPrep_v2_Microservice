@@ -36,7 +36,6 @@ public record ExamDetail(Guid Id, string Title, string Part, string Description,
 public record SubmitExamResult(Guid AttemptId, int Score, int CorrectAnswers, int TotalQuestions, string ExamTitle);
 public record LearningRecordDto(Guid Id, string ExamTitle, int Score, int CorrectAnswers, int TotalQuestions, DateTime CompletedAt);
 public record ProgressSummary(string UserId, int TotalAttempts, double AverageScore, int BestScore, List<LearningRecordDto> Recent);
-
 // ==========================================
 // CONTENT CMS MODELS (UC-16.1 to UC-16.7)
 // ==========================================
@@ -264,3 +263,48 @@ public class UserAttemptHistoryDto
     public int RemainingTime { get; set; }
     public bool IsSubmitted { get; set; }
 }
+
+public record UserListItemDto(
+    string Id,
+    string Email,
+    string FullName,
+    string? Avatar,
+    string Status,
+    string AuthProvider,
+    DateTime CreatedAt,
+    DateTime? LastLoginAt,
+    List<string> Roles);
+
+public record UserListResponse(
+    List<UserListItemDto> Items,
+    int TotalCount,
+    int PageIndex,
+    int PageSize,
+    int TotalPages);
+
+public record UserSessionDto(
+    int Id,
+    string TokenPreview,
+    DateTime CreatedAt,
+    DateTime ExpiresAt,
+    string? CreatedByIp,
+    bool IsActive,
+    string? ReasonRevoked);
+
+public record UserDetailAdminDto(
+    string Id,
+    string Email,
+    string FullName,
+    string? Avatar,
+    string? PhoneNumber,
+    string Status,
+    string AuthProvider,
+    bool EmailConfirmed,
+    int AccessFailedCount,
+    DateTimeOffset? LockoutEnd,
+    DateTime CreatedAt,
+    DateTime? UpdatedAt,
+    DateTime? LastLoginAt,
+    List<string> Roles,
+    List<UserSessionDto> RecentSessions);
+
