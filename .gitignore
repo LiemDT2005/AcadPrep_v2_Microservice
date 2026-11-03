@@ -12,3 +12,13 @@ appsettings.Development.json
 .DS_Store
 .~lock.*#
 ~$*
+
+# Local-only files (Gia Huy)
+/AGENTS.md
+/REPO_AUDIT.md
+/*.docx
+tests/E2E/
+tests/Identity.E2EHost/
+tests/Identity.E2EHost.Tests/
+tests/Identity.Startup.Tests/
+tests/Identity.TestSetup/
