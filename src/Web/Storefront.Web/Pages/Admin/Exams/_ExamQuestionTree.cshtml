@@ -2,12 +2,13 @@
 @{
     var exam = Model.Exam;
 }
-    <!-- Part Accordions (7 items) -->
+
+    <!-- SECTION 3: QUESTION TREE BY PART -->
     <section class="flex flex-col gap-md">
-        <h3 class="font-headline-sm text-headline-sm text-on-surface font-bold flex items-center gap-xs">
-            <span class="material-symbols-outlined text-primary">list_alt</span>
-            Question List by Part
-        </h3>
+        <div class="qc-section-title">
+            <span class="material-symbols-outlined">view_list</span>
+            <h3>Question Tree by Part (Parts 1 – 7)</h3>
+        </div>
 
         <!-- PART 1 -->
         <details class="qc-accordion group transition-all duration-300" open>
@@ -16,7 +17,7 @@
                     <span class="material-symbols-outlined text-primary transition-transform group-open:rotate-180">expand_more</span>
                     <div>
                         <h4 class="font-title-md text-title-md font-bold text-on-surface">Part 1: Photographs</h4>
-                        <p class="font-body-sm text-body-sm text-on-surface-variant mt-xs">Listen & select the correct description for the photograph</p>
+                        <p class="font-body-sm text-body-sm text-on-surface-variant mt-xs">Listen to 4 statements and choose the one that best describes the picture</p>
                     </div>
                 </div>
                 <span class="qc-part-badge-count @(Model.Part1Count >= Storefront.Web.Pages.Admin.Exams.ExamStructureViewModel.TargetP1 ? "qc-part-badge-count--complete" : "")">
@@ -26,35 +27,52 @@
             <div class="qc-accordion__body">
                 @if (Model.Part1Questions.Any())
                 {
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-sm">
+                    <div class="flex flex-col gap-sm">
                         @foreach (var q in Model.Part1Questions)
                         {
                             <div class="qc-question-item">
-                                <div class="flex items-center gap-md flex-1 min-w-0 pr-md">
-                                    @if (!string.IsNullOrEmpty(q.ImageUrl))
-                                    {
-                                        <div class="w-12 h-12 bg-surface-container rounded-lg overflow-hidden shrink-0">
-                                            <img src="@q.ImageUrl" alt="@q.QuestionNumber" class="w-full h-full object-cover" />
-                                        </div>
-                                    }
-                                    else
-                                    {
-                                        <div class="w-12 h-12 bg-surface-container rounded-lg flex items-center justify-center text-primary shrink-0">
-                                            <span class="material-symbols-outlined text-md">image</span>
-                                        </div>
-                                    }
-                                    <div class="min-w-0">
-                                        <h5 class="font-title-sm text-title-sm font-semibold text-on-surface">Q@(q.QuestionNumber)</h5>
-                                        <p class="font-body-xs text-body-xs text-on-surface-variant line-clamp-1 mt-3xs">@q.QuestionText</p>
-                                        <div class="flex items-center gap-sm mt-xs text-on-surface-variant">
-                                            <span class="font-body-xs text-body-xs bg-surface-container p-1 rounded">Correct: @q.CorrectOption</span>
-                                            @if (!string.IsNullOrEmpty(q.AudioUrl))
-                                            {
-                                                <span class="material-symbols-outlined text-sm" title="Has Audio">volume_up</span>
-                                            }
-                                        </div>
+                                <div class="flex-1 min-w-0 pr-md">
+                                    <div class="flex items-center gap-sm flex-wrap">
+                                        <span class="font-label-md text-label-md font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-md">Q@(q.QuestionNumber)</span>
+                                        <span class="font-body-xs text-body-xs bg-tertiary-fixed/20 text-on-tertiary-fixed-variant px-2 py-0.5 rounded-full font-semibold">Correct: @q.CorrectOption</span>
+                                        @if (!string.IsNullOrEmpty(q.Difficulty))
+                                        {
+                                            <span class="font-body-xs text-body-xs bg-surface-container px-2 py-0.5 rounded-full font-medium text-on-surface-variant">@q.Difficulty</span>
+                                        }
+                                        @if (!string.IsNullOrEmpty(q.ImageUrl))
+                                        {
+                                            <span class="flex items-center gap-2xs font-body-xs text-body-xs text-on-surface-variant bg-surface-container px-2 py-0.5 rounded">
+                                                <span class="material-symbols-outlined text-[13px]">image</span> Image attached
+                                            </span>
+                                        }
+                                        @if (!string.IsNullOrEmpty(q.AudioUrl))
+                                        {
+                                            <span class="flex items-center gap-2xs font-body-xs text-body-xs text-on-surface-variant bg-surface-container px-2 py-0.5 rounded">
+                                                <span class="material-symbols-outlined text-[13px]">audiotrack</span>
+                                                @(q.AudioStartSecond.HasValue && q.AudioEndSecond.HasValue ? $"{q.AudioStartSecond}s–{q.AudioEndSecond}s" : "Audio")
+                                            </span>
+                                        }
+                                    </div>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-md gap-y-2xs mt-xs text-body-xs font-body-xs text-on-surface-variant">
+                                        @foreach (var opt in q.Options.OrderBy(o => o.OptionLetter))
+                                        {
+                                            <div class="truncate @(opt.OptionLetter == q.CorrectOption ? "text-on-surface font-semibold" : "")">
+                                                (@opt.OptionLetter) @opt.OptionText
+                                            </div>
+                                        }
                                     </div>
                                 </div>
+                                @if (!Model.IsReadOnly)
+                                {
+                                    <div class="flex shrink-0 gap-xs">
+                                        <a href="/Admin/Exams/@exam.Id/Questions/Create/ListeningQuestion?part=1&editId=@q.Id" class="text-primary hover:bg-primary/10 p-2 rounded-lg transition-colors flex items-center justify-center" title="Edit">
+                                            <span class="material-symbols-outlined text-sm">edit</span>
+                                        </a>
+                                        <button type="button" onclick="confirmDelete('question', @q.Id, 'Q@(q.QuestionNumber)')" class="text-error hover:bg-error-container/20 p-2 rounded-lg transition-colors flex items-center justify-center" title="Delete">
+                                            <span class="material-symbols-outlined text-sm">delete</span>
+                                        </button>
+                                    </div>
+                                }
                             </div>
                         }
                     </div>
@@ -64,6 +82,19 @@
                     <div class="qc-empty-state">
                         <p class="font-body-md text-body-md text-on-surface-variant mb-md">No Part 1 questions yet.</p>
                     </div>
+                }
+                @if (!Model.IsReadOnly && Model.CanAddP1)
+                {
+                    <div class="flex justify-end">
+                        <a href="/Admin/Exams/@exam.Id/Questions/Create/ListeningQuestion?part=1" class="qc-btn-secondary">
+                            <span class="material-symbols-outlined text-sm">add</span>
+                            Add Question
+                        </a>
+                    </div>
+                }
+                else if (!Model.CanAddP1)
+                {
+                    <p class="font-body-sm text-body-sm text-on-surface-variant text-center py-2">Part 1 is complete (@Storefront.Web.Pages.Admin.Exams.ExamStructureViewModel.TargetP1/@Storefront.Web.Pages.Admin.Exams.ExamStructureViewModel.TargetP1 questions).</p>
                 }
             </div>
         </details>
@@ -75,7 +106,7 @@
                     <span class="material-symbols-outlined text-primary transition-transform group-open:rotate-180">expand_more</span>
                     <div>
                         <h4 class="font-title-md text-title-md font-bold text-on-surface">Part 2: Question-Response</h4>
-                        <p class="font-body-sm text-body-sm text-on-surface-variant mt-xs">Listen to a question and 3 response options</p>
+                        <p class="font-body-sm text-body-sm text-on-surface-variant mt-xs">Listen to a question and 3 responses (A, B, C), then choose the correct one</p>
                     </div>
                 </div>
                 <span class="qc-part-badge-count @(Model.Part2Count >= Storefront.Web.Pages.Admin.Exams.ExamStructureViewModel.TargetP2 ? "qc-part-badge-count--complete" : "")">
@@ -85,26 +116,50 @@
             <div class="qc-accordion__body">
                 @if (Model.Part2Questions.Any())
                 {
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-sm">
+                    <div class="flex flex-col gap-sm">
                         @foreach (var q in Model.Part2Questions)
                         {
                             <div class="qc-question-item">
-                                <div class="flex items-center gap-md flex-1 min-w-0 pr-md">
-                                    <div class="w-12 h-12 bg-surface-container rounded-lg flex items-center justify-center text-primary shrink-0">
-                                        <span class="material-symbols-outlined text-md">hearing</span>
+                                <div class="flex-1 min-w-0 pr-md">
+                                    <div class="flex items-center gap-sm flex-wrap">
+                                        <span class="font-label-md text-label-md font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-md">Q@(q.QuestionNumber)</span>
+                                        <span class="font-body-xs text-body-xs bg-tertiary-fixed/20 text-on-tertiary-fixed-variant px-2 py-0.5 rounded-full font-semibold">Correct: @q.CorrectOption</span>
+                                        @if (!string.IsNullOrEmpty(q.Difficulty))
+                                        {
+                                            <span class="font-body-xs text-body-xs bg-surface-container px-2 py-0.5 rounded-full font-medium text-on-surface-variant">@q.Difficulty</span>
+                                        }
+                                        @if (!string.IsNullOrEmpty(q.AudioUrl))
+                                        {
+                                            <span class="flex items-center gap-2xs font-body-xs text-body-xs text-on-surface-variant bg-surface-container px-2 py-0.5 rounded">
+                                                <span class="material-symbols-outlined text-[13px]">audiotrack</span>
+                                                @(q.AudioStartSecond.HasValue && q.AudioEndSecond.HasValue ? $"{q.AudioStartSecond}s–{q.AudioEndSecond}s" : "Audio")
+                                            </span>
+                                        }
                                     </div>
-                                    <div class="min-w-0">
-                                        <h5 class="font-title-sm text-title-sm font-semibold text-on-surface">Q@(q.QuestionNumber)</h5>
-                                        <p class="font-body-xs text-body-xs text-on-surface-variant line-clamp-1 mt-3xs">@q.QuestionText</p>
-                                        <div class="flex items-center gap-sm mt-xs text-on-surface-variant">
-                                            <span class="font-body-xs text-body-xs bg-surface-container p-1 rounded">Correct: @q.CorrectOption</span>
-                                            @if (!string.IsNullOrEmpty(q.AudioUrl))
-                                            {
-                                                <span class="material-symbols-outlined text-sm" title="Has Audio">volume_up</span>
-                                            }
-                                        </div>
+                                    @if (!string.IsNullOrEmpty(q.QuestionText))
+                                    {
+                                        <p class="font-body-sm text-body-sm text-on-surface mt-xs font-medium">@q.QuestionText</p>
+                                    }
+                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-x-md gap-y-2xs mt-xs text-body-xs font-body-xs text-on-surface-variant">
+                                        @foreach (var opt in q.Options.OrderBy(o => o.OptionLetter))
+                                        {
+                                            <div class="truncate @(opt.OptionLetter == q.CorrectOption ? "text-on-surface font-semibold" : "")">
+                                                (@opt.OptionLetter) @opt.OptionText
+                                            </div>
+                                        }
                                     </div>
                                 </div>
+                                @if (!Model.IsReadOnly)
+                                {
+                                    <div class="flex shrink-0 gap-xs">
+                                        <a href="/Admin/Exams/@exam.Id/Questions/Create/ListeningQuestion?part=2&editId=@q.Id" class="text-primary hover:bg-primary/10 p-2 rounded-lg transition-colors flex items-center justify-center" title="Edit">
+                                            <span class="material-symbols-outlined text-sm">edit</span>
+                                        </a>
+                                        <button type="button" onclick="confirmDelete('question', @q.Id, 'Q@(q.QuestionNumber)')" class="text-error hover:bg-error-container/20 p-2 rounded-lg transition-colors flex items-center justify-center" title="Delete">
+                                            <span class="material-symbols-outlined text-sm">delete</span>
+                                        </button>
+                                    </div>
+                                }
                             </div>
                         }
                     </div>
@@ -115,6 +170,19 @@
                         <p class="font-body-md text-body-md text-on-surface-variant mb-md">No Part 2 questions yet.</p>
                     </div>
                 }
+                @if (!Model.IsReadOnly && Model.CanAddP2)
+                {
+                    <div class="flex justify-end">
+                        <a href="/Admin/Exams/@exam.Id/Questions/Create/ListeningQuestion?part=2" class="qc-btn-secondary">
+                            <span class="material-symbols-outlined text-sm">add</span>
+                            Add Question
+                        </a>
+                    </div>
+                }
+                else if (!Model.CanAddP2)
+                {
+                    <p class="font-body-sm text-body-sm text-on-surface-variant text-center py-2">Part 2 is complete (@Storefront.Web.Pages.Admin.Exams.ExamStructureViewModel.TargetP2/@Storefront.Web.Pages.Admin.Exams.ExamStructureViewModel.TargetP2 questions).</p>
+                }
             </div>
         </details>
 
@@ -124,8 +192,8 @@
                 <div class="flex items-center gap-md">
                     <span class="material-symbols-outlined text-primary transition-transform group-open:rotate-180">expand_more</span>
                     <div>
-                        <h4 class="font-title-md text-title-md font-bold text-on-surface">Part 3: Conversations</h4>
-                        <p class="font-body-sm text-body-sm text-on-surface-variant mt-xs">Listen to a short conversation between 2-3 people and answer 3 questions</p>
+                        <h4 class="font-title-md text-title-md font-bold text-on-surface">Part 3: Short Conversations</h4>
+                        <p class="font-body-sm text-body-sm text-on-surface-variant mt-xs">Listen to a conversation and answer 3 related questions</p>
                     </div>
                 </div>
                 <span class="qc-part-badge-count @(Model.Part3Count >= Storefront.Web.Pages.Admin.Exams.ExamStructureViewModel.TargetP3 ? "qc-part-badge-count--complete" : "")">
@@ -139,27 +207,58 @@
                         @foreach (var g in Model.Part3Groups)
                         {
                             var qList = g.OrderBy(q => q.QuestionNumber).ToList();
+                            if (!g.Key.HasValue)
+                            {
+                                foreach (var q in qList)
+                                {
+                                    <div class="qc-question-item">
+                                        <div class="flex-1 min-w-0 pr-md">
+                                            <h5 class="font-title-sm text-title-sm font-semibold text-on-surface">Q@(q.QuestionNumber) (standalone)</h5>
+                                            <p class="font-body-xs text-body-xs text-on-surface-variant line-clamp-1 mt-3xs">@q.QuestionText</p>
+                                        </div>
+                                        @if (!Model.IsReadOnly)
+                                        {
+                                            <button type="button" onclick="confirmDelete('question', @q.Id, 'Q@(q.QuestionNumber)')" class="text-error hover:bg-error-container/20 p-2 rounded-lg transition-colors flex items-center justify-center">
+                                                <span class="material-symbols-outlined text-sm">delete</span>
+                                            </button>
+                                        }
+                                    </div>
+                                }
+                                continue;
+                            }
+
                             var min = qList.First().QuestionNumber;
                             var max = qList.Last().QuestionNumber;
                             var label = $"Q{min}–{max}";
-                            var firstAudio = qList.FirstOrDefault(q => !string.IsNullOrEmpty(q.AudioUrl))?.AudioUrl;
-                            
+                            var gName = qList.FirstOrDefault()?.QuestionGroupName ?? $"Listening Group #{g.Key}";
+
                             <div class="qc-question-item">
-                                <div class="flex items-center gap-md">
-                                    <div class="w-12 h-12 bg-surface-container rounded-lg flex items-center justify-center text-primary shrink-0">
-                                        <span class="material-symbols-outlined text-md">forum</span>
-                                    </div>
-                                    <div>
-                                        <h5 class="font-title-sm text-title-sm font-semibold text-on-surface">Conversation (@label)</h5>
-                                        <div class="flex items-center gap-sm mt-xs text-on-surface-variant">
-                                            <span class="font-body-xs text-body-xs bg-surface-container p-1 rounded">@qList.Count questions</span>
-                                            @if (!string.IsNullOrEmpty(firstAudio))
-                                            {
-                                                <span class="material-symbols-outlined text-sm" title="Has Audio">volume_up</span>
-                                            }
-                                        </div>
+                                <div class="flex-1 min-w-0 pr-md">
+                                    <h5 class="font-title-sm text-title-sm font-semibold text-on-surface flex items-center gap-xs">
+                                        <span class="material-symbols-outlined text-primary text-sm">forum</span>
+                                        @gName (@label)
+                                    </h5>
+                                    <div class="flex flex-col gap-2xs mt-xs">
+                                        @foreach (var q in qList)
+                                        {
+                                            <p class="font-body-xs text-body-xs text-on-surface-variant truncate">
+                                                <span class="font-semibold text-on-surface">Q@(q.QuestionNumber):</span> @q.QuestionText
+                                                <span class="text-tertiary font-semibold ml-1">[Ans: @q.CorrectOption]</span>
+                                            </p>
+                                        }
                                     </div>
                                 </div>
+                                @if (!Model.IsReadOnly)
+                                {
+                                    <div class="flex shrink-0 gap-xs">
+                                        <a href="/Admin/Exams/@exam.Id/Questions/Create/Listening?part=3&groupId=@g.Key" class="text-primary hover:bg-primary/10 p-2 rounded-lg transition-colors flex items-center justify-center" title="Edit">
+                                            <span class="material-symbols-outlined text-sm">edit</span>
+                                        </a>
+                                        <button type="button" onclick="confirmDelete('listeninggroup', @(g.Key ?? 0), '@gName (@label)')" class="text-error hover:bg-error-container/20 p-2 rounded-lg transition-colors flex items-center justify-center" title="Delete">
+                                            <span class="material-symbols-outlined text-sm">delete</span>
+                                        </button>
+                                    </div>
+                                }
                             </div>
                         }
                     </div>
@@ -167,8 +266,21 @@
                 else
                 {
                     <div class="qc-empty-state">
-                        <p class="font-body-md text-body-md text-on-surface-variant mb-md">No Part 3 questions yet.</p>
+                        <p class="font-body-md text-body-md text-on-surface-variant mb-md">No Part 3 listening groups yet.</p>
                     </div>
+                }
+                @if (!Model.IsReadOnly && Model.CanAddP3)
+                {
+                    <div class="flex justify-end">
+                        <a href="/Admin/Exams/@exam.Id/Questions/Create/Listening?part=3" class="qc-btn-secondary">
+                            <span class="material-symbols-outlined text-sm">add</span>
+                            Add Listening Group
+                        </a>
+                    </div>
+                }
+                else if (!Model.CanAddP3)
+                {
+                    <p class="font-body-sm text-body-sm text-on-surface-variant text-center py-2">Part 3 is complete (@Storefront.Web.Pages.Admin.Exams.ExamStructureViewModel.TargetP3/@Storefront.Web.Pages.Admin.Exams.ExamStructureViewModel.TargetP3 questions).</p>
                 }
             </div>
         </details>
@@ -179,8 +291,8 @@
                 <div class="flex items-center gap-md">
                     <span class="material-symbols-outlined text-primary transition-transform group-open:rotate-180">expand_more</span>
                     <div>
-                        <h4 class="font-title-md text-title-md font-bold text-on-surface">Part 4: Talks</h4>
-                        <p class="font-body-sm text-body-sm text-on-surface-variant mt-xs">Listen to a short talk and answer 3 questions</p>
+                        <h4 class="font-title-md text-title-md font-bold text-on-surface">Part 4: Short Talks</h4>
+                        <p class="font-body-sm text-body-sm text-on-surface-variant mt-xs">Listen to a short talk and answer 3 related questions</p>
                     </div>
                 </div>
                 <span class="qc-part-badge-count @(Model.Part4Count >= Storefront.Web.Pages.Admin.Exams.ExamStructureViewModel.TargetP4 ? "qc-part-badge-count--complete" : "")">
@@ -194,27 +306,58 @@
                         @foreach (var g in Model.Part4Groups)
                         {
                             var qList = g.OrderBy(q => q.QuestionNumber).ToList();
+                            if (!g.Key.HasValue)
+                            {
+                                foreach (var q in qList)
+                                {
+                                    <div class="qc-question-item">
+                                        <div class="flex-1 min-w-0 pr-md">
+                                            <h5 class="font-title-sm text-title-sm font-semibold text-on-surface">Q@(q.QuestionNumber) (standalone)</h5>
+                                            <p class="font-body-xs text-body-xs text-on-surface-variant line-clamp-1 mt-3xs">@q.QuestionText</p>
+                                        </div>
+                                        @if (!Model.IsReadOnly)
+                                        {
+                                            <button type="button" onclick="confirmDelete('question', @q.Id, 'Q@(q.QuestionNumber)')" class="text-error hover:bg-error-container/20 p-2 rounded-lg transition-colors flex items-center justify-center">
+                                                <span class="material-symbols-outlined text-sm">delete</span>
+                                            </button>
+                                        }
+                                    </div>
+                                }
+                                continue;
+                            }
+
                             var min = qList.First().QuestionNumber;
                             var max = qList.Last().QuestionNumber;
                             var label = $"Q{min}–{max}";
-                            var firstAudio = qList.FirstOrDefault(q => !string.IsNullOrEmpty(q.AudioUrl))?.AudioUrl;
-                            
+                            var gName = qList.FirstOrDefault()?.QuestionGroupName ?? $"Listening Group #{g.Key}";
+
                             <div class="qc-question-item">
-                                <div class="flex items-center gap-md">
-                                    <div class="w-12 h-12 bg-surface-container rounded-lg flex items-center justify-center text-primary shrink-0">
-                                        <span class="material-symbols-outlined text-md">record_voice_over</span>
-                                    </div>
-                                    <div>
-                                        <h5 class="font-title-sm text-title-sm font-semibold text-on-surface">Short Talk (@label)</h5>
-                                        <div class="flex items-center gap-sm mt-xs text-on-surface-variant">
-                                            <span class="font-body-xs text-body-xs bg-surface-container p-1 rounded">@qList.Count questions</span>
-                                            @if (!string.IsNullOrEmpty(firstAudio))
-                                            {
-                                                <span class="material-symbols-outlined text-sm" title="Has Audio">volume_up</span>
-                                            }
-                                        </div>
+                                <div class="flex-1 min-w-0 pr-md">
+                                    <h5 class="font-title-sm text-title-sm font-semibold text-on-surface flex items-center gap-xs">
+                                        <span class="material-symbols-outlined text-primary text-sm">record_voice_over</span>
+                                        @gName (@label)
+                                    </h5>
+                                    <div class="flex flex-col gap-2xs mt-xs">
+                                        @foreach (var q in qList)
+                                        {
+                                            <p class="font-body-xs text-body-xs text-on-surface-variant truncate">
+                                                <span class="font-semibold text-on-surface">Q@(q.QuestionNumber):</span> @q.QuestionText
+                                                <span class="text-tertiary font-semibold ml-1">[Ans: @q.CorrectOption]</span>
+                                            </p>
+                                        }
                                     </div>
                                 </div>
+                                @if (!Model.IsReadOnly)
+                                {
+                                    <div class="flex shrink-0 gap-xs">
+                                        <a href="/Admin/Exams/@exam.Id/Questions/Create/Listening?part=4&groupId=@g.Key" class="text-primary hover:bg-primary/10 p-2 rounded-lg transition-colors flex items-center justify-center" title="Edit">
+                                            <span class="material-symbols-outlined text-sm">edit</span>
+                                        </a>
+                                        <button type="button" onclick="confirmDelete('listeninggroup', @(g.Key ?? 0), '@gName (@label)')" class="text-error hover:bg-error-container/20 p-2 rounded-lg transition-colors flex items-center justify-center" title="Delete">
+                                            <span class="material-symbols-outlined text-sm">delete</span>
+                                        </button>
+                                    </div>
+                                }
                             </div>
                         }
                     </div>
@@ -222,8 +365,21 @@
                 else
                 {
                     <div class="qc-empty-state">
-                        <p class="font-body-md text-body-md text-on-surface-variant mb-md">No Part 4 questions yet.</p>
+                        <p class="font-body-md text-body-md text-on-surface-variant mb-md">No Part 4 listening groups yet.</p>
                     </div>
+                }
+                @if (!Model.IsReadOnly && Model.CanAddP4)
+                {
+                    <div class="flex justify-end">
+                        <a href="/Admin/Exams/@exam.Id/Questions/Create/Listening?part=4" class="qc-btn-secondary">
+                            <span class="material-symbols-outlined text-sm">add</span>
+                            Add Listening Group
+                        </a>
+                    </div>
+                }
+                else if (!Model.CanAddP4)
+                {
+                    <p class="font-body-sm text-body-sm text-on-surface-variant text-center py-2">Part 4 is complete (@Storefront.Web.Pages.Admin.Exams.ExamStructureViewModel.TargetP4/@Storefront.Web.Pages.Admin.Exams.ExamStructureViewModel.TargetP4 questions).</p>
                 }
             </div>
         </details>
@@ -235,7 +391,7 @@
                     <span class="material-symbols-outlined text-primary transition-transform group-open:rotate-180">expand_more</span>
                     <div>
                         <h4 class="font-title-md text-title-md font-bold text-on-surface">Part 5: Incomplete Sentences</h4>
-                        <p class="font-body-sm text-body-sm text-on-surface-variant mt-xs">Standalone questions, fill in the blank with the correct option</p>
+                        <p class="font-body-sm text-body-sm text-on-surface-variant mt-xs">Choose the word or phrase that best completes each standalone sentence</p>
                     </div>
                 </div>
                 <span class="qc-part-badge-count @(Model.Part5Count >= Storefront.Web.Pages.Admin.Exams.ExamStructureViewModel.TargetP5 ? "qc-part-badge-count--complete" : "")">
@@ -245,21 +401,44 @@
             <div class="qc-accordion__body">
                 @if (Model.Part5Questions.Any())
                 {
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-sm">
+                    <div class="flex flex-col gap-sm">
                         @foreach (var q in Model.Part5Questions)
                         {
                             <div class="qc-question-item">
                                 <div class="flex-1 min-w-0 pr-md">
-                                    <span class="font-label-sm text-label-sm font-semibold text-primary">Q@(q.QuestionNumber):</span>
-                                    <p class="font-body-sm text-body-sm text-on-surface line-clamp-1 mt-xs">@q.QuestionText</p>
-                                    <div class="flex items-center gap-sm mt-xs">
-                                        <span class="font-body-xs text-body-xs font-semibold text-tertiary bg-tertiary-fixed/20 p-1 px-2 rounded-full">Correct Option: @q.CorrectOption</span>
+                                    <div class="flex items-center gap-sm flex-wrap">
+                                        <span class="font-label-md text-label-md font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-md">Q@(q.QuestionNumber)</span>
+                                        <span class="font-body-xs text-body-xs bg-tertiary-fixed/20 text-on-tertiary-fixed-variant px-2 py-0.5 rounded-full font-semibold">Correct: @q.CorrectOption</span>
                                         @if (!string.IsNullOrEmpty(q.QuestionType))
                                         {
-                                            <span class="font-body-xs text-body-xs text-on-surface-variant bg-surface-container p-0.5 px-2 rounded">@q.QuestionType</span>
+                                            <span class="font-body-xs text-body-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">@q.QuestionType</span>
+                                        }
+                                        @if (!string.IsNullOrEmpty(q.Difficulty))
+                                        {
+                                            <span class="font-body-xs text-body-xs bg-surface-container px-2 py-0.5 rounded-full font-medium text-on-surface-variant">@q.Difficulty</span>
+                                        }
+                                    </div>
+                                    <p class="font-body-sm text-body-sm text-on-surface mt-xs font-medium">@q.QuestionText</p>
+                                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-x-md gap-y-2xs mt-xs text-body-xs font-body-xs text-on-surface-variant">
+                                        @foreach (var opt in q.Options.OrderBy(o => o.OptionLetter))
+                                        {
+                                            <div class="truncate @(opt.OptionLetter == q.CorrectOption ? "text-on-surface font-semibold" : "")">
+                                                (@opt.OptionLetter) @opt.OptionText
+                                            </div>
                                         }
                                     </div>
                                 </div>
+                                @if (!Model.IsReadOnly)
+                                {
+                                    <div class="flex shrink-0 gap-xs">
+                                        <a href="/Admin/Exams/@exam.Id/Questions/Create/Part5?editId=@q.Id" class="text-primary hover:bg-primary/10 p-2 rounded-lg transition-colors flex items-center justify-center" title="Edit">
+                                            <span class="material-symbols-outlined text-sm">edit</span>
+                                        </a>
+                                        <button type="button" onclick="confirmDelete('question', @q.Id, 'Q@(q.QuestionNumber)')" class="text-error hover:bg-error-container/20 p-2 rounded-lg transition-colors flex items-center justify-center" title="Delete">
+                                            <span class="material-symbols-outlined text-sm">delete</span>
+                                        </button>
+                                    </div>
+                                }
                             </div>
                         }
                     </div>
@@ -269,6 +448,19 @@
                     <div class="qc-empty-state">
                         <p class="font-body-md text-body-md text-on-surface-variant mb-md">No Part 5 questions yet.</p>
                     </div>
+                }
+                @if (!Model.IsReadOnly && Model.CanAddP5)
+                {
+                    <div class="flex justify-end">
+                        <a href="/Admin/Exams/@exam.Id/Questions/Create/Part5" class="qc-btn-secondary">
+                            <span class="material-symbols-outlined text-sm">add</span>
+                            Add Standalone Question
+                        </a>
+                    </div>
+                }
+                else if (!Model.CanAddP5)
+                {
+                    <p class="font-body-sm text-body-sm text-on-surface-variant text-center py-2">Part 5 is complete (@Storefront.Web.Pages.Admin.Exams.ExamStructureViewModel.TargetP5/@Storefront.Web.Pages.Admin.Exams.ExamStructureViewModel.TargetP5 questions).</p>
                 }
             </div>
         </details>
@@ -280,7 +472,7 @@
                     <span class="material-symbols-outlined text-primary transition-transform group-open:rotate-180">expand_more</span>
                     <div>
                         <h4 class="font-title-md text-title-md font-bold text-on-surface">Part 6: Text Completion</h4>
-                        <p class="font-body-sm text-body-sm text-on-surface-variant mt-xs">A reading passage with 4 blank spaces to fill in</p>
+                        <p class="font-body-sm text-body-sm text-on-surface-variant mt-xs">Fill in 4 blanks within a passage or email</p>
                     </div>
                 </div>
                 <span class="qc-part-badge-count @(Model.Part6Count >= Storefront.Web.Pages.Admin.Exams.ExamStructureViewModel.TargetP6 ? "qc-part-badge-count--complete" : "")">
@@ -294,27 +486,75 @@
                         @foreach (var g in Model.Part6Groups)
                         {
                             var qList = g.OrderBy(q => q.QuestionNumber).ToList();
+                            if (!g.Key.HasValue)
+                            {
+                                foreach (var q in qList)
+                                {
+                                    <div class="qc-question-item">
+                                        <div class="flex-1 min-w-0 pr-md">
+                                            <h5 class="font-title-sm text-title-sm font-semibold text-on-surface">Q@(q.QuestionNumber) (standalone)</h5>
+                                            <p class="font-body-xs text-body-xs text-on-surface-variant line-clamp-1 mt-3xs">@q.QuestionText</p>
+                                        </div>
+                                        @if (!Model.IsReadOnly)
+                                        {
+                                            <button type="button" onclick="confirmDelete('question', @q.Id, 'Q@(q.QuestionNumber)')" class="text-error hover:bg-error-container/20 p-2 rounded-lg transition-colors flex items-center justify-center">
+                                                <span class="material-symbols-outlined text-sm">delete</span>
+                                            </button>
+                                        }
+                                    </div>
+                                }
+                                continue;
+                            }
+
                             var min = qList.First().QuestionNumber;
                             var max = qList.Last().QuestionNumber;
                             var label = $"Q{min}–{max}";
-                            
+                            var textPreview = qList.FirstOrDefault()?.PassageContent;
+
                             <div class="qc-question-item">
                                 <div class="flex-1 min-w-0 pr-md">
                                     <h5 class="font-title-sm text-title-sm font-semibold text-on-surface flex items-center gap-xs">
                                         <span class="material-symbols-outlined text-primary text-sm">article</span>
-                                        Text Completion (@label)
+                                        Text Completion Passage (@label)
                                     </h5>
-                                    <p class="font-body-xs text-body-xs text-on-surface-variant mt-xs">@qList.Count questions in this passage</p>
+                                    @if (!string.IsNullOrEmpty(textPreview))
+                                    {
+                                        <p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-1 mt-xs italic">"@textPreview"</p>
+                                    }
                                 </div>
+                                @if (!Model.IsReadOnly)
+                                {
+                                    <div class="flex shrink-0 gap-xs">
+                                        <a href="/Admin/Exams/@exam.Id/Questions/Create/Part6?passageId=@(g.Key ?? 0)" class="text-primary hover:bg-primary/10 p-2 rounded-lg transition-colors flex items-center justify-center" title="Edit">
+                                            <span class="material-symbols-outlined text-sm">edit</span>
+                                        </a>
+                                        <button type="button" onclick="confirmDelete('textcompletion', @(g.Key ?? 0), 'Passage @label')" class="text-error hover:bg-error-container/20 p-2 rounded-lg transition-colors flex items-center justify-center" title="Delete">
+                                            <span class="material-symbols-outlined text-sm">delete</span>
+                                        </button>
+                                    </div>
+                                }
                             </div>
                         }
-                    </div>  
+                    </div>
                 }
                 else
                 {
                     <div class="qc-empty-state">
                         <p class="font-body-md text-body-md text-on-surface-variant mb-md">No Part 6 passages yet.</p>
                     </div>
+                }
+                @if (!Model.IsReadOnly && Model.CanAddP6)
+                {
+                    <div class="flex justify-end">
+                        <a href="/Admin/Exams/@exam.Id/Questions/Create/Part6" class="qc-btn-secondary">
+                            <span class="material-symbols-outlined text-sm">add</span>
+                            Add Passage
+                        </a>
+                    </div>
+                }
+                else if (!Model.CanAddP6)
+                {
+                    <p class="font-body-sm text-body-sm text-on-surface-variant text-center py-2">Part 6 is complete (@Storefront.Web.Pages.Admin.Exams.ExamStructureViewModel.TargetP6/@Storefront.Web.Pages.Admin.Exams.ExamStructureViewModel.TargetP6 questions).</p>
                 }
             </div>
         </details>
@@ -326,7 +566,7 @@
                     <span class="material-symbols-outlined text-primary transition-transform group-open:rotate-180">expand_more</span>
                     <div>
                         <h4 class="font-title-md text-title-md font-bold text-on-surface">Part 7: Reading Comprehension</h4>
-                        <p class="font-body-sm text-body-sm text-on-surface-variant mt-xs">Read passages and answer corresponding questions</p>
+                        <p class="font-body-sm text-body-sm text-on-surface-variant mt-xs">Read 1-3 passages and answer 2-5 corresponding questions</p>
                     </div>
                 </div>
                 <span class="qc-part-badge-count @(Model.Part7Count >= Storefront.Web.Pages.Admin.Exams.ExamStructureViewModel.TargetP7 ? "qc-part-badge-count--complete" : "")">
@@ -344,6 +584,12 @@
                                     <h5 class="font-title-sm text-title-sm font-semibold text-on-surface">Q@(q.QuestionNumber) (standalone)</h5>
                                     <p class="font-body-xs text-body-xs text-on-surface-variant line-clamp-1 mt-3xs">@q.QuestionText</p>
                                 </div>
+                                @if (!Model.IsReadOnly)
+                                {
+                                    <button type="button" onclick="confirmDelete('question', @q.Id, 'Q@(q.QuestionNumber)')" class="text-error hover:bg-error-container/20 p-2 rounded-lg transition-colors flex items-center justify-center">
+                                        <span class="material-symbols-outlined text-sm">delete</span>
+                                    </button>
+                                }
                             </div>
                         }
                         @foreach (var s in Model.Part7Sets)
@@ -352,17 +598,34 @@
                             var min = qList.Any() ? qList.First().QuestionNumber.ToString() : "?";
                             var max = qList.Any() ? qList.Last().QuestionNumber.ToString() : "?";
                             var label = qList.Count > 1 ? $"Q{min}–{max}" : $"Q{min}";
-                            
+                            var deleteType = s.GroupId > 0 ? "readingset" : "passage";
+                            var deleteTargetId = s.GroupId > 0 ? s.GroupId : s.PassageId;
+
                             <div class="qc-question-item">
                                 <div class="flex-1 min-w-0 pr-md">
                                     <h5 class="font-title-sm text-title-sm font-semibold text-on-surface flex items-center gap-xs">
                                         <span class="material-symbols-outlined text-primary text-sm">menu_book</span>
-                                        Reading Set (@label)
+                                        @s.Name (@label)
                                     </h5>
                                     <div class="flex items-center gap-sm mt-xs text-on-surface-variant">
+                                        <span class="font-body-xs text-body-xs bg-surface-container p-1 rounded">@Math.Max(1, s.Passages.Count) passages</span>
                                         <span class="font-body-xs text-body-xs bg-surface-container p-1 rounded">@s.Questions.Count questions</span>
                                     </div>
                                 </div>
+                                @if (!Model.IsReadOnly)
+                                {
+                                    <div class="flex shrink-0 gap-xs">
+                                        @if (s.GroupId > 0)
+                                        {
+                                            <a href="/Admin/Exams/@exam.Id/Questions/Create/Part7?groupId=@s.GroupId" class="text-primary hover:bg-primary/10 p-2 rounded-lg transition-colors flex items-center justify-center" title="Edit">
+                                                <span class="material-symbols-outlined text-sm">edit</span>
+                                            </a>
+                                        }
+                                        <button type="button" onclick="confirmDelete('@deleteType', @deleteTargetId, '@s.Name (@label)')" class="text-error hover:bg-error-container/20 p-2 rounded-lg transition-colors flex items-center justify-center" title="Delete">
+                                            <span class="material-symbols-outlined text-sm">delete</span>
+                                        </button>
+                                    </div>
+                                }
                             </div>
                         }
                     </div>
@@ -372,6 +635,19 @@
                     <div class="qc-empty-state">
                         <p class="font-body-md text-body-md text-on-surface-variant mb-md">No Part 7 reading sets yet.</p>
                     </div>
+                }
+                @if (!Model.IsReadOnly && Model.CanAddP7)
+                {
+                    <div class="flex justify-end">
+                        <a href="/Admin/Exams/@exam.Id/Questions/Create/Part7" class="qc-btn-secondary">
+                            <span class="material-symbols-outlined text-sm">add</span>
+                            Add Reading Set
+                        </a>
+                    </div>
+                }
+                else if (!Model.CanAddP7)
+                {
+                    <p class="font-body-sm text-body-sm text-on-surface-variant text-center py-2">Part 7 is complete (@Storefront.Web.Pages.Admin.Exams.ExamStructureViewModel.TargetP7/@Storefront.Web.Pages.Admin.Exams.ExamStructureViewModel.TargetP7 questions).</p>
                 }
             </div>
         </details>

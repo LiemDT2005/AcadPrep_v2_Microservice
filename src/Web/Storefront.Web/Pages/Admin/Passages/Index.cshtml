@@ -1,0 +1,324 @@
+@page
+@model Storefront.Web.Pages.Admin.Passages.IndexModel
+@{
+    Layout = "_ModeratorLayout";
+    ViewData["Title"] = "Reading Passages (Part 6 & 7)";
+}
+
+@Html.AntiForgeryToken()
+
+<div class="flex flex-col gap-lg">
+    @if (TempData["SuccessMessage"] is string successMsg)
+    {
+        <div class="p-md rounded-xl bg-tertiary-fixed/40 border border-tertiary text-on-tertiary-fixed font-label-md flex items-center justify-between">
+            <div class="flex items-center gap-sm">
+                <span class="material-symbols-outlined text-tertiary">check_circle</span>
+                <span>@successMsg</span>
+            </div>
+        </div>
+    }
+
+    <!-- Hero Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-md bg-surface-container-lowest p-lg rounded-2xl border border-outline-variant/40 shadow-sm">
+        <div>
+            <div class="flex items-center gap-xs text-primary font-label-sm uppercase tracking-wider mb-1">
+                <span class="material-symbols-outlined text-sm">menu_book</span>
+                <span>UC-18.1 — UC-18.5 • Reading Passages CMS</span>
+            </div>
+            <h2 class="font-headline-md text-headline-md font-bold text-on-surface">Reading Passage Management</h2>
+            <p class="text-body-sm text-on-surface-variant mt-1">Manage Part 6 (Text Completion) and Part 7 (Reading Comprehension) passages with non-orphan question protection.</p>
+        </div>
+        <div class="flex items-center gap-sm">
+            <button type="button" onclick="openCreatePassageModal()" class="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-on-primary font-label-md px-5 py-2.5 rounded-xl shadow-sm transition-colors cursor-pointer">
+                <span class="material-symbols-outlined text-sm">add</span>
+                <span>Create Passage</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- 4 Stat Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-md">
+        <div class="bg-surface-container-lowest p-md rounded-xl border border-outline-variant/40 shadow-sm flex items-center gap-md">
+            <div class="w-12 h-12 rounded-xl bg-primary-fixed flex items-center justify-center text-primary">
+                <span class="material-symbols-outlined">article</span>
+            </div>
+            <div>
+                <div class="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Total Passages</div>
+                <div class="text-2xl font-bold text-on-surface">@Model.TotalPassages</div>
+            </div>
+        </div>
+        <div class="bg-surface-container-lowest p-md rounded-xl border border-outline-variant/40 shadow-sm flex items-center gap-md">
+            <div class="w-12 h-12 rounded-xl bg-secondary-fixed flex items-center justify-center text-secondary">
+                <span class="material-symbols-outlined">edit_document</span>
+            </div>
+            <div>
+                <div class="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Part 6 Passages</div>
+                <div class="text-2xl font-bold text-on-surface">@Model.Part6Passages</div>
+            </div>
+        </div>
+        <div class="bg-surface-container-lowest p-md rounded-xl border border-outline-variant/40 shadow-sm flex items-center gap-md">
+            <div class="w-12 h-12 rounded-xl bg-tertiary-fixed flex items-center justify-center text-tertiary">
+                <span class="material-symbols-outlined">library_books</span>
+            </div>
+            <div>
+                <div class="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Part 7 Passages</div>
+                <div class="text-2xl font-bold text-on-surface">@Model.Part7Passages</div>
+            </div>
+        </div>
+        <div class="bg-surface-container-lowest p-md rounded-xl border border-outline-variant/40 shadow-sm flex items-center gap-md">
+            <div class="w-12 h-12 rounded-xl bg-primary-fixed/60 flex items-center justify-center text-primary">
+                <span class="material-symbols-outlined">verified</span>
+            </div>
+            <div>
+                <div class="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">In Active Exams</div>
+                <div class="text-2xl font-bold text-on-surface">@Model.ActiveExamPassages</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search & Filter Bar -->
+    <form method="get" class="bg-surface-container-lowest p-md rounded-xl border border-outline-variant/40 shadow-sm grid grid-cols-1 md:grid-cols-12 gap-md items-end">
+        <div class="md:col-span-5">
+            <label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Search Passage Text / Exam</label>
+            <div class="relative">
+                <span class="material-symbols-outlined absolute left-3 top-2.5 text-on-surface-variant text-sm">search</span>
+                <input type="text" name="Keyword" value="@Model.Keyword" placeholder="Search by content, explanation, or exam title..." class="w-full pl-9 pr-3 py-2 rounded-lg border border-outline-variant text-body-sm focus:border-primary focus:ring-primary" />
+            </div>
+        </div>
+        <div class="md:col-span-3">
+            <label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Filter by Exam</label>
+            <select name="ExamId" class="w-full py-2 px-3 rounded-lg border border-outline-variant text-body-sm">
+                <option value="">All Exams</option>
+                @foreach (var ex in Model.AvailableExams)
+                {
+                    <option value="@ex.Id" selected="@(Model.ExamId == ex.Id)">@ex.Title (@ex.Status)</option>
+                }
+            </select>
+        </div>
+        <div class="md:col-span-2">
+            <label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Part</label>
+            <select name="Part" class="w-full py-2 px-3 rounded-lg border border-outline-variant text-body-sm">
+                <option value="">All (Part 6 & 7)</option>
+                <option value="6" selected="@(Model.Part == 6)">Part 6 (Text Completion)</option>
+                <option value="7" selected="@(Model.Part == 7)">Part 7 (Reading Comp.)</option>
+            </select>
+        </div>
+        <div class="md:col-span-2 flex gap-2">
+            <button type="submit" class="flex-1 bg-primary hover:bg-primary/90 text-on-primary font-label-md py-2 px-4 rounded-lg transition-colors cursor-pointer">Filter</button>
+            <a href="/Admin/Passages" class="border border-outline-variant hover:bg-surface-container text-on-surface-variant font-label-md py-2 px-3 rounded-lg transition-colors">Reset</a>
+        </div>
+    </form>
+
+    <!-- Passages Table (UC-18.1) -->
+    <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/40 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-surface-container text-on-surface-variant text-xs uppercase tracking-wider border-b border-outline-variant">
+                        <th class="py-3.5 px-4">ID</th>
+                        <th class="py-3.5 px-4">Part / Order</th>
+                        <th class="py-3.5 px-4">Passage Preview</th>
+                        <th class="py-3.5 px-4">Exam</th>
+                        <th class="py-3.5 px-4 text-center">Attached Questions</th>
+                        <th class="py-3.5 px-4 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-outline-variant/30 text-body-sm">
+                    @if (Model.Passages.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="6" class="py-12 text-center text-on-surface-variant">
+                                No reading passages found matching your criteria.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model.Passages)
+                        {
+                            var preview = string.IsNullOrWhiteSpace(item.Content)
+                                ? "(Image Passage)"
+                                : (item.Content.Length > 140 ? item.Content[..140] + "..." : item.Content);
+                            <tr class="hover:bg-surface-container-low/60 transition-colors" id="passage-row-@item.Id">
+                                <td class="py-3.5 px-4 font-bold text-primary">#@item.Id</td>
+                                <td class="py-3.5 px-4">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold @(item.Part == 6 ? "bg-secondary-fixed text-on-secondary-fixed" : "bg-tertiary-fixed text-on-tertiary-fixed")">
+                                        Part @item.Part
+                                    </span>
+                                    <div class="text-xs text-on-surface-variant mt-1">Order: #@item.DisplayOrder</div>
+                                </td>
+                                <td class="py-3.5 px-4 max-w-md">
+                                    <div class="font-medium text-on-surface whitespace-pre-line line-clamp-2">@preview</div>
+                                    @if (!string.IsNullOrWhiteSpace(item.QuestionGroupName))
+                                    {
+                                        <div class="text-xs text-primary mt-1">Group: @item.QuestionGroupName</div>
+                                    }
+                                </td>
+                                <td class="py-3.5 px-4">
+                                    <a href="/Admin/Exams/Detail?id=@item.ExamId" class="font-semibold text-on-surface hover:text-primary hover:underline">@(item.ExamTitle ?? $"Exam #{item.ExamId}")</a>
+                                    <div class="mt-0.5">
+                                        <span class="inline-block px-2 py-0.5 rounded text-[11px] font-semibold @(item.IsExamActive ? "bg-tertiary-fixed text-tertiary" : "bg-surface-variant text-on-surface-variant")">
+                                            @item.ExamStatus
+                                        </span>
+                                    </div>
+                                </td>
+                                <td class="py-3.5 px-4 text-center">
+                                    @if (item.QuestionCount > 0)
+                                    {
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-primary-fixed text-primary">
+                                            @item.QuestionCount Qs
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-surface-variant text-on-surface-variant">
+                                            0 Qs
+                                        </span>
+                                    }
+                                </td>
+                                <td class="py-3.5 px-4 text-right">
+                                    <div class="inline-flex items-center gap-1">
+                                        <a href="/Admin/Passages/Detail?id=@item.Id" class="p-2 rounded-lg text-on-surface-variant hover:text-primary hover:bg-primary-fixed/40 transition-colors" title="View & Edit Passage (UC-18.3 / UC-18.4)">
+                                            <span class="material-symbols-outlined text-[19px]">visibility</span>
+                                        </a>
+                                        <button type="button" onclick="confirmDeletePassage(@item.Id, @item.QuestionCount, @(item.IsExamActive ? "true" : "false"))" class="p-2 rounded-lg text-on-surface-variant hover:text-error hover:bg-error-container/40 transition-colors cursor-pointer" title="Delete Passage (UC-18.5)">
+                                            <span class="material-symbols-outlined text-[19px]">delete</span>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Create Passage Modal (UC-18.2) -->
+<div id="create-passage-modal" class="@(Model.ShowCreateModal ? "flex" : "hidden") fixed inset-0 z-50 bg-on-surface/40 backdrop-blur-sm items-center justify-center p-4">
+    <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/40 shadow-2xl max-w-2xl w-full p-lg flex flex-col gap-md max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between border-b border-outline-variant/40 pb-sm">
+            <div>
+                <h3 class="font-headline-sm text-headline-sm font-bold text-on-surface">Create Reading Passage (UC-18.2)</h3>
+                <p class="text-xs text-on-surface-variant">Add a new reading passage for Part 6 or Part 7.</p>
+            </div>
+            <button type="button" onclick="closeCreatePassageModal()" class="p-1 text-on-surface-variant hover:text-on-surface cursor-pointer">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        @if (Model.FormErrors.Count > 0)
+        {
+            <div class="p-sm rounded-lg bg-error-container text-on-error-container text-body-sm">
+                @foreach (var err in Model.FormErrors)
+                {
+                    <div>• @err</div>
+                }
+            </div>
+        }
+
+        <form method="post" asp-page-handler="Create" class="flex flex-col gap-md">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-md">
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold uppercase text-on-surface-variant mb-1">Target Exam *</label>
+                    <select asp-for="CreateForm.ExamId" class="w-full rounded-lg border border-outline-variant py-2 px-3 text-body-sm" required>
+                        <option value="">-- Select Exam --</option>
+                        @foreach (var ex in Model.AvailableExams)
+                        {
+                            <option value="@ex.Id">@ex.Title (@ex.Status)</option>
+                        }
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-on-surface-variant mb-1">Display Order</label>
+                    <input type="number" asp-for="CreateForm.DisplayOrder" min="1" class="w-full rounded-lg border border-outline-variant py-2 px-3 text-body-sm" />
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold uppercase text-on-surface-variant mb-1">Passage Content *</label>
+                <textarea asp-for="CreateForm.Content" rows="6" placeholder="Enter reading passage text (email, notice, article, memo)..." class="w-full rounded-lg border border-outline-variant p-3 text-body-sm"></textarea>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold uppercase text-on-surface-variant mb-1">Optional Image URL</label>
+                <input type="text" asp-for="CreateForm.ImageUrl" placeholder="https://example.com/passage-image.png" class="w-full rounded-lg border border-outline-variant py-2 px-3 text-body-sm" />
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold uppercase text-on-surface-variant mb-1">Explanation / Translation Notes</label>
+                <textarea asp-for="CreateForm.Explanation" rows="2" placeholder="Optional explanation or Vietnamese translation of the passage..." class="w-full rounded-lg border border-outline-variant p-3 text-body-sm"></textarea>
+            </div>
+
+            <div class="flex justify-end gap-sm pt-sm border-t border-outline-variant/40">
+                <button type="button" onclick="closeCreatePassageModal()" class="border border-outline-variant px-4 py-2 rounded-lg text-body-sm font-semibold text-on-surface-variant hover:bg-surface-container cursor-pointer">Cancel</button>
+                <button type="submit" class="bg-primary hover:bg-primary/90 text-on-primary px-5 py-2 rounded-lg text-body-sm font-semibold cursor-pointer">Create Passage</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openCreatePassageModal() {
+            const modal = document.getElementById('create-passage-modal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+        }
+
+        function closeCreatePassageModal() {
+            const modal = document.getElementById('create-passage-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        function confirmDeletePassage(id, questionCount, isActive) {
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+
+            if (questionCount > 0) {
+                // UC-18.5: Warn about attached Part 6-7 questions and prevent orphan questions
+                showConfirm({
+                    title: 'Non-Orphan Constraint (UC-18.5)',
+                    message: `Passage #${id} currently has ${questionCount} attached Part 6–7 question(s). To prevent orphan questions in the database, deleting this passage will also remove its ${questionCount} attached question(s). Proceed?`,
+                    confirmText: `Delete Passage & ${questionCount} Question(s)`,
+                    cancelText: 'Cancel',
+                    isDestructive: true,
+                    onConfirm: () => executeDeletePassage(id, true, token)
+                });
+            } else {
+                showConfirm({
+                    title: `Delete Passage #${id}`,
+                    message: 'This passage has 0 attached questions. Are you sure you want to permanently delete it?',
+                    confirmText: 'Delete Passage',
+                    cancelText: 'Cancel',
+                    isDestructive: true,
+                    onConfirm: () => executeDeletePassage(id, false, token)
+                });
+            }
+        }
+
+        async function executeDeletePassage(id, deleteWithQuestions, token) {
+            try {
+                const res = await fetch(`?handler=Delete&id=${id}&deleteWithQuestions=${deleteWithQuestions}`, {
+                    method: 'POST',
+                    headers: { 'RequestVerificationToken': token }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    const row = document.getElementById(`passage-row-${id}`);
+                    if (row) row.remove();
+                } else {
+                    showToast(data.error || 'Failed to delete passage.', 'error');
+                }
+            } catch (err) {
+                showToast('Network error while deleting passage.', 'error');
+            }
+        }
+    </script>
+}

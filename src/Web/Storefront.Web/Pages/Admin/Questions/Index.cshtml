@@ -1,0 +1,765 @@
+@page
+@model Storefront.Web.Pages.Admin.Questions.IndexModel
+@using System.Text.Json
+@{
+    Layout = "_ModeratorLayout";
+    ViewData["Title"] = "Question Bank Management";
+}
+
+<link rel="stylesheet" href="~/css/admin-question-create.css" />
+
+<div class="w-full flex flex-col gap-lg pb-12">
+    <!-- HEADER -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-md">
+        <div>
+            <span class="font-label-sm text-label-sm uppercase tracking-widest text-outline font-bold">Content Service · Question Bank</span>
+            <h1 class="font-headline-lg text-headline-lg font-bold text-on-surface mt-2xs">Question Bank Management</h1>
+            <p class="font-body-md text-body-md text-on-surface-variant mt-xs">
+                Manage TOEIC Listening &amp; Reading questions across Parts 1–7, difficulty levels, audio segments, and embedded exams.
+            </p>
+        </div>
+        <div class="flex items-center gap-sm flex-wrap">
+            <button type="button" onclick="openBuilderLauncherModal()" class="qc-btn-secondary flex items-center gap-xs">
+                <span class="material-symbols-outlined text-[18px]">magic_button</span>
+                Part 1–7 Wizard Builder
+            </button>
+            <button type="button" onclick="openCreateQuestionModal()" class="bg-primary text-on-primary hover:opacity-90 font-label-lg text-label-lg py-2.5 px-5 rounded-xl flex items-center gap-sm shadow-sm transition-all">
+                <span class="material-symbols-outlined text-[20px]">add_circle</span>
+                Create Question
+            </button>
+        </div>
+    </div>
+
+    <!-- ALERTS -->
+    @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+    {
+        <div class="bg-tertiary-fixed/30 border border-tertiary text-on-tertiary-fixed-variant rounded-xl p-md flex items-center justify-between shadow-sm">
+            <div class="flex items-center gap-sm">
+                <span class="material-symbols-outlined text-tertiary">check_circle</span>
+                <span class="font-body-md font-medium">@Model.SuccessMessage</span>
+            </div>
+            <button type="button" onclick="this.parentElement.remove()" class="text-on-tertiary-fixed-variant hover:opacity-75">
+                <span class="material-symbols-outlined text-sm">close</span>
+            </button>
+        </div>
+    }
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="bg-error-container border border-error text-on-error-container rounded-xl p-md flex items-center justify-between shadow-sm">
+            <div class="flex items-center gap-sm">
+                <span class="material-symbols-outlined text-error">error</span>
+                <span class="font-body-md font-medium">@Model.ErrorMessage</span>
+            </div>
+            <button type="button" onclick="this.parentElement.remove()" class="text-on-error-container hover:opacity-75">
+                <span class="material-symbols-outlined text-sm">close</span>
+            </button>
+        </div>
+    }
+
+    <!-- BENTO SUMMARY STATS -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-md">
+        <div class="bg-surface-container-lowest p-lg rounded-xl border border-outline-variant/20 shadow-sm flex items-center justify-between">
+            <div>
+                <span class="font-label-sm text-label-sm uppercase text-on-surface-variant font-bold">Total Questions</span>
+                <h3 class="font-headline-md text-headline-md font-bold text-on-surface mt-xs">@Model.TotalQuestionsCount</h3>
+                <p class="font-body-xs text-body-xs text-on-surface-variant mt-2xs">In Question Bank</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                <span class="material-symbols-outlined text-[26px]">quiz</span>
+            </div>
+        </div>
+
+        <div class="bg-surface-container-lowest p-lg rounded-xl border border-outline-variant/20 shadow-sm flex items-center justify-between">
+            <div>
+                <span class="font-label-sm text-label-sm uppercase text-on-surface-variant font-bold">Listening (Parts 1–4)</span>
+                <h3 class="font-headline-md text-headline-md font-bold text-primary mt-xs">@Model.ListeningQuestionsCount</h3>
+                <p class="font-body-xs text-body-xs text-on-surface-variant mt-2xs">Audio &amp; photo items</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                <span class="material-symbols-outlined text-[26px]">headphones</span>
+            </div>
+        </div>
+
+        <div class="bg-surface-container-lowest p-lg rounded-xl border border-outline-variant/20 shadow-sm flex items-center justify-between">
+            <div>
+                <span class="font-label-sm text-label-sm uppercase text-on-surface-variant font-bold">Reading (Parts 5–7)</span>
+                <h3 class="font-headline-md text-headline-md font-bold text-tertiary mt-xs">@Model.ReadingQuestionsCount</h3>
+                <p class="font-body-xs text-body-xs text-on-surface-variant mt-2xs">Grammar &amp; passages</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-tertiary-fixed/40 text-on-tertiary-fixed-variant flex items-center justify-center">
+                <span class="material-symbols-outlined text-[26px]">menu_book</span>
+            </div>
+        </div>
+
+        <div class="bg-surface-container-lowest p-lg rounded-xl border border-outline-variant/20 shadow-sm flex items-center justify-between">
+            <div>
+                <span class="font-label-sm text-label-sm uppercase text-on-surface-variant font-bold">Active Exam Items</span>
+                <h3 class="font-headline-md text-headline-md font-bold text-on-surface mt-xs">@Model.ActiveExamQuestionsCount</h3>
+                <p class="font-body-xs text-body-xs text-on-surface-variant mt-2xs">In Published Exams</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-secondary-container text-on-secondary-container flex items-center justify-center">
+                <span class="material-symbols-outlined text-[26px]">verified</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- SEARCH & FILTER BAR (UC-17.6 & UC-17.7) -->
+    <form method="get" class="bg-surface-container-lowest p-md rounded-xl border border-outline-variant/20 shadow-sm flex flex-col lg:flex-row items-stretch lg:items-center gap-md">
+        <div class="relative flex-1">
+            <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-outline text-[20px]">search</span>
+            <input type="text"
+                   name="SearchTerm"
+                   value="@Model.SearchTerm"
+                   placeholder="Search questions by text keyword, option text, explanation, grammar type, or topic tag..."
+                   class="w-full pl-11 pr-4 py-2.5 bg-surface-container-low border border-outline-variant/30 rounded-xl font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary transition-all" />
+        </div>
+
+        <div class="flex flex-wrap items-center gap-sm">
+            <!-- Filter by Part 1-7 -->
+            <select name="FilterPart" onchange="this.form.submit()" class="px-3.5 py-2.5 bg-surface-container-low border border-outline-variant/30 rounded-xl font-label-md text-label-md text-on-surface focus:outline-none focus:border-primary">
+                <option value="">All Parts (Part 1–7)</option>
+                <option value="1" selected="@(Model.FilterPart == 1)">Part 1: Photographs</option>
+                <option value="2" selected="@(Model.FilterPart == 2)">Part 2: Question-Response</option>
+                <option value="3" selected="@(Model.FilterPart == 3)">Part 3: Conversations</option>
+                <option value="4" selected="@(Model.FilterPart == 4)">Part 4: Short Talks</option>
+                <option value="5" selected="@(Model.FilterPart == 5)">Part 5: Incomplete Sentences</option>
+                <option value="6" selected="@(Model.FilterPart == 6)">Part 6: Text Completion</option>
+                <option value="7" selected="@(Model.FilterPart == 7)">Part 7: Reading Comprehension</option>
+            </select>
+
+            <!-- Filter by Difficulty -->
+            <select name="FilterDifficulty" onchange="this.form.submit()" class="px-3.5 py-2.5 bg-surface-container-low border border-outline-variant/30 rounded-xl font-label-md text-label-md text-on-surface focus:outline-none focus:border-primary">
+                <option value="All" selected="@(string.IsNullOrEmpty(Model.FilterDifficulty) || Model.FilterDifficulty == "All")">All Difficulties</option>
+                <option value="Easy" selected="@(Model.FilterDifficulty == "Easy")">Easy</option>
+                <option value="Medium" selected="@(Model.FilterDifficulty == "Medium")">Medium</option>
+                <option value="Hard" selected="@(Model.FilterDifficulty == "Hard")">Hard</option>
+            </select>
+
+            <!-- Filter by Exam -->
+            <select name="FilterExamId" onchange="this.form.submit()" class="px-3.5 py-2.5 bg-surface-container-low border border-outline-variant/30 rounded-xl font-label-md text-label-md text-on-surface focus:outline-none focus:border-primary max-w-[230px] truncate">
+                <option value="">All Embedded Exams</option>
+                @foreach (var ex in Model.Exams)
+                {
+                    <option value="@ex.Id" selected="@(Model.FilterExamId == ex.Id)">@ex.Title (@ex.Status)</option>
+                }
+            </select>
+
+            <button type="submit" class="bg-primary text-on-primary hover:opacity-90 px-4 py-2.5 rounded-xl font-label-md text-label-md font-semibold flex items-center gap-xs transition-all">
+                <span class="material-symbols-outlined text-[18px]">filter_alt</span>
+                Filter
+            </button>
+
+            @if (!string.IsNullOrWhiteSpace(Model.SearchTerm) || Model.FilterPart.HasValue || (!string.IsNullOrWhiteSpace(Model.FilterDifficulty) && Model.FilterDifficulty != "All") || Model.FilterExamId.HasValue)
+            {
+                <a href="/Admin/Questions" class="px-3.5 py-2.5 rounded-xl border border-outline-variant/40 text-on-surface-variant hover:bg-surface-container font-label-md text-label-md flex items-center gap-xs transition-colors">
+                    <span class="material-symbols-outlined text-[18px]">restart_alt</span>
+                    Reset
+                </a>
+            }
+        </div>
+    </form>
+
+    <!-- PART QUICK FILTER PILLS -->
+    <div class="flex items-center gap-xs flex-wrap">
+        <a href="@Url.Page("./Index", new { SearchTerm = Model.SearchTerm, FilterPart = (int?)null, FilterDifficulty = Model.FilterDifficulty, FilterExamId = Model.FilterExamId })"
+           class="px-3.5 py-1.5 rounded-full font-label-sm text-label-sm font-semibold transition-all @(!Model.FilterPart.HasValue ? "bg-primary text-on-primary shadow-sm" : "bg-surface-container-lowest border border-outline-variant/30 text-on-surface-variant hover:bg-surface-container")">
+            All Parts
+        </a>
+        @for (int p = 1; p <= 7; p++)
+        {
+            var isSelected = Model.FilterPart == p;
+            <a href="@Url.Page("./Index", new { SearchTerm = Model.SearchTerm, FilterPart = p, FilterDifficulty = Model.FilterDifficulty, FilterExamId = Model.FilterExamId })"
+               class="px-3.5 py-1.5 rounded-full font-label-sm text-label-sm font-semibold transition-all @(isSelected ? "bg-primary text-on-primary shadow-sm" : "bg-surface-container-lowest border border-outline-variant/30 text-on-surface-variant hover:bg-surface-container")">
+                Part @p
+            </a>
+        }
+    </div>
+
+    <!-- QUESTIONS TABLE (UC-17.1) -->
+    <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/20 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-outline-variant/20 bg-surface-container-low/60 font-label-sm text-label-sm uppercase text-on-surface-variant">
+                        <th class="py-3.5 px-4">Q# &amp; Part</th>
+                        <th class="py-3.5 px-4">Question Stem &amp; Options</th>
+                        <th class="py-3.5 px-4">Difficulty &amp; Tags</th>
+                        <th class="py-3.5 px-4">Embedded Exam</th>
+                        <th class="py-3.5 px-4 text-center">Answer</th>
+                        <th class="py-3.5 px-4 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-outline-variant/15 font-body-sm text-body-sm">
+                    @if (Model.Questions.Items.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="6" class="py-12 text-center text-on-surface-variant">
+                                <div class="flex flex-col items-center gap-sm">
+                                    <span class="material-symbols-outlined text-4xl text-outline">search_off</span>
+                                    <p class="font-title-sm text-title-sm font-semibold text-on-surface">No questions matched your criteria</p>
+                                    <p class="font-body-sm text-body-sm text-on-surface-variant">Try clearing your search keyword or changing Part / Difficulty filters.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var q in Model.Questions.Items)
+                        {
+                            var optA = q.Options.FirstOrDefault(o => o.OptionLetter == "A")?.OptionText ?? "";
+                            var optB = q.Options.FirstOrDefault(o => o.OptionLetter == "B")?.OptionText ?? "";
+                            var optC = q.Options.FirstOrDefault(o => o.OptionLetter == "C")?.OptionText ?? "";
+                            var optD = q.Options.FirstOrDefault(o => o.OptionLetter == "D")?.OptionText ?? "";
+
+                            var diffBadgeClass = q.Difficulty switch
+                            {
+                                "Easy" => "bg-tertiary-fixed/40 text-on-tertiary-fixed-variant border-tertiary/30",
+                                "Hard" => "bg-error-container/50 text-on-error-container border-error/30",
+                                _ => "bg-primary/10 text-primary border-primary/20"
+                            };
+
+                            var qJson = JsonSerializer.Serialize(new
+                            {
+                                q.Id,
+                                q.ExamId,
+                                q.Part,
+                                q.QuestionNumber,
+                                q.QuestionText,
+                                q.CorrectOption,
+                                q.Explanation,
+                                q.QuestionType,
+                                q.TopicTag,
+                                q.Difficulty,
+                                q.AudioUrl,
+                                q.ImageUrl,
+                                OptionA = optA,
+                                OptionB = optB,
+                                OptionC = optC,
+                                OptionD = optD
+                            });
+
+                            <tr class="hover:bg-surface-container-low/40 transition-colors">
+                                <td class="py-3.5 px-4 align-top whitespace-nowrap">
+                                    <div class="flex flex-col gap-1">
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="font-label-md text-label-md font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-md">Q@(q.QuestionNumber)</span>
+                                            <span class="font-label-sm text-label-sm font-semibold bg-surface-container px-2 py-0.5 rounded text-on-surface">Part @q.Part</span>
+                                        </div>
+                                        <span class="font-body-xs text-body-xs text-outline">ID: #@q.Id</span>
+                                    </div>
+                                </td>
+
+                                <td class="py-3.5 px-4 align-top max-w-md">
+                                    <a href="/Admin/Questions/Detail?id=@q.Id" class="font-body-md text-body-md font-semibold text-on-surface hover:text-primary transition-colors line-clamp-2">
+                                        @(string.IsNullOrWhiteSpace(q.QuestionText) ? $"[Part {q.Part} Audio/Image Question #{q.QuestionNumber}]" : q.QuestionText)
+                                    </a>
+                                    <div class="grid grid-cols-2 gap-x-3 gap-y-0.5 mt-1.5 text-body-xs text-on-surface-variant">
+                                        @foreach (var opt in q.Options.OrderBy(o => o.OptionLetter))
+                                        {
+                                            <span class="truncate @(opt.OptionLetter == q.CorrectOption ? "text-tertiary font-bold" : "")">
+                                                (@opt.OptionLetter) @opt.OptionText
+                                            </span>
+                                        }
+                                    </div>
+                                    <div class="flex items-center gap-xs mt-1.5 flex-wrap">
+                                        @if (!string.IsNullOrEmpty(q.AudioUrl))
+                                        {
+                                            <span class="inline-flex items-center gap-2xs text-[11px] bg-surface-container px-2 py-0.5 rounded text-on-surface-variant">
+                                                <span class="material-symbols-outlined text-[13px] text-primary">audiotrack</span> Audio
+                                            </span>
+                                        }
+                                        @if (!string.IsNullOrEmpty(q.ImageUrl))
+                                        {
+                                            <span class="inline-flex items-center gap-2xs text-[11px] bg-surface-container px-2 py-0.5 rounded text-on-surface-variant">
+                                                <span class="material-symbols-outlined text-[13px] text-primary">image</span> Image
+                                            </span>
+                                        }
+                                        @if (!string.IsNullOrEmpty(q.QuestionGroupName))
+                                        {
+                                            <span class="inline-flex items-center gap-2xs text-[11px] bg-surface-container px-2 py-0.5 rounded text-on-surface-variant truncate max-w-[200px]">
+                                                <span class="material-symbols-outlined text-[13px]">folder</span> @q.QuestionGroupName
+                                            </span>
+                                        }
+                                    </div>
+                                </td>
+
+                                <td class="py-3.5 px-4 align-top whitespace-nowrap">
+                                    <div class="flex flex-col items-start gap-1">
+                                        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold border @diffBadgeClass">
+                                            @q.Difficulty
+                                        </span>
+                                        @if (!string.IsNullOrEmpty(q.QuestionType))
+                                        {
+                                            <span class="text-xs text-on-surface-variant font-medium">@q.QuestionType</span>
+                                        }
+                                        @if (!string.IsNullOrEmpty(q.TopicTag))
+                                        {
+                                            <span class="text-[11px] bg-surface-container px-2 py-0.5 rounded text-on-surface-variant">#@q.TopicTag</span>
+                                        }
+                                    </div>
+                                </td>
+
+                                <td class="py-3.5 px-4 align-top">
+                                    <div class="flex flex-col items-start gap-1">
+                                        <a href="/Admin/Exams/Edit?id=@q.ExamId" class="font-label-md text-label-md font-semibold text-on-surface hover:text-primary transition-colors line-clamp-1">
+                                            @(q.ExamTitle ?? $"Exam #{q.ExamId}")
+                                        </a>
+                                        @if (q.IsExamActive)
+                                        {
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-tertiary-fixed text-on-tertiary-fixed-variant">
+                                                <span class="material-symbols-outlined text-[12px]">visibility</span>
+                                                Published (Active)
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-secondary-container text-on-secondary-container">
+                                                <span class="material-symbols-outlined text-[12px]">edit_note</span>
+                                                @q.ExamStatus
+                                            </span>
+                                        }
+                                    </div>
+                                </td>
+
+                                <td class="py-3.5 px-4 align-top text-center">
+                                    <span class="inline-flex w-7 h-7 rounded-full bg-tertiary text-on-tertiary font-label-md text-label-md font-bold items-center justify-center">
+                                        @q.CorrectOption
+                                    </span>
+                                </td>
+
+                                <td class="py-3.5 px-4 align-top text-right whitespace-nowrap">
+                                    <div class="inline-flex items-center gap-1">
+                                        <!-- View Detail (UC-17.3) -->
+                                        <a href="/Admin/Questions/Detail?id=@q.Id"
+                                           class="p-2 rounded-lg text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-colors"
+                                           title="View Question Detail">
+                                            <span class="material-symbols-outlined text-[19px]">visibility</span>
+                                        </a>
+
+                                        <!-- Quick Edit Modal (UC-17.4) -->
+                                        <button type="button"
+                                                onclick='openEditQuestionModal(@Html.Raw(qJson))'
+                                                class="p-2 rounded-lg text-primary hover:bg-primary/10 transition-colors"
+                                                title="Edit Question / Audio / Answers">
+                                            <span class="material-symbols-outlined text-[19px]">edit</span>
+                                        </button>
+
+                                        <!-- Delete with Active Exam Warning (UC-17.5) -->
+                                        <button type="button"
+                                                onclick="openDeleteQuestionModal(@q.Id, 'Q@(q.QuestionNumber) (Part @q.Part)', @(q.IsExamActive ? "true" : "false"), '@Html.Raw((q.ExamTitle ?? "").Replace("'", "\\'"))')"
+                                                class="p-2 rounded-lg text-error hover:bg-error-container/25 transition-colors"
+                                                title="Delete Question">
+                                            <span class="material-symbols-outlined text-[19px]">delete</span>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- PAGINATION -->
+        @if (Model.Questions.TotalPages > 1)
+        {
+            <div class="p-md border-t border-outline-variant/20 flex flex-col sm:flex-row items-center justify-between gap-sm bg-surface-container-low/30">
+                <span class="font-body-xs text-body-xs text-on-surface-variant">
+                    Showing page <strong>@Model.Questions.Page</strong> of <strong>@Model.Questions.TotalPages</strong> (@Model.Questions.TotalCount total questions)
+                </span>
+                <div class="flex items-center gap-xs">
+                    @for (int i = 1; i <= Model.Questions.TotalPages; i++)
+                    {
+                        var active = i == Model.Questions.Page;
+                        <a href="@Url.Page("./Index", new { SearchTerm = Model.SearchTerm, FilterPart = Model.FilterPart, FilterDifficulty = Model.FilterDifficulty, FilterExamId = Model.FilterExamId, PageIndex = i })"
+                           class="w-9 h-9 rounded-lg font-label-md text-label-md flex items-center justify-center transition-all @(active ? "bg-primary text-on-primary font-bold shadow-sm" : "bg-surface-container-lowest border border-outline-variant/30 text-on-surface hover:bg-surface-container")">
+                            @i
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- CREATE / EDIT QUESTION MODAL (UC-17.2 & UC-17.4) -->
+<div id="upsertQuestionModal" class="qc-modal hidden">
+    <div class="qc-modal__backdrop" onclick="closeUpsertQuestionModal()"></div>
+    <div class="qc-modal__panel qc-modal__panel--lg max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center border-b border-outline-variant/30 pb-sm">
+            <div>
+                <h3 id="upsertModalTitle" class="font-headline-sm text-headline-sm text-on-surface font-bold">Create Question</h3>
+                <p class="font-body-xs text-body-xs text-on-surface-variant mt-2xs">Assign to Exam &amp; Part 1–7, configure audio/image, options A–D, and difficulty</p>
+            </div>
+            <button type="button" onclick="closeUpsertQuestionModal()" class="p-2 rounded-full hover:bg-surface-container-high">
+                <span class="material-symbols-outlined text-on-surface-variant">close</span>
+            </button>
+        </div>
+
+        <form method="post" asp-page-handler="Save" enctype="multipart/form-data" class="flex flex-col gap-md pt-sm">
+            <input type="hidden" name="SearchTerm" value="@Model.SearchTerm" />
+            <input type="hidden" name="FilterPart" value="@Model.FilterPart" />
+            <input type="hidden" name="FilterDifficulty" value="@Model.FilterDifficulty" />
+            <input type="hidden" name="FilterExamId" value="@Model.FilterExamId" />
+            <input type="hidden" name="PageIndex" value="@Model.PageIndex" />
+            <input type="hidden" name="Form.QuestionId" id="qFormId" value="" />
+            <input type="hidden" name="Form.AudioUrl" id="qFormAudioUrl" value="" />
+            <input type="hidden" name="Form.ImageUrl" id="qFormImageUrl" value="" />
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-sm">
+                <div class="md:col-span-2 flex flex-col gap-2xs">
+                    <label class="qc-label">Target Exam <span class="text-error">*</span></label>
+                    <select name="Form.ExamId" id="qFormExamId" class="qc-select" required>
+                        @foreach (var ex in Model.Exams)
+                        {
+                            <option value="@ex.Id">@ex.Title (@ex.Status)</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="flex flex-col gap-2xs">
+                    <label class="qc-label">TOEIC Part (1–7) <span class="text-error">*</span></label>
+                    <select name="Form.Part" id="qFormPart" onchange="onModalPartChanged()" class="qc-select" required>
+                        <option value="1">Part 1: Photographs</option>
+                        <option value="2">Part 2: Question-Response</option>
+                        <option value="3">Part 3: Conversations</option>
+                        <option value="4">Part 4: Short Talks</option>
+                        <option value="5" selected>Part 5: Incomplete Sentences</option>
+                        <option value="6">Part 6: Text Completion</option>
+                        <option value="7">Part 7: Reading Comprehension</option>
+                    </select>
+                </div>
+
+                <div class="flex flex-col gap-2xs">
+                    <label class="qc-label">Question Number <span class="text-error">*</span></label>
+                    <input type="number" name="Form.QuestionNumber" id="qFormNumber" min="1" max="200" value="105" class="qc-input" required />
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-sm">
+                <div class="flex flex-col gap-2xs">
+                    <label class="qc-label">Difficulty Level <span class="text-error">*</span></label>
+                    <select name="Form.Difficulty" id="qFormDifficulty" class="qc-select">
+                        <option value="Easy">Easy</option>
+                        <option value="Medium" selected>Medium</option>
+                        <option value="Hard">Hard</option>
+                    </select>
+                </div>
+                <div class="flex flex-col gap-2xs">
+                    <label class="qc-label">Question Type / Skill</label>
+                    <input type="text" name="Form.QuestionType" id="qFormType" placeholder="e.g. Vocabulary, Preposition, Detail" class="qc-input" />
+                </div>
+                <div class="flex flex-col gap-2xs">
+                    <label class="qc-label">Topic Tag</label>
+                    <input type="text" name="Form.TopicTag" id="qFormTag" placeholder="e.g. Business, Finance, Travel" class="qc-input" />
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-2xs">
+                <div class="flex justify-between items-center">
+                    <label class="qc-label">Question Stem / Text</label>
+                    <button type="button" onclick="insertBlankIntoModalStem()" class="text-xs text-primary font-semibold hover:underline">+ Insert Blank (______)</button>
+                </div>
+                <textarea name="Form.QuestionText" id="qFormText" rows="2" placeholder="Enter question text or sentence with blank..." class="qc-textarea"></textarea>
+            </div>
+
+            <!-- Media (Audio / Image) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-sm bg-surface-container-low/50 p-sm rounded-xl border border-outline-variant/20">
+                <div class="flex flex-col gap-2xs">
+                    <label class="qc-label">Audio File (Optional / Listening Parts 1–4)</label>
+                    <input type="file" name="Form.AudioFile" accept="audio/*" class="text-xs text-on-surface-variant" />
+                    <span id="qFormCurrentAudio" class="text-[11px] text-primary truncate"></span>
+                </div>
+                <div class="flex flex-col gap-2xs">
+                    <label class="qc-label">Photograph / Graphic Image (Optional)</label>
+                    <input type="file" name="Form.ImageFile" accept="image/*" class="text-xs text-on-surface-variant" />
+                    <span id="qFormCurrentImage" class="text-[11px] text-primary truncate"></span>
+                </div>
+            </div>
+
+            <!-- Options A-D & Correct Option -->
+            <div class="flex flex-col gap-xs">
+                <label class="qc-label">Answer Options &amp; Correct Choice (Click radio to mark correct answer) <span class="text-error">*</span></label>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-sm">
+                    <div class="qc-option-row">
+                        <span class="qc-option-badge">A</span>
+                        <input type="text" name="Form.OptionA" id="qFormOptA" placeholder="Option A text" required />
+                        <input type="radio" name="Form.CorrectOption" id="qFormRadioA" value="A" checked />
+                    </div>
+                    <div class="qc-option-row">
+                        <span class="qc-option-badge">B</span>
+                        <input type="text" name="Form.OptionB" id="qFormOptB" placeholder="Option B text" required />
+                        <input type="radio" name="Form.CorrectOption" id="qFormRadioB" value="B" />
+                    </div>
+                    <div class="qc-option-row">
+                        <span class="qc-option-badge">C</span>
+                        <input type="text" name="Form.OptionC" id="qFormOptC" placeholder="Option C text" required />
+                        <input type="radio" name="Form.CorrectOption" id="qFormRadioC" value="C" />
+                    </div>
+                    <div class="qc-option-row" id="qFormOptDRow">
+                        <span class="qc-option-badge">D</span>
+                        <input type="text" name="Form.OptionD" id="qFormOptD" placeholder="Option D text" />
+                        <input type="radio" name="Form.CorrectOption" id="qFormRadioD" value="D" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-2xs">
+                <label class="qc-label">Explanation / Rationale</label>
+                <textarea name="Form.Explanation" id="qFormExplanation" rows="2" placeholder="Explain why the correct answer is right..." class="qc-textarea"></textarea>
+            </div>
+
+            <div class="flex justify-end gap-sm pt-sm border-t border-outline-variant/30">
+                <button type="button" onclick="closeUpsertQuestionModal()" class="qc-btn-ghost">Cancel</button>
+                <button type="submit" class="qc-btn-primary">
+                    <span class="material-symbols-outlined text-[18px]">save</span>
+                    <span id="upsertSubmitLabel">Save Question</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- PART 1-7 WIZARD BUILDER LAUNCHER MODAL -->
+<div id="builderLauncherModal" class="qc-modal hidden">
+    <div class="qc-modal__backdrop" onclick="closeBuilderLauncherModal()"></div>
+    <div class="qc-modal__panel qc-modal__panel--lg">
+        <div class="flex justify-between items-center border-b border-outline-variant/30 pb-sm">
+            <div>
+                <h3 class="font-headline-sm text-headline-sm text-on-surface font-bold">Launch Part 1–7 Question Builder</h3>
+                <p class="font-body-xs text-body-xs text-on-surface-variant mt-2xs">Select target Exam and open the dedicated visual builder with live preview &amp; audio waveform</p>
+            </div>
+            <button type="button" onclick="closeBuilderLauncherModal()" class="p-2 rounded-full hover:bg-surface-container-high">
+                <span class="material-symbols-outlined text-on-surface-variant">close</span>
+            </button>
+        </div>
+
+        <div class="flex flex-col gap-md py-sm">
+            <div class="flex flex-col gap-2xs">
+                <label class="qc-label">1. Select Target Exam</label>
+                <select id="launcherExamSelect" class="qc-select">
+                    @foreach (var ex in Model.Exams)
+                    {
+                        <option value="@ex.Id">@ex.Title (@ex.Status)</option>
+                    }
+                </select>
+            </div>
+
+            <div class="flex flex-col gap-2xs">
+                <label class="qc-label">2. Choose TOEIC Part Builder</label>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-sm">
+                    <button type="button" onclick="launchPartBuilder('ListeningQuestion?part=1')" class="qc-part-picker-card text-left">
+                        <div class="qc-part-picker-icon"><span class="material-symbols-outlined">image</span></div>
+                        <div class="flex-1">
+                            <h5 class="font-title-sm text-title-sm font-bold text-on-surface">Part 1: Photographs</h5>
+                            <p class="font-body-xs text-body-xs text-on-surface-variant">Photo + Audio Waveform Builder</p>
+                        </div>
+                    </button>
+                    <button type="button" onclick="launchPartBuilder('ListeningQuestion?part=2')" class="qc-part-picker-card text-left">
+                        <div class="qc-part-picker-icon"><span class="material-symbols-outlined">hearing</span></div>
+                        <div class="flex-1">
+                            <h5 class="font-title-sm text-title-sm font-bold text-on-surface">Part 2: Question-Response</h5>
+                            <p class="font-body-xs text-body-xs text-on-surface-variant">3-Option Audio Question Builder</p>
+                        </div>
+                    </button>
+                    <button type="button" onclick="launchPartBuilder('Listening?part=3')" class="qc-part-picker-card text-left">
+                        <div class="qc-part-picker-icon"><span class="material-symbols-outlined">forum</span></div>
+                        <div class="flex-1">
+                            <h5 class="font-title-sm text-title-sm font-bold text-on-surface">Part 3: Short Conversations</h5>
+                            <p class="font-body-xs text-body-xs text-on-surface-variant">2-Step Conversation Group Wizard</p>
+                        </div>
+                    </button>
+                    <button type="button" onclick="launchPartBuilder('Listening?part=4')" class="qc-part-picker-card text-left">
+                        <div class="qc-part-picker-icon"><span class="material-symbols-outlined">record_voice_over</span></div>
+                        <div class="flex-1">
+                            <h5 class="font-title-sm text-title-sm font-bold text-on-surface">Part 4: Short Talks</h5>
+                            <p class="font-body-xs text-body-xs text-on-surface-variant">2-Step Talk Group Wizard</p>
+                        </div>
+                    </button>
+                    <button type="button" onclick="launchPartBuilder('Part5')" class="qc-part-picker-card text-left">
+                        <div class="qc-part-picker-icon"><span class="material-symbols-outlined">description</span></div>
+                        <div class="flex-1">
+                            <h5 class="font-title-sm text-title-sm font-bold text-on-surface">Part 5: Incomplete Sentences</h5>
+                            <p class="font-body-xs text-body-xs text-on-surface-variant">Grammar/Vocab Sentence Builder</p>
+                        </div>
+                    </button>
+                    <button type="button" onclick="launchPartBuilder('Part6')" class="qc-part-picker-card text-left">
+                        <div class="qc-part-picker-icon"><span class="material-symbols-outlined">article</span></div>
+                        <div class="flex-1">
+                            <h5 class="font-title-sm text-title-sm font-bold text-on-surface">Part 6: Text Completion</h5>
+                            <p class="font-body-xs text-body-xs text-on-surface-variant">Passage with 4 Blanks Wizard</p>
+                        </div>
+                    </button>
+                    <button type="button" onclick="launchPartBuilder('Part7')" class="qc-part-picker-card text-left md:col-span-2">
+                        <div class="qc-part-picker-icon"><span class="material-symbols-outlined">menu_book</span></div>
+                        <div class="flex-1">
+                            <h5 class="font-title-sm text-title-sm font-bold text-on-surface">Part 7: Reading Comprehension</h5>
+                            <p class="font-body-xs text-body-xs text-on-surface-variant">3-Step Multi-Passage Reading Set Wizard</p>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- DELETE CONFIRMATION MODAL WITH ACTIVE EXAM WARNING (UC-17.5) -->
+<div id="deleteQuestionModal" class="qc-modal hidden">
+    <div class="qc-modal__backdrop" onclick="closeDeleteQuestionModal()"></div>
+    <div class="qc-modal__panel">
+        <div class="flex items-start gap-md">
+            <div class="w-12 h-12 rounded-full bg-error-container text-on-error-container flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-error">warning</span>
+            </div>
+            <div class="flex-1">
+                <h4 class="font-title-lg text-title-lg font-bold text-on-surface">Delete Question</h4>
+                <p class="font-body-md text-body-md text-on-surface-variant mt-xs">
+                    Are you sure you want to delete <strong id="delModalQuestionLabel" class="text-on-surface">this question</strong>?
+                </p>
+
+                <!-- Active Exam Warning Banner -->
+                <div id="delModalActiveWarning" class="hidden mt-md p-3.5 rounded-xl bg-error-container/45 border border-error text-on-error-container flex items-start gap-xs">
+                    <span class="material-symbols-outlined text-error text-[20px] mt-0.5">report</span>
+                    <div class="text-xs leading-relaxed">
+                        <strong>Active Exam Warning:</strong> This question is currently embedded in active exam <strong id="delModalActiveExamName"></strong> (Status: <strong>Published</strong>). Deleting this question will immediately remove it from the live exam!
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <form method="post" asp-page-handler="Delete" class="flex justify-end gap-sm pt-md border-t border-outline-variant/30 mt-md">
+            <input type="hidden" name="SearchTerm" value="@Model.SearchTerm" />
+            <input type="hidden" name="FilterPart" value="@Model.FilterPart" />
+            <input type="hidden" name="FilterDifficulty" value="@Model.FilterDifficulty" />
+            <input type="hidden" name="FilterExamId" value="@Model.FilterExamId" />
+            <input type="hidden" name="PageIndex" value="@Model.PageIndex" />
+            <input type="hidden" name="deleteId" id="delModalQuestionId" value="0" />
+            <button type="button" onclick="closeDeleteQuestionModal()" class="qc-btn-ghost">Cancel</button>
+            <button type="submit" class="bg-error text-on-error hover:opacity-90 font-label-lg text-label-lg px-5 py-2.5 rounded-xl font-semibold transition-all flex items-center gap-xs shadow-sm">
+                <span class="material-symbols-outlined text-sm">delete</span>
+                Confirm Delete
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function onModalPartChanged() {
+        const part = parseInt(document.getElementById('qFormPart').value) || 5;
+        const optDRow = document.getElementById('qFormOptDRow');
+        const optDInput = document.getElementById('qFormOptD');
+        if (part === 2) {
+            optDRow.classList.add('opacity-40');
+            optDInput.required = false;
+        } else {
+            optDRow.classList.remove('opacity-40');
+            optDInput.required = true;
+        }
+    }
+
+    function insertBlankIntoModalStem() {
+        const el = document.getElementById('qFormText');
+        if (!el) return;
+        const start = el.selectionStart ?? el.value.length;
+        const end = el.selectionEnd ?? el.value.length;
+        el.value = el.value.substring(0, start) + '______' + el.value.substring(end);
+        el.focus();
+    }
+
+    function openCreateQuestionModal() {
+        document.getElementById('upsertModalTitle').textContent = 'Create New Question (UC-17.2)';
+        document.getElementById('upsertSubmitLabel').textContent = 'Create Question';
+        document.getElementById('qFormId').value = '';
+        document.getElementById('qFormPart').value = '5';
+        document.getElementById('qFormNumber').value = '105';
+        document.getElementById('qFormDifficulty').value = 'Medium';
+        document.getElementById('qFormType').value = 'Vocabulary';
+        document.getElementById('qFormTag').value = 'Business';
+        document.getElementById('qFormText').value = '';
+        document.getElementById('qFormOptA').value = '';
+        document.getElementById('qFormOptB').value = '';
+        document.getElementById('qFormOptC').value = '';
+        document.getElementById('qFormOptD').value = '';
+        document.getElementById('qFormRadioA').checked = true;
+        document.getElementById('qFormExplanation').value = '';
+        document.getElementById('qFormAudioUrl').value = '';
+        document.getElementById('qFormImageUrl').value = '';
+        document.getElementById('qFormCurrentAudio').textContent = '';
+        document.getElementById('qFormCurrentImage').textContent = '';
+        onModalPartChanged();
+        document.getElementById('upsertQuestionModal').classList.remove('hidden');
+    }
+
+    function openEditQuestionModal(q) {
+        document.getElementById('upsertModalTitle').textContent = `Update Question #${q.QuestionNumber} (UC-17.4)`;
+        document.getElementById('upsertSubmitLabel').textContent = 'Update Question';
+        document.getElementById('qFormId').value = q.Id;
+        document.getElementById('qFormExamId').value = q.ExamId;
+        document.getElementById('qFormPart').value = q.Part;
+        document.getElementById('qFormNumber').value = q.QuestionNumber;
+        document.getElementById('qFormDifficulty').value = q.Difficulty || 'Medium';
+        document.getElementById('qFormType').value = q.QuestionType || '';
+        document.getElementById('qFormTag').value = q.TopicTag || '';
+        document.getElementById('qFormText').value = q.QuestionText || '';
+        document.getElementById('qFormOptA').value = q.OptionA || '';
+        document.getElementById('qFormOptB').value = q.OptionB || '';
+        document.getElementById('qFormOptC').value = q.OptionC || '';
+        document.getElementById('qFormOptD').value = q.OptionD || '';
+        document.getElementById('qFormExplanation').value = q.Explanation || '';
+        document.getElementById('qFormAudioUrl').value = q.AudioUrl || '';
+        document.getElementById('qFormImageUrl').value = q.ImageUrl || '';
+        document.getElementById('qFormCurrentAudio').textContent = q.AudioUrl ? `Current audio: ${q.AudioUrl}` : '';
+        document.getElementById('qFormCurrentImage').textContent = q.ImageUrl ? `Current image: ${q.ImageUrl}` : '';
+
+        const correct = (q.CorrectOption || 'A').toUpperCase();
+        const radio = document.getElementById('qFormRadio' + correct);
+        if (radio) radio.checked = true;
+
+        onModalPartChanged();
+        document.getElementById('upsertQuestionModal').classList.remove('hidden');
+    }
+
+    function closeUpsertQuestionModal() {
+        document.getElementById('upsertQuestionModal').classList.add('hidden');
+    }
+
+    function openBuilderLauncherModal() {
+        document.getElementById('builderLauncherModal').classList.remove('hidden');
+    }
+
+    function closeBuilderLauncherModal() {
+        document.getElementById('builderLauncherModal').classList.add('hidden');
+    }
+
+    function launchPartBuilder(routeSuffix) {
+        const examId = document.getElementById('launcherExamSelect').value || '1';
+        window.location.href = `/Admin/Exams/${examId}/Questions/Create/${routeSuffix}`;
+    }
+
+    function openDeleteQuestionModal(id, label, isActive, examTitle) {
+        document.getElementById('delModalQuestionId').value = id;
+        document.getElementById('delModalQuestionLabel').textContent = label;
+        const warnBox = document.getElementById('delModalActiveWarning');
+        const examNameSpan = document.getElementById('delModalActiveExamName');
+        if (isActive) {
+            examNameSpan.textContent = examTitle || 'Published Exam';
+            warnBox.classList.remove('hidden');
+        } else {
+            warnBox.classList.add('hidden');
+        }
+        document.getElementById('deleteQuestionModal').classList.remove('hidden');
+    }
+
+    function closeDeleteQuestionModal() {
+        document.getElementById('deleteQuestionModal').classList.add('hidden');
+    }
+
+    @if (Model.Create)
+    {
+        <text>
+        window.addEventListener('DOMContentLoaded', () => {
+            openCreateQuestionModal();
+        });
+        </text>
+    }
+</script>

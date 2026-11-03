@@ -106,12 +106,94 @@ public class ExamsController(IContentService contentService) : ControllerBase
     }
 
     /// <summary>
+    /// Get Exam Aggregate Statistics
+    /// </summary>
+    [HttpGet("stats")]
+    public async Task<IActionResult> GetExamStats(CancellationToken ct)
+    {
+        var result = await contentService.GetExamStatsAsync(ct);
+        if (!result.IsSuccess)
+            return BadRequest(new { error = result.Error });
+
+        return Ok(result.Value);
+    }
+
+    /// <summary>
     /// Get Available Exam Series
     /// </summary>
     [HttpGet("series")]
     public async Task<IActionResult> GetExamSeries(CancellationToken ct)
     {
         var result = await contentService.GetExamSeriesAsync(ct);
+        if (!result.IsSuccess)
+            return BadRequest(new { error = result.Error });
+
+        return Ok(result.Value);
+    }
+
+    // ==========================================
+    // EXAM CONTENT BUILDERS (UC-17.2, 17.4, 17.5)
+    // ==========================================
+
+    [HttpPost("{examId:int}/content/listening-question")]
+    public async Task<IActionResult> SaveListeningQuestion(int examId, [FromBody] SaveListeningQuestionRequestDto dto, CancellationToken ct)
+    {
+        var req = dto with { ExamId = examId };
+        var result = await contentService.SaveListeningQuestionAsync(req, ct);
+        if (!result.IsSuccess)
+            return BadRequest(new { error = result.Error });
+
+        return Ok(new { id = result.Value, message = "Listening question saved." });
+    }
+
+    [HttpPost("{examId:int}/content/listening-group")]
+    public async Task<IActionResult> SaveListeningGroup(int examId, [FromBody] SaveListeningGroupRequestDto dto, CancellationToken ct)
+    {
+        var req = dto with { ExamId = examId };
+        var result = await contentService.SaveListeningGroupAsync(req, ct);
+        if (!result.IsSuccess)
+            return BadRequest(new { error = result.Error });
+
+        return Ok(new { id = result.Value, message = "Listening group saved." });
+    }
+
+    [HttpPost("{examId:int}/content/part5")]
+    public async Task<IActionResult> SavePart5Question(int examId, [FromBody] SavePart5QuestionRequestDto dto, CancellationToken ct)
+    {
+        var req = dto with { ExamId = examId };
+        var result = await contentService.SavePart5QuestionAsync(req, ct);
+        if (!result.IsSuccess)
+            return BadRequest(new { error = result.Error });
+
+        return Ok(new { id = result.Value, message = "Part 5 question saved." });
+    }
+
+    [HttpPost("{examId:int}/content/part6")]
+    public async Task<IActionResult> SavePart6Set(int examId, [FromBody] SavePart6SetRequestDto dto, CancellationToken ct)
+    {
+        var req = dto with { ExamId = examId };
+        var result = await contentService.SavePart6SetAsync(req, ct);
+        if (!result.IsSuccess)
+            return BadRequest(new { error = result.Error });
+
+        return Ok(new { id = result.Value, message = "Part 6 passage & questions saved." });
+    }
+
+    [HttpPost("{examId:int}/content/part7")]
+    public async Task<IActionResult> SavePart7Set(int examId, [FromBody] SavePart7SetRequestDto dto, CancellationToken ct)
+    {
+        var req = dto with { ExamId = examId };
+        var result = await contentService.SavePart7SetAsync(req, ct);
+        if (!result.IsSuccess)
+            return BadRequest(new { error = result.Error });
+
+        return Ok(new { id = result.Value, message = "Part 7 reading set saved." });
+    }
+
+    [HttpDelete("{examId:int}/content/{contentType}/{targetId:int}")]
+    public async Task<IActionResult> DeleteExamContent(int examId, string contentType, int targetId, CancellationToken ct)
+    {
+        var result = await contentService.DeleteExamContentAsync(examId, contentType, targetId, ct);
         if (!result.IsSuccess)
             return BadRequest(new { error = result.Error });
 

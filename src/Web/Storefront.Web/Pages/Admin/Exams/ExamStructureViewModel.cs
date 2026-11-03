@@ -4,9 +4,13 @@ namespace Storefront.Web.Pages.Admin.Exams;
 
 public class ReadingSetViewModel
 {
+    public int GroupId { get; set; }
     public int PassageId { get; set; }
+    public string Name { get; set; } = "";
+    public string? Explanation { get; set; }
     public string? PassageContent { get; set; }
     public string? ImageUrl { get; set; }
+    public List<AdminPassageDetail> Passages { get; set; } = [];
     public List<AdminQuestionDetail> Questions { get; set; } = [];
 }
 
@@ -79,25 +83,67 @@ public class ExamStructureViewModel
         Part5Questions = qs.Where(q => q.Part == 5).OrderBy(q => q.QuestionNumber).ToList();
         Part6Groups = qs.Where(q => q.Part == 6).GroupBy(q => q.PassageId).ToList();
 
-        // Part 7 sets based on Passages and Questions
         var passages = Exam.Passages ?? [];
         var passageDict = passages.ToDictionary(p => p.Id);
+        var groups = Exam.QuestionGroups ?? [];
+        var groupDict = groups.ToDictionary(g => g.Id);
         var part7Questions = qs.Where(q => q.Part == 7).ToList();
 
-        var part7PassageGroups = part7Questions
-            .Where(q => q.PassageId.HasValue)
-            .GroupBy(q => q.PassageId!.Value);
-
         Part7Sets = [];
-        foreach (var group in part7PassageGroups)
+
+        // 1. Part 7 sets grouped by QuestionGroupId
+        var p7ByGroup = part7Questions
+            .Where(q => q.QuestionGroupId.HasValue)
+            .GroupBy(q => q.QuestionGroupId!.Value);
+
+        foreach (var grp in p7ByGroup)
         {
-            passageDict.TryGetValue(group.Key, out var passage);
+            groupDict.TryGetValue(grp.Key, out var qGroup);
+            var grpPassages = qGroup?.Passages?.OrderBy(p => p.DisplayOrder).ToList()
+                ?? passages.Where(p => p.QuestionGroupId == grp.Key).OrderBy(p => p.DisplayOrder).ToList();
+
+            var firstPassage = grpPassages.FirstOrDefault();
+            if (firstPassage == null)
+            {
+                var pId = grp.FirstOrDefault(q => q.PassageId.HasValue)?.PassageId;
+                if (pId.HasValue && passageDict.TryGetValue(pId.Value, out var fp))
+                {
+                    firstPassage = fp;
+                    grpPassages = [fp];
+                }
+            }
+
             Part7Sets.Add(new ReadingSetViewModel
             {
-                PassageId = group.Key,
+                GroupId = grp.Key,
+                PassageId = firstPassage?.Id ?? 0,
+                Name = !string.IsNullOrWhiteSpace(qGroup?.Name) ? qGroup.Name : $"Reading Set #{grp.Key}",
+                Explanation = qGroup?.Explanation ?? firstPassage?.Explanation,
+                PassageContent = firstPassage?.Content,
+                ImageUrl = firstPassage?.ImageUrl,
+                Passages = grpPassages,
+                Questions = grp.OrderBy(q => q.QuestionNumber).ToList()
+            });
+        }
+
+        // 2. Legacy Part 7 sets that only have PassageId (without QuestionGroupId)
+        var p7ByPassageOnly = part7Questions
+            .Where(q => !q.QuestionGroupId.HasValue && q.PassageId.HasValue)
+            .GroupBy(q => q.PassageId!.Value);
+
+        foreach (var grp in p7ByPassageOnly)
+        {
+            passageDict.TryGetValue(grp.Key, out var passage);
+            Part7Sets.Add(new ReadingSetViewModel
+            {
+                GroupId = 0,
+                PassageId = grp.Key,
+                Name = $"Passage #{grp.Key}",
+                Explanation = passage?.Explanation,
                 PassageContent = passage?.Content,
                 ImageUrl = passage?.ImageUrl,
-                Questions = group.OrderBy(q => q.QuestionNumber).ToList()
+                Passages = passage != null ? [passage] : [],
+                Questions = grp.OrderBy(q => q.QuestionNumber).ToList()
             });
         }
 

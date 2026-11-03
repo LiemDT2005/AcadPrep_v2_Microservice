@@ -94,6 +94,27 @@ public class EditModel(ToeicApiClient api) : PageModel
         return Page();
     }
 
+    public async Task<IActionResult> OnPostDeleteAsync(int id, string contentType, int targetId)
+    {
+        if (id <= 0 || targetId <= 0 || string.IsNullOrWhiteSpace(contentType))
+        {
+            ErrorMessage = "Invalid content deletion request.";
+            return RedirectToPage("./Edit", new { id });
+        }
+
+        var (res, error) = await api.DeleteExamContentAsync(id, contentType, targetId);
+        if (res != null)
+        {
+            SuccessMessage = res.Message;
+        }
+        else
+        {
+            ErrorMessage = error ?? "Failed to delete exam content.";
+        }
+
+        return RedirectToPage("./Edit", new { id });
+    }
+
     private async Task<bool> LoadExamAsync(int id)
     {
         var exam = await api.GetAdminExamAsync(id);

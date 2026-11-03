@@ -12,6 +12,8 @@ namespace Content.Repositories;
 
 public class ExamRepository(IContentDbContext db, IMapper mapper) : IExamRepository
 {
+    public IContentDbContext DbContext => db;
+
     public Task<List<string>> GetSeriesNamesAsync(CancellationToken ct = default) =>
         db.ExamSeries.AsNoTracking().Where(s => !s.IsDeleted)
             .Select(s => s.Name).Distinct().OrderBy(n => n).ToListAsync(ct);

@@ -20,7 +20,10 @@ builder.Services.AddDbContext<ContentDbContext>(options =>
 builder.Services.AddScoped<IContentDbContext>(sp => sp.GetRequiredService<ContentDbContext>());
 
 // 2. HttpClient & Service Injections
-builder.Services.AddHttpClient<IExamAttemptChecker, HttpExamAttemptChecker>();
+builder.Services.AddHttpClient<IExamAttemptChecker, HttpExamAttemptChecker>(client =>
+{
+    client.Timeout = TimeSpan.FromMilliseconds(500);
+});
 builder.Services.AddScoped<IExamRepository, ExamRepository>();
 builder.Services.AddScoped<IExamSeriesRepository, ExamSeriesRepository>();
 builder.Services.AddScoped<IContentService, ContentService>();
@@ -53,9 +56,9 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
     {
-        Title = "Content Service API (AcadPrep Exams & CMS)",
+        Title = "Content Service API (AcadPrep Exams, Questions & Passages CMS)",
         Version = "v1",
-        Description = "Microservice phụ trách danh sách/chi tiết đề Learner (UC-3.1–3.4) và CMS Exams (UC-16.1–16.7)."
+        Description = "Microservice phụ trách danh sách/chi tiết đề Learner (UC-3.1–3.4), CMS Exams (UC-16.1–16.7), Question Bank (UC-17.1–17.7) và Reading Passages (UC-18.1–18.5)."
     });
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
