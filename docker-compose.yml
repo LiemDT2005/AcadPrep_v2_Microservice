@@ -52,8 +52,10 @@ services:
     - ConnectionStrings__Default=Server=sqlserver,1433;Database=AcadPrep_IdentityDb;User Id=sa;Password=Password123!;TrustServerCertificate=True
     - Redis__ConnectionString=redis:6379
     depends_on:
-    - sqlserver
-    - redis
+      sqlserver:
+        condition: service_healthy
+      redis:
+        condition: service_started
   content.api:
     build:
       context: .
@@ -187,7 +189,7 @@ services:
       ASPNETCORE_HTTP_PORTS: '8080'
       ASPNETCORE_URLS: http://+:8080
       Urls: http://+:8080
-      ConnectionStrings__Default: ${NOTIFICATIONS_CONNECTION_STRING:?Set NOTIFICATIONS_CONNECTION_STRING explicitly}
+      ConnectionStrings__Default: ${NOTIFICATIONS_CONNECTION_STRING:-Server=sqlserver,1433;Database=AcadPrep_NotificationsDb;User Id=sa;Password=Password123!;TrustServerCertificate=True}
       Jwt__PublicKeyPath: /app/keys/public_key.pem
     volumes:
     - type: bind
@@ -196,6 +198,9 @@ services:
       read_only: true
       bind:
         create_host_path: false
+    depends_on:
+      sqlserver:
+        condition: service_healthy
 volumes:
   content-data: null
   identity-data: null

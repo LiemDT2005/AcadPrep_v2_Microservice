@@ -13,9 +13,10 @@ Notification startup never applies migrations or seeds data.
 
 ## Docker Compose
 
-Set `NOTIFICATIONS_CONNECTION_STRING` in the invoking process environment using
-secure configuration. The Compose service deliberately refuses a missing value.
-Do not put credentials in tracked files or command-line arguments.
+For local development, Compose defaults to the `AcadPrep_NotificationsDb`
+database on its `sqlserver` service, using the same local SQL login as the other
+services. Set `NOTIFICATIONS_CONNECTION_STRING` in the invoking process
+environment to override this connection for another environment.
 
 `notifications.api` uses container port 8080 and host port 5010. It mounts only
 the existing Identity public key, read-only, at `/app/keys/public_key.pem`.
@@ -23,7 +24,7 @@ The source must already be a valid public-key file. No private key is copied,
 mounted or included in the Notification Docker build context.
 
 Validate without starting services: `docker compose config --quiet`.
-Do not run Compose until the database target and environment are approved.
+Notification waits for the local SQL Server health check before starting.
 
 Gateway's local `appsettings.json` retains `http://localhost:5010/`.
 Compose overrides only the Notification destination with
