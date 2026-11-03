@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Learning.Application.Services;
 
-public class LearningAdminService(ILearningDbContext db, ILearningCache cache)
+public class LearningAdminService(ILearningDbContext db, ILearningCache cache, IExamStatisticsSource examStatistics)
 {
     private static readonly TimeSpan AdminCacheDuration = TimeSpan.FromHours(1);
 
@@ -85,26 +85,16 @@ public class LearningAdminService(ILearningDbContext db, ILearningCache cache)
     public async Task<Result<PaginatedListDto<ExamStatsItemDto>>> GetExamStatisticsAsync(
         int pageNumber = 1, int pageSize = 10, CancellationToken ct = default)
     {
-        var cacheKey = $"admin_exam_stats_p{pageNumber}_s{pageSize}";
+        pageNumber = Math.Max(1, pageNumber);
+        pageSize = Math.Clamp(pageSize, 1, 100);
+        var cacheKey = $"admin_exam_stats_v2_p{pageNumber}_s{pageSize}";
         var cached = await cache.GetAsync<PaginatedListDto<ExamStatsItemDto>>(cacheKey, ct);
         if (cached is not null) return Result.Success(cached);
 
-        var attempts = await db.ExamAttemptRecords.AsNoTracking().ToListAsync(ct);
-
-        var grouped = attempts
-            .GroupBy(ea => new { ea.ExamId, ea.ExamTitle })
-            .Select(g => new ExamStatsItemDto(
-                g.Key.ExamId,
-                g.Key.ExamTitle,
-                g.Count(),
-                Math.Round(g.Average(x => (double)x.Score), 1),
-                g.Max(x => x.Score),
-                g.Min(x => x.Score),
-                // Approximate completion rate based on submitted exams
-                Math.Round(g.Average(x => x.TotalQuestions > 0 ? ((double)x.CorrectAnswers / x.TotalQuestions * 100) : 0), 1)
-            ))
-            .OrderByDescending(s => s.TotalAttempts)
-            .ToList();
+        List<ExamStatsItemDto> grouped;
+        try { grouped = await examStatistics.GetAsync(ct); }
+        catch (HttpRequestException) { return Result<PaginatedListDto<ExamStatsItemDto>>.Failure("Exam statistics are temporarily unavailable."); }
+        catch (TaskCanceledException) when (!ct.IsCancellationRequested) { return Result<PaginatedListDto<ExamStatsItemDto>>.Failure("Exam statistics request timed out."); }
 
         var totalCount = grouped.Count;
         var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);

@@ -1,0 +1,10 @@
+@Exam_HostAddress = http://localhost:5003
+
+### Aggregate count used by Content Service
+GET {{Exam_HostAddress}}/api/exams/1/attempts/count
+Accept: application/json
+
+### Personal history (requires JWT)
+GET {{Exam_HostAddress}}/api/exams/1/attempts/me
+Authorization: Bearer {{jwt}}
+Accept: application/json

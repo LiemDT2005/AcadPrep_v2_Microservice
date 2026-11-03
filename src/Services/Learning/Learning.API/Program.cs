@@ -10,6 +10,11 @@ using Microsoft.OpenApi.Models;
 var builder = WebApplication.CreateBuilder(args);
 
 // Layer Dependency Injections
+builder.Services.AddHttpClient<Learning.Application.Interfaces.IExamStatisticsSource, Learning.Infrastructure.Messaging.HttpExamStatisticsSource>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["Exam:BaseUrl"] ?? "http://localhost:5003/");
+    client.Timeout = TimeSpan.FromSeconds(15);
+});
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 

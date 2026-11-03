@@ -42,6 +42,7 @@ public static class DependencyInjection
         services.AddScoped<TestSubmittedHandler>();
 
         services.AddHostedService<StudyStreakResetWorker>();
+        services.AddHostedService<LearningEventSubscriptionWorker>();
 
         return services;
     }

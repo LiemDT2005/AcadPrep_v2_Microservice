@@ -35,7 +35,8 @@ public class TestSubmittedHandler(GamificationService gamificationService, ILogg
             @event.TotalQuestions,
             @event.CorrectAnswers,
             null,
-            cancellationToken
+            cancellationToken,
+            submittedAt: @event.OccurredOn
         );
     }
 
@@ -57,7 +58,8 @@ public class TestSubmittedHandler(GamificationService gamificationService, ILogg
             @event.TotalQuestions,
             @event.CorrectAnswers,
             @event.PartBreakdown,
-            cancellationToken
+            cancellationToken,
+            submittedAt: @event.OccurredOn
         );
     }
 }

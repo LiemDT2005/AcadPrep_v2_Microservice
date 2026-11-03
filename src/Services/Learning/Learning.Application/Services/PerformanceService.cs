@@ -8,6 +8,16 @@ namespace Learning.Application.Services;
 
 public class PerformanceService(ILearningDbContext db)
 {
+    public async Task<Result<StudyHistoryDto>> GetVocabularyHistoryAsync(string userId, CancellationToken ct = default)
+    {
+        var days = await db.SavedVocabularies.AsNoTracking().Where(v => v.UserId == userId)
+            .GroupBy(v => v.DateSaved.Date)
+            .Select(g => new { Count = g.Count(), Latest = g.Max(v => v.DateSaved) })
+            .OrderByDescending(g => g.Latest).Take(30).ToListAsync(ct);
+        return Result.Success(new StudyHistoryDto(days.Select(d => new StudyActivityDto("vocab", "Vocabulary notebook",
+            $"Saved {d.Count} words", d.Latest, "/Vocabulary/Notebook", "menu_book", "tertiary")).ToList()));
+    }
+
     public async Task<Result<PerformanceAnalysisDto>> GetPerformanceAnalysisAsync(
         string userId, CancellationToken ct = default)
     {

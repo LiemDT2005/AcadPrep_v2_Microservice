@@ -37,7 +37,7 @@
                 {
                     <span id="exam-timer" class="font-mono text-lg font-bold tabular-nums bg-white text-primary px-3 py-1.5 rounded-lg shadow-sm">--:--</span>
                 }
-                <button id="btn-submit" type="button" disabled aria-disabled="true" title="Submission is not available yet" class="bg-white text-primary hover:bg-white/90 font-label-md font-bold px-5 py-2.5 rounded-lg flex items-center gap-1 shadow-sm transition-all">
+                <button id="btn-submit" type="button" class="bg-white text-primary hover:bg-white/90 font-label-md font-bold px-5 py-2.5 rounded-lg flex items-center gap-1 shadow-sm transition-all">
                     <span class="material-symbols-outlined text-lg">send</span> Submit
                 </button>
                 <button id="btn-exit" type="button" class="text-label-md text-white/80 hover:text-white hover:opacity-100 transition-opacity" data-exit-url="/Exams/Detail/@session.ExamId">Exit</button>
@@ -78,7 +78,7 @@
                 <section id="audio-section" class="shrink-0 bg-surface-container-low rounded-xl border border-outline-variant/30 p-3 hidden">
                     @* Hidden media element — clip progress is shown via custom segment controls *@
                     <div id="audio-player-ui" class="flex items-center gap-3">
-                        <button id="audio-play-btn" type="button" disabled aria-disabled="true" class="shrink-0 w-11 h-11 rounded-full bg-primary text-on-primary flex items-center justify-center hover:opacity-90" title="Play / Pause" aria-label="Play or pause audio segment">
+                        <button id="audio-play-btn" type="button" class="shrink-0 w-11 h-11 rounded-full bg-primary text-on-primary flex items-center justify-center hover:opacity-90" title="Play / Pause" aria-label="Play or pause audio segment">
                             <span id="audio-play-icon" class="material-symbols-outlined text-[28px]">play_arrow</span>
                         </button>
                         <div class="flex-1 min-w-0">
@@ -136,7 +136,7 @@
     <div id="modal-leave" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-on-surface/40 backdrop-blur-sm">
         <div class="bg-surface-container-lowest rounded-2xl max-w-md w-full p-6 space-y-4">
             <h3 class="font-headline-md font-bold">Leave practice?</h3>
-            <p class="text-body-sm text-error">Your progress will NOT be saved. Are you sure you want to exit?</p>
+            <p class="text-body-sm text-error">Your saved progress will be available when you resume. Are you sure you want to exit?</p>
             <div class="flex gap-3">
                 <button data-close-leave type="button" class="flex-1 py-3 rounded-xl border font-medium">Stay</button>
                 <button data-confirm-leave type="button" class="flex-1 py-3 rounded-xl bg-error text-on-primary font-bold">Leave</button>
@@ -151,11 +151,15 @@
 
     <div id="vocab-toast" class="hidden fixed bottom-4 right-4 z-50 max-w-sm rounded-2xl bg-surface-container-high px-4 py-3 text-sm text-on-surface shadow-xl border border-outline-variant/30"></div>
 
+    @Html.AntiForgeryToken()
+    <div id="save-status" role="status" aria-live="polite" class="fixed bottom-10 right-4 z-40 rounded-lg bg-white px-3 py-2 text-sm shadow">Saved</div>
     <script>
         window.examSessionConfig = {
             mode: '@(session.Mode == "practice" ? "practice" : "full")',
             sessionId: @session.SessionId,
             examId: @session.ExamId,
+            answers: @Html.Raw(JsonSerializer.Serialize(session.Answers)),
+            audioProgress: @Html.Raw(JsonSerializer.Serialize(session.AudioProgress, jsonOptions)),
             expiresAt: @Html.Raw(JsonSerializer.Serialize(session.ExpiresAt)),
             questions: @Html.Raw(questionsJson)
         };

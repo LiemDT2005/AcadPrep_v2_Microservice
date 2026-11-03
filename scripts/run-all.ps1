@@ -12,10 +12,10 @@ $env:ASPNETCORE_ENVIRONMENT = "Development"
 $services = @(
     @{ Name = "Identity.API"; Path = "src/Services/Identity/Identity.API" },
     @{ Name = "Catalog.API";  Path = "src/Services/Catalog/Catalog.API" },
-    @{ Name = "Exam.API";     Path = "src/Services/Exam/Exam.API" },
+    @{ Name = "Exam";     Path = "src/Services/Exam" },
     @{ Name = "Progress.API"; Path = "src/Services/Progress/Progress.API" },
     @{ Name = "Learning.API"; Path = "src/Services/Learning/Learning.API" },
-    @{ Name = "Content.API";  Path = "src/Services/Content/Content.API" },
+    @{ Name = "Content";  Path = "src/Services/Content" },
     @{ Name = "ApiGateway";   Path = "src/ApiGateways/ApiGateway" },
     @{ Name = "Storefront.Web"; Path = "src/Web/Storefront.Web" }
 )

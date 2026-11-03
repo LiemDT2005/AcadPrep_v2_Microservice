@@ -1,118 +1,180 @@
 services:
-  notifications.api:
-    build:
-      context: .
-      dockerfile: src/Services/Notification/Notifications.API/Dockerfile
-    ports:
-      - "5010:8080"
-    environment:
-      ASPNETCORE_ENVIRONMENT: Development
-      ASPNETCORE_HTTP_PORTS: "8080"
-      ASPNETCORE_URLS: http://+:8080
-      Urls: http://+:8080
-      ConnectionStrings__Default: ${NOTIFICATIONS_CONNECTION_STRING:?Set NOTIFICATIONS_CONNECTION_STRING explicitly}
-      Jwt__PublicKeyPath: /app/keys/public_key.pem
-    volumes:
-      - type: bind
-        source: ./src/Services/Identity/Identity.API/keys/public_key.pem
-        target: /app/keys/public_key.pem
-        read_only: true
-        bind:
-          create_host_path: false
-
   rabbitmq:
     image: rabbitmq:3.13-management
     ports:
-      - "5672:5672"
-      - "15672:15672"
+    - 5672:5672
+    - 15672:15672
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
-
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
-
+    - 6379:6379
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: acadprep-sqlserver
     ports:
-      - "1433:1433"
+    - 1433:1433
     environment:
-      ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD: "Password123!"
-
+      ACCEPT_EULA: Y
+      MSSQL_SA_PASSWORD: Password123!
+    healthcheck:
+      test:
+      - CMD
+      - /opt/mssql-tools18/bin/sqlcmd
+      - -S
+      - localhost
+      - -U
+      - sa
+      - -P
+      - Password123!
+      - -C
+      - -Q
+      - SELECT 1
+      interval: 5s
+      timeout: 5s
+      start_period: 20s
+      retries: 20
   identity.api:
     build:
       context: .
       dockerfile: src/Services/Identity/Identity.API/Dockerfile
     container_name: acadprep-identity-api
     ports:
-      - "5001:5001"
+    - 5001:5001
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://0.0.0.0:5001
-      - Urls=http://0.0.0.0:5001
-      - ConnectionStrings__Default=Server=sqlserver,1433;Database=AcadPrep_IdentityDb;User Id=sa;Password=Password123!;TrustServerCertificate=True
-      - Redis__ConnectionString=redis:6379
+    - ASPNETCORE_ENVIRONMENT=Development
+    - ASPNETCORE_URLS=http://0.0.0.0:5001
+    - Urls=http://0.0.0.0:5001
+    - ConnectionStrings__Default=Server=sqlserver,1433;Database=AcadPrep_IdentityDb;User
+      Id=sa;Password=Password123!;TrustServerCertificate=True
+    - Redis__ConnectionString=redis:6379
     depends_on:
-      - sqlserver
-      - redis
-
+    - sqlserver
+    - redis
+  content.api:
+    build:
+      context: .
+      dockerfile: src/Services/Content/Dockerfile
+    ports:
+    - 5006:5006
+    environment:
+    - ASPNETCORE_ENVIRONMENT=Development
+    - Urls=http://0.0.0.0:5006
+    - ConnectionStrings__Sqlite=Data Source=/data/content.db
+    - Services__ExamApi=http://exam.api:5003
+    - InternalApiKey=${ACADPREP_INTERNAL_API_KEY:-AcadPrep_Local_Exam_Content_ChangeBeforeDeploy}
+    volumes:
+    - content-data:/data
+  learning.api:
+    build:
+      context: .
+      dockerfile: src/Services/Learning/Dockerfile
+    ports:
+    - 5005:5005
+    environment:
+    - ASPNETCORE_ENVIRONMENT=Development
+    - Urls=http://0.0.0.0:5005
+    - ConnectionStrings__Default=Server=sqlserver,1433;Database=AcadPrep_LearningDb;User
+      Id=sa;Password=Password123!;TrustServerCertificate=True
+    - ConnectionStrings__Redis=redis:6379
+    - RabbitMQ__Host=rabbitmq
+    - Exam__BaseUrl=http://exam.api:5003/
+    - Exam__ApiKey=${ACADPREP_INTERNAL_API_KEY:-AcadPrep_Local_Exam_Content_ChangeBeforeDeploy}
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+      redis:
+        condition: service_started
+      exam.api:
+        condition: service_started
   exam.api:
     build:
       context: .
-      dockerfile: src/Services/Exam/Exam.API/Dockerfile
+      dockerfile: src/Services/Exam/Dockerfile
     container_name: acadprep-exam-api
     ports:
-      - "5003:5003"
+    - 5003:5003
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://0.0.0.0:5003
-      - Urls=http://0.0.0.0:5003
-      - ConnectionStrings__Default=Server=sqlserver,1433;Database=AcadPrep_ExamDb;User Id=sa;Password=Password123!;TrustServerCertificate=True
-      - RabbitMQ__Host=rabbitmq
-      - RabbitMQ__Port=5672
-      - RabbitMQ__UserName=guest
-      - RabbitMQ__Password=guest
+    - ASPNETCORE_ENVIRONMENT=Development
+    - ASPNETCORE_URLS=http://0.0.0.0:5003
+    - Urls=http://0.0.0.0:5003
+    - ConnectionStrings__Default=Server=sqlserver,1433;Database=AcadPrep_ExamDb;User
+      Id=sa;Password=Password123!;TrustServerCertificate=True
+    - RabbitMQ__Host=rabbitmq
+    - RabbitMQ__Port=5672
+    - RabbitMQ__UserName=guest
+    - RabbitMQ__Password=guest
+    - Content__BaseUrl=http://content.api:5006/
+    - Content__ApiKey=${ACADPREP_INTERNAL_API_KEY:-AcadPrep_Local_Exam_Content_ChangeBeforeDeploy}
+    - InternalApiKey=${ACADPREP_INTERNAL_API_KEY:-AcadPrep_Local_Exam_Content_ChangeBeforeDeploy}
     depends_on:
-      - sqlserver
-      - rabbitmq
-
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+      content.api:
+        condition: service_started
   apigateway:
     build:
       context: .
       dockerfile: src/ApiGateways/ApiGateway/Dockerfile
     container_name: acadprep-apigateway
     ports:
-      - "5080:5080"
+    - 5080:5080
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://0.0.0.0:5080
-      - Urls=http://0.0.0.0:5080
-      - ReverseProxy__Clusters__exam__Destinations__d1__Address=http://exam.api:5003/
-      - ReverseProxy__Clusters__identity__Destinations__d1__Address=http://identity.api:5001/
-      - ReverseProxy__Clusters__notification__Destinations__d1__Address=http://notifications.api:8080/
+    - ASPNETCORE_ENVIRONMENT=Development
+    - ASPNETCORE_URLS=http://0.0.0.0:5080
+    - Urls=http://0.0.0.0:5080
+    - ReverseProxy__Clusters__exam__Destinations__d1__Address=http://exam.api:5003/
+    - ReverseProxy__Clusters__content__Destinations__d1__Address=http://content.api:5006/
+    - ReverseProxy__Clusters__learning__Destinations__d1__Address=http://learning.api:5005/
+    - ReverseProxy__Clusters__identity__Destinations__d1__Address=http://identity.api:5001/
+    - ReverseProxy__Clusters__notification__Destinations__d1__Address=http://notifications.api:8080/
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+    - host.docker.internal:host-gateway
     depends_on:
-      - exam.api
-      - identity.api
-
+    - exam.api
+    - learning.api
+    - identity.api
   storefront.web:
     build:
       context: .
       dockerfile: src/Web/Storefront.Web/Dockerfile
     container_name: acadprep-storefront-web
     ports:
-      - "5100:5100"
+    - 5100:5100
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://0.0.0.0:5100
-      - Urls=http://0.0.0.0:5100
-      - GatewayUrl=http://apigateway:5080
+    - ASPNETCORE_ENVIRONMENT=Development
+    - ASPNETCORE_URLS=http://0.0.0.0:5100
+    - Urls=http://0.0.0.0:5100
+    - GatewayUrl=http://apigateway:5080
     depends_on:
-      - apigateway
-
-
+    - apigateway
+  notifications.api:
+    build:
+      context: .
+      dockerfile: src/Services/Notification/Notifications.API/Dockerfile
+    ports:
+    - 5010:8080
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: '8080'
+      ASPNETCORE_URLS: http://+:8080
+      Urls: http://+:8080
+      ConnectionStrings__Default: ${NOTIFICATIONS_CONNECTION_STRING:?Set NOTIFICATIONS_CONNECTION_STRING
+        explicitly}
+      Jwt__PublicKeyPath: /app/keys/public_key.pem
+    volumes:
+    - type: bind
+      source: ./src/Services/Identity/Identity.API/keys/public_key.pem
+      target: /app/keys/public_key.pem
+      read_only: true
+      bind:
+        create_host_path: false
+volumes:
+  content-data: null
+  identity-data: null

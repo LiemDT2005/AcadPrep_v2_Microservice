@@ -33,7 +33,7 @@
             <div class="flex items-center gap-3">
                 <span id="current-part-label" class="text-label-md text-white/80 hidden sm:inline">Part 1</span>
                 <span id="exam-timer" class="font-mono text-lg font-bold tabular-nums bg-white text-primary px-3 py-1.5 rounded-lg shadow-sm">--:--:--</span>
-                <button id="btn-submit" type="button" disabled aria-disabled="true" title="Submission is not available yet" class="bg-white text-primary hover:bg-white/90 font-label-md font-bold px-5 py-2.5 rounded-lg flex items-center gap-1 shadow-sm transition-all">
+                <button id="btn-submit" type="button" class="bg-white text-primary hover:bg-white/90 font-label-md font-bold px-5 py-2.5 rounded-lg flex items-center gap-1 shadow-sm transition-all">
                     <span class="material-symbols-outlined text-lg">send</span> Submit
                 </button>
             </div>
@@ -141,7 +141,7 @@
     <div id="modal-leave" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-on-surface/40 backdrop-blur-sm">
         <div class="bg-surface-container-lowest rounded-2xl max-w-md w-full p-6 space-y-4">
             <h3 class="font-headline-md font-bold">Leave the test?</h3>
-            <p class="text-body-sm text-on-surface-variant">Your answers will be lost when you leave. Are you sure you want to exit?</p>
+            <p class="text-body-sm text-on-surface-variant">Your saved answers will be available when you resume. Are you sure you want to exit?</p>
             <div class="flex gap-3">
                 <button data-close-leave type="button" class="flex-1 py-3 rounded-xl border font-medium">Continue</button>
                 <button data-confirm-leave type="button" class="flex-1 py-3 rounded-xl bg-primary text-on-primary font-bold">Exit</button>
@@ -152,16 +152,20 @@
     <div id="modal-timeout" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-on-surface/60 backdrop-blur-sm">
         <div class="bg-surface-container-lowest rounded-2xl max-w-sm w-full p-8 text-center space-y-4">
             <h3 class="font-headline-md font-bold text-error">Time's up!</h3>
-            <p id="timeout-message" class="text-body-md text-on-surface-variant">Answering has stopped. Your answers have not been submitted.</p>
+            <p id="timeout-message" class="text-body-md text-on-surface-variant">Answering has stopped. Submitting your saved answers…</p>
             <button type="button" data-close-timeout class="w-full py-3 rounded-xl bg-primary text-on-primary font-bold">Review answers</button>
         </div>
     </div>
 
+    @Html.AntiForgeryToken()
+    <div id="save-status" role="status" aria-live="polite" class="fixed bottom-10 right-4 z-40 rounded-lg bg-white px-3 py-2 text-sm shadow">Saved</div>
     <script>
         window.examSessionConfig = {
             mode: '@(session.Mode == "practice" ? "practice" : "full")',
             sessionId: @session.SessionId,
             examId: @session.ExamId,
+            answers: @Html.Raw(JsonSerializer.Serialize(session.Answers)),
+            audioProgress: @Html.Raw(JsonSerializer.Serialize(session.AudioProgress, jsonOptions)),
             expiresAt: @Html.Raw(JsonSerializer.Serialize(session.ExpiresAt)),
             questions: @Html.Raw(questionsJson)
         };

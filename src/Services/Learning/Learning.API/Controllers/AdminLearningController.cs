@@ -1,6 +1,7 @@
 using Learning.Application.DTOs;
 using Learning.Application.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Learning.API.Controllers;
 
@@ -38,6 +39,7 @@ public class AdminLearningController(
     /// <summary>
     /// UC-20.3: View Exam Statistics (Attempts, average/highest/lowest scores per exam, Cached with Redis)
     /// </summary>
+    [Authorize(Roles = "Admin")]
     [HttpGet("exam-stats")]
     public async Task<IActionResult> GetExamStatistics(
         [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, CancellationToken ct = default)

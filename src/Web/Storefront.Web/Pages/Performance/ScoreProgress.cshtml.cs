@@ -11,7 +11,9 @@ public class ScoreProgressModel(ToeicApiClient api) : PageModel
 
     public async Task<IActionResult> OnGetAsync([FromQuery] string? userId)
     {
-        var targetUser = userId ?? HttpContext.Session.GetString("userId");
+        if (string.IsNullOrEmpty(HttpContext.Session.GetString("jwt")))
+            return RedirectToPage("/Account/Login");
+        var targetUser = HttpContext.Session.GetString("userId");
         var result = await api.GetScoreProgressAsync(targetUser);
         if (result != null)
         {

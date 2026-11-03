@@ -1,5 +1,9 @@
 namespace Learning.Application.DTOs;
 
+public record StudyActivityDto(string ActivityType, string Title, string Description, DateTime OccurredAt,
+    string LinkUrl, string Icon, string ColorType);
+public record StudyHistoryDto(List<StudyActivityDto> Items);
+
 // --- Leaderboard (UC-4) ---
 public record LeaderboardEntryDto(
     int Rank,

@@ -85,7 +85,7 @@ public class GamificationService(ILearningDbContext db, ILearningCache cache)
         int score, int listeningScore, int readingScore,
         int totalQuestions, int correctAnswers,
         Dictionary<int, int>? partBreakdown = null,
-        CancellationToken ct = default)
+        CancellationToken ct = default, DateTime? submittedAt = null)
     {
         // 1. Record Exam Attempt
         var exists = await db.ExamAttemptRecords.AnyAsync(x => x.AttemptId == attemptId, ct);
@@ -105,13 +105,14 @@ public class GamificationService(ILearningDbContext db, ILearningCache cache)
                 ListeningCorrect = (listeningScore > 0 && totalQuestions > 0) ? (int)Math.Round(listeningScore / 4.95) : 0,
                 ReadingCorrect = (readingScore > 0 && totalQuestions > 0) ? (int)Math.Round(readingScore / 4.95) : 0,
                 PartMasteryJson = partBreakdown is not null ? System.Text.Json.JsonSerializer.Serialize(partBreakdown) : null,
-                SubmittedAt = DateTime.UtcNow
+                SubmittedAt = submittedAt ?? DateTime.UtcNow
             };
             db.ExamAttemptRecords.Add(attemptRecord);
         }
 
         // 2. Update Study Streak (UTC+7 timezone logic)
-        var today = GetCurrentDateVietnam();
+        var today = DateOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(
+            DateTime.SpecifyKind(submittedAt ?? DateTime.UtcNow, DateTimeKind.Utc), VietnamTimeZone));
         var yesterday = today.AddDays(-1);
 
         var streak = await db.StudyStreaks.FirstOrDefaultAsync(s => s.UserId == userId, ct);

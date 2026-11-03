@@ -281,7 +281,7 @@ public partial class ToeicApiClient(HttpClient http, IHttpContextAccessor httpCo
         queryParams.Add($"pageIndex={pageIndex}");
         queryParams.Add($"pageSize={pageSize}");
 
-        var url = "/exam/api/exams" + (queryParams.Count > 0 ? "?" + string.Join("&", queryParams) : "");
+        var url = "/content/api/exams" + (queryParams.Count > 0 ? "?" + string.Join("&", queryParams) : "");
         try
         {
             return await http.GetFromJsonAsync<GetExamListResponse>(url, JsonOpts);
@@ -296,15 +296,30 @@ public partial class ToeicApiClient(HttpClient http, IHttpContextAccessor httpCo
     public async Task<GetExamDetailDto?> GetExamDetailAsync(int id)
     {
         AttachToken();
-        var url = $"/exam/api/exams/{id}";
+        var url = $"/content/api/exams/{id}";
         try
         {
-            return await http.GetFromJsonAsync<GetExamDetailDto>(url, JsonOpts);
+            var detail = await http.GetFromJsonAsync<GetExamDetailDto>(url, JsonOpts);
+            if (detail is not null && !string.IsNullOrEmpty(httpContextAccessor.HttpContext?.Session.GetString("jwt")))
+                detail.AttemptHistory = await GetMyExamAttemptHistoryAsync(id);
+            return detail;
         }
         catch
         {
             return null;
         }
+    }
+
+    private async Task<List<UserAttemptHistoryDto>> GetMyExamAttemptHistoryAsync(int examId)
+    {
+        try
+        {
+            using var response = await http.GetAsync($"/exam/api/exams/{examId}/attempts/me");
+            if (!response.IsSuccessStatusCode) return [];
+            return await response.Content.ReadFromJsonAsync<List<UserAttemptHistoryDto>>(JsonOpts) ?? [];
+        }
+        catch (HttpRequestException) { return []; }
+        catch (TaskCanceledException) { return []; }
     }
 
     public async Task<(int? SessionId, string? Error, bool Unauthorized)> StartSessionAsync(int examId, StartPracticeRequest? practice)
@@ -485,7 +500,9 @@ public partial class ToeicApiClient(HttpClient http, IHttpContextAccessor httpCo
     {
         AttachToken();
         var res = await http.GetAsync($"/learning/api/admin/learning/exam-stats?pageNumber={pageNumber}&pageSize={pageSize}");
-        if (!res.IsSuccessStatusCode) return new PaginatedListDto<ExamStatsItemDto>([], 1, 0, 0, false, false);
+        if (res.StatusCode is System.Net.HttpStatusCode.Unauthorized or System.Net.HttpStatusCode.Forbidden)
+            throw new UnauthorizedAccessException();
+        res.EnsureSuccessStatusCode();
         return await res.Content.ReadFromJsonAsync<PaginatedListDto<ExamStatsItemDto>>(JsonOpts);
     }
 
