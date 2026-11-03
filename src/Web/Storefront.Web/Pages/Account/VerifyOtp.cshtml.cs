@@ -30,57 +30,28 @@ public class VerifyOtpModel(ToeicApiClient api) : PageModel
 
     public async Task<IActionResult> OnPostVerifyAsync()
     {
-        if (string.IsNullOrWhiteSpace(Otp) || Otp.Length != 6)
+        if (!ModelState.IsValid)
         {
             Error = "Please enter all 6 digits of the OTP code.";
-            return Page();
+            return new JsonResult(new { success = false, error = Error });
         }
 
         var (data, error) = await api.VerifyOtpAsync(Email, Otp);
         if (data is null)
         {
-            Error = error ?? "Verification failed. Please check the OTP code.";
-            return Page();
+            return new JsonResult(new { success = false, error = error ?? "Verification failed. Please check the OTP code." });
         }
 
-        HttpContext.Session.SetString("jwt", data.Token);
-        HttpContext.Session.SetString("name", data.FullName);
-        HttpContext.Session.SetString("userId", data.UserId);
-        if (!string.IsNullOrEmpty(data.RefreshToken))
-        {
-            HttpContext.Session.SetString("refreshToken", data.RefreshToken);
-        }
-        if (!string.IsNullOrEmpty(data.Avatar))
-        {
-            HttpContext.Session.SetString("avatar", data.Avatar);
-        }
-        if (data.Roles is not null && data.Roles.Count > 0)
-        {
-            HttpContext.Session.SetString("roles", string.Join(",", data.Roles));
-        }
+        HttpContext.Session.SaveAuthentication(data);
 
-        return RedirectToPage("/Index");
+        return new JsonResult(new { success = true, redirectTo = Url.Page("/Index") });
     }
 
     public async Task<IActionResult> OnPostResendAsync()
     {
-        if (string.IsNullOrWhiteSpace(Email))
-        {
-            Error = "Invalid email address.";
-            return Page();
-        }
-
-        var (success, msg) = await api.ResendOtpAsync(Email);
-        if (success)
-        {
-            SuccessMessage = "A new OTP code has been dispatched! Please check your email inbox.";
-            Error = null;
-        }
-        else
-        {
-            Error = msg;
-        }
-
-        return Page();
+        if (string.IsNullOrWhiteSpace(Email) || !new EmailAddressAttribute().IsValid(Email))
+            return new JsonResult(new { success = false, error = "Invalid email address." });
+        var (success, message) = await api.ResendOtpAsync(Email.Trim());
+        return new JsonResult(new { success, error = success ? null : message });
     }
 }

@@ -1,0 +1,28 @@
+# Git
+.git
+.gitignore
+
+# Build outputs
+**/bin/
+**/obj/
+**/out/
+
+# IDE / Editor files
+.vs/
+.idea/
+.vscode/
+*.user
+*.suo
+
+# Data and Logs
+data/
+logs/
+*.log
+
+# Documentation / Markdown
+docs/
+*.md
+
+# Scripts and tests not needed in runtime images
+scripts/
+tests/

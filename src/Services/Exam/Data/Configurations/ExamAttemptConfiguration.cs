@@ -39,7 +39,7 @@ public class ExamAttemptConfiguration : IEntityTypeConfiguration<ExamAttempt>
             .HasDefaultValue(false);
 
         builder.Property(x => x.StartedAt)
-            .HasDefaultValueSql("GETDATE()");
+            .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
         builder.Property(x => x.CompletedAt)
             .IsRequired(false);

@@ -1,4 +1,4 @@
-using System.Text;
+using BuildingBlocks.Common.Authentication;
 using BuildingBlocks.EventBus;
 using Exam.Data;
 using Exam.Mappings;
@@ -8,7 +8,6 @@ using Exam.Services;
 using Exam.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -54,21 +53,7 @@ builder.Services.AddAutoMapper(cfg =>
 }, typeof(ExamMappingProfile));
 
 // Authentication
-var jwt = builder.Configuration.GetSection("Jwt");
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(opt =>
-    {
-        opt.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = jwt["Issuer"],
-            ValidAudience = jwt["Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt["Key"]!))
-        };
-    });
+builder.Services.AddIdentityJwtAuthentication(builder.Configuration, builder.Environment);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

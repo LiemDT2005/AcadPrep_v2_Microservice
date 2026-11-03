@@ -33,7 +33,8 @@ public record UserProfileDto(
     string Status,
     List<string> Roles,
     DateTime CreatedAt,
-    DateTime? LastLoginAt);
+    DateTime? LastLoginAt,
+    bool CanChangePassword = true);
 
 public record AuthResponse(
     string Token,

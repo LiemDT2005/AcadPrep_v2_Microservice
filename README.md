@@ -278,3 +278,13 @@ antiforgery token và render trang câu hỏi của cả hai chế độ.
 Các API lưu phiên/nộp/review và lịch sử được mô tả trong [Migration Thanh Liêm](docs/Migration_ThanhLiem.md).
 Để chạy toàn bộ các service cần cho task này bằng Docker: `docker compose up --build`.
 Quota Billing hiện dùng `PendingBillingQuotaPolicy` theo phạm vi đã thống nhất; adapter thực tế sẽ thay registration `IExamQuotaPolicy`.
+
+### Dữ liệu demo liên kết giữa các service
+
+Chạy `dotnet run --project tools/SeedDemoData -- --local-sql` từ thư mục repository để bổ sung dữ liệu vào SQL Server local và SQLite Content. Lệnh giữ nguyên dữ liệu/tài khoản đã có và có thể chạy lại. Có tài khoản learner `hana@acadprep.com`, moderator `moderator.demo@example.test`, admin `admin.demo@example.test`; mật khẩu tài khoản demo mới là `Demo@123456`.
+
+Bộ dữ liệu gồm khóa học, bài học, đề 200 câu, lịch sử làm bài và câu trả lời, tiến độ, từ vựng, flashcard, streak và huy hiệu. Xem [hướng dẫn seed](tools/SeedDemoData/README.md) để biết các tài khoản kiểm tra trạng thái, đường dẫn database, giới hạn của đề/audio demo và cách chạy thử bằng SQLite riêng.
+
+### JWT sau khi tích hợp các service
+
+Identity phát token RS256. Exam, Content, Learning, Catalog và Progress xác thực bằng public key của Identity qua `Jwt:PublicKeyPath` (đường dẫn tương đối với thư mục service) hoặc `Jwt:PublicKey` (PEM). Docker Compose mount public key ở chế độ chỉ đọc cho Exam, Content và Learning. Khi publish riêng từng service, đặt `Jwt__PublicKeyPath` trỏ tới public key đã cấp cho service.

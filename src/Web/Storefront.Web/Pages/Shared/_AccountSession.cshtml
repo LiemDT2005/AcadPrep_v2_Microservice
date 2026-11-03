@@ -1,0 +1,36 @@
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@{
+    var jwtToken = Context.Session.GetString("jwt");
+}
+    @if (!string.IsNullOrEmpty(jwtToken))
+    {
+        var gatewayUrl = Configuration["GatewayUrl"] ?? "http://localhost:5080";
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+        <script>
+            (function() {
+                const token = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(jwtToken));
+                const gatewayUrl = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(gatewayUrl));
+                const hubUrl = `${gatewayUrl}/identity/hubs/user`;
+
+                try {
+                    const connection = new signalR.HubConnectionBuilder()
+                        .withUrl(hubUrl, {
+                            accessTokenFactory: () => token
+                        })
+                        .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
+                        .build();
+
+                    connection.on("ForceLogout", function (reason) {
+                        alert(`⚠️ TÀI KHOẢN ĐÃ BỊ KHÓA!\n\nLý do: ${reason || 'Vi phạm chính sách hệ thống'}\n\nBạn sẽ được đăng xuất ngay lập tức.`);
+                        window.location.href = '/Account/Logout';
+                    });
+
+                    connection.start().catch(err => {
+                        console.warn("[SignalR ForceLogout] Hub connection error:", err.toString());
+                    });
+                } catch (e) {
+                    console.warn("[SignalR ForceLogout] Hub initialization error:", e);
+                }
+            })();
+        </script>
+    }

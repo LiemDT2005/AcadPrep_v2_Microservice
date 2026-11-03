@@ -22,13 +22,12 @@ public class LoginModel(ToeicApiClient api, IConfiguration configuration) : Page
     public string? Error { get; set; }
     public bool RequiresOtp { get; set; }
     public string? UnverifiedEmail { get; set; }
-    public string GoogleClientId { get; set; } = string.Empty;
+    public string GoogleClientId => configuration["Authentication:Google:ClientId"] ?? string.Empty;
 
-    public void OnGet()
-    {
-        GoogleClientId = configuration["Authentication:Google:ClientId"]
-            ?? "401550501610-22kns7qtv5i7gda0bpqnn241a064u65m.apps.googleusercontent.com";
-    }
+    [BindProperty(SupportsGet = true)]
+    public string? ReturnUrl { get; set; }
+
+    public void OnGet() { }
 
     public async Task<IActionResult> OnPostAsync()
     {
@@ -44,8 +43,8 @@ public class LoginModel(ToeicApiClient api, IConfiguration configuration) : Page
             return Page();
         }
 
-        SaveSession(data);
-        return RedirectToPage("/Index");
+        HttpContext.Session.SaveAuthentication(data);
+        return RedirectAfterSignIn();
     }
 
     public async Task<IActionResult> OnPostGoogleAsync()
@@ -63,26 +62,18 @@ public class LoginModel(ToeicApiClient api, IConfiguration configuration) : Page
             return Page();
         }
 
-        SaveSession(data);
-        return RedirectToPage("/Index");
+        HttpContext.Session.SaveAuthentication(data);
+        return RedirectAfterSignIn();
     }
 
-    private void SaveSession(Models.AuthResponse data)
+    private IActionResult RedirectAfterSignIn()
     {
-        HttpContext.Session.SetString("jwt", data.Token);
-        HttpContext.Session.SetString("name", data.FullName);
-        HttpContext.Session.SetString("userId", data.UserId);
-        if (!string.IsNullOrEmpty(data.RefreshToken))
-        {
-            HttpContext.Session.SetString("refreshToken", data.RefreshToken);
-        }
-        if (!string.IsNullOrEmpty(data.Avatar))
-        {
-            HttpContext.Session.SetString("avatar", data.Avatar);
-        }
-        if (data.Roles is not null && data.Roles.Count > 0)
-        {
-            HttpContext.Session.SetString("roles", string.Join(",", data.Roles));
-        }
+        if (Url.IsLocalUrl(ReturnUrl) && ReturnUrl is not ("/" or "/Index"))
+            return LocalRedirect(ReturnUrl!);
+
+        var roles = (HttpContext.Session.GetString("roles") ?? "").Split(',');
+        var destination = roles.Contains("Admin") ? "/Admin/Dashboard"
+            : roles.Contains("Moderator") ? "/Admin/Exams" : "/";
+        return LocalRedirect(destination);
     }
 }

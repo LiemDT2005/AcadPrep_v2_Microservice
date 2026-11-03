@@ -15,7 +15,8 @@ public static class UserMapper
             Status: user.Status.ToString(),
             Roles: [.. roles],
             CreatedAt: user.CreatedAt,
-            LastLoginAt: user.LastLoginAt
+            LastLoginAt: user.LastLoginAt,
+            CanChangePassword: user.AuthProvider != "Google" || !string.IsNullOrEmpty(user.PasswordHash)
         );
     }
 

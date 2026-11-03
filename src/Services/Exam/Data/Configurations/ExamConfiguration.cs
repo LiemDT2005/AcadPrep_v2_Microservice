@@ -42,7 +42,7 @@ public class ExamConfiguration : IEntityTypeConfiguration<global::Exam.Entities.
             .HasDefaultValue(false);
 
         builder.Property(x => x.CreatedAt)
-            .HasDefaultValueSql("GETDATE()");
+            .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
         builder.Property(x => x.LastModifiedAt)
             .IsRequired(false);

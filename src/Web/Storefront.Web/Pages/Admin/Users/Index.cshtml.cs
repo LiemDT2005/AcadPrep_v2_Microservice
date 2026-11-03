@@ -27,6 +27,9 @@ public class IndexModel(ToeicApiClient api) : PageModel
     [TempData]
     public string? ErrorMessage { get; set; }
 
+    public string CurrentAdminId => HttpContext.Session.GetString("userId") ?? string.Empty;
+    public string[] AvailableRoles => ["Admin", "Moderator", "Learner"];
+
     private bool IsAdmin()
     {
         var roles = HttpContext.Session.GetString("roles") ?? string.Empty;
@@ -40,7 +43,9 @@ public class IndexModel(ToeicApiClient api) : PageModel
             return RedirectToPage("/Account/Login");
         }
 
-        UserList = await api.GetUsersAsync(Search, Role, Status, PageIndex, 10);
+        PageIndex = Math.Max(1, PageIndex);
+        UserList = await api.GetUsersAsync(Search, Role == "all" ? null : Role, Status == "all" ? null : Status, PageIndex, 10);
+        if (UserList is null) ErrorMessage = "Unable to load accounts. Please try again.";
         return Page();
     }
 
@@ -55,7 +60,7 @@ public class IndexModel(ToeicApiClient api) : PageModel
             return RedirectToPage(new { Search, Role, Status, PageIndex });
         }
 
-        if (selectedRoles is null || selectedRoles.Count == 0)
+        if (selectedRoles is null || selectedRoles.Count == 0 || selectedRoles.Except(AvailableRoles).Any())
         {
             ErrorMessage = "User must have at least one assigned role.";
             return RedirectToPage(new { Search, Role, Status, PageIndex });
@@ -108,6 +113,8 @@ public class IndexModel(ToeicApiClient api) : PageModel
             ErrorMessage = "User not found.";
             return RedirectToPage(new { Search, Role, Status, PageIndex });
         }
+
+        if (targetStatus is not (1 or 2)) return BadRequest();
 
         var (success, error) = await api.UpdateUserStatusAsync(userId, targetStatus, banReason);
         if (!success)

@@ -27,7 +27,7 @@ public class ExamSeriesConfiguration : IEntityTypeConfiguration<ExamSeries>
             .HasDefaultValue(false);
 
         builder.Property(x => x.CreatedAt)
-            .HasDefaultValueSql("GETDATE()");
+            .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
         builder.HasQueryFilter(x => !x.IsDeleted);
     }

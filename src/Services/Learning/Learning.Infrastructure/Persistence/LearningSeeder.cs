@@ -5,7 +5,7 @@ namespace Learning.Infrastructure.Persistence;
 
 public static class LearningSeeder
 {
-    public static async Task SeedAsync(LearningDbContext db)
+    public static async Task SeedAsync(LearningDbContext db, bool includeSampleUsers = true)
     {
         // 1. Seed Achievements
         if (!await db.Achievements.AnyAsync())
@@ -109,6 +109,8 @@ public static class LearningSeeder
             db.Vocabularies.AddRange(vocabs);
             await db.SaveChangesAsync();
         }
+
+        if (!includeSampleUsers) return;
 
         // 3. Seed User Profiles Snapshot
         if (!await db.UserProfiles.AnyAsync())

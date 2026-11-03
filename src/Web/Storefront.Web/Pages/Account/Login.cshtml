@@ -1,45 +1,43 @@
 @page
 @model Storefront.Web.Pages.Account.LoginModel
 @{
-    ViewData["Title"] = "Sign In — AcadPrep";
-    Layout = null;
+    ViewData["Title"] = "Login";
+    Layout = null; // Trang login dùng layout riêng — không có navbar
+    var returnUrl = Model.ReturnUrl ?? "/";
+    var externalError = Request.Query["error"].ToString();
 }
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"]</title>
-    <meta name="description" content="Sign in to AcadPrep to practice TOEIC, track your progress, and reach your target score." />
-
-    <!-- Tailwind CSS with AcadPrep Design Tokens -->
+    <title>Login — AcadPrep</title>
+    <meta name="description" content="Login to AcadPrep to prepare for TOEIC, track your progress and achieve your goals." />
     <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
-
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
     <script>
         tailwind.config = {
           theme: {
             extend: {
               colors: {
-                primary:        "#1e00a9",
+                primary:    "#1e00a9",
                 "primary-dark": "#16007e",
-                surface:        "#fcf8ff",
+                surface:    "#fcf8ff",
                 "surface-card": "#ffffff",
-                accent:         "#3525cd",
-                muted:          "#464555",
-                border:         "#c7c4d8",
-                error:          "#ba1a1a",
-                "error-bg":     "#ffdad6",
-                success:        "#006c4c",
-                "success-bg":   "#89f8c7",
-                warning:        "#7c5800",
-                "warning-bg":   "#ffdfa1"
+                accent:     "#3525cd",
+                muted:      "#464555",
+                border:     "#c7c4d8",
+                error:      "#ba1a1a",
+                "error-bg": "#ffdad6",
+                success:    "#006c4c",
+                "success-bg": "#89f8c7",
+                warning:    "#7c5800",
+                "warning-bg": "#ffdfa1"
               },
               fontFamily: { sans: ["Inter", "sans-serif"] },
               boxShadow: {
-                card:         "0 4px 24px rgba(30,0,169,0.08), 0 1px 4px rgba(30,0,169,0.04)",
+                card:   "0 4px 24px rgba(30,0,169,0.08), 0 1px 4px rgba(30,0,169,0.04)",
                 "card-hover": "0 8px 40px rgba(30,0,169,0.14), 0 2px 8px rgba(30,0,169,0.06)",
               }
             }
@@ -49,21 +47,25 @@
     <style>
         body { font-family: "Inter", sans-serif; }
 
+        /* Gradient background */
         .login-bg {
             background: linear-gradient(135deg, #1e00a9 0%, #3525cd 40%, #6b5fff 100%);
         }
 
+        /* Glass card */
         .glass-card {
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
         }
 
+        /* Input focus ring */
         .input-field:focus {
             outline: none;
             border-color: #1e00a9;
             box-shadow: 0 0 0 3px rgba(30,0,169,0.15);
         }
 
+        /* Animated underline for divider text */
         .divider-text {
             position: relative;
         }
@@ -72,17 +74,23 @@
             content: "";
             position: absolute;
             top: 50%;
-            width: 32%;
+            width: 40%;
             height: 1px;
-            background: #e2e8f0;
+            background: #c7c4d8;
         }
         .divider-text::before { right: 100%; margin-right: 12px; }
         .divider-text::after  { left: 100%;  margin-left: 12px; }
 
+        /* Button hover lift */
         .btn-primary { transition: transform 0.15s ease, box-shadow 0.15s ease; }
         .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(30,0,169,0.35); }
         .btn-primary:active { transform: translateY(0); }
 
+        .btn-google { transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease; }
+        .btn-google:hover { transform: translateY(-1px); background: #f1f0ff; box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+        .btn-google:active { transform: translateY(0); }
+
+        /* Floating label animation */
         .input-wrap { position: relative; }
         .input-icon {
             position: absolute;
@@ -100,7 +108,9 @@
             padding-left: 2.75rem !important;
         }
         #password-input { padding-right: 2.75rem !important; }
+        #toggle-password { z-index: 1; }
 
+        /* Fade-in animation */
         @@keyframes fadeUp {
             from { opacity: 0; transform: translateY(20px); }
             to   { opacity: 1; transform: translateY(0); }
@@ -108,6 +118,8 @@
         .fade-up { animation: fadeUp 0.5s ease both; }
         .delay-1 { animation-delay: 0.1s; }
         .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+        .delay-4 { animation-delay: 0.4s; }
     </style>
 </head>
 <body class="min-h-screen login-bg flex items-center justify-center p-4">
@@ -115,169 +127,160 @@
 <div class="w-full max-w-md fade-up">
 
     <!-- Logo / Brand -->
-    <div class="text-center mb-6 fade-up delay-1">
-        <a href="/" class="inline-flex items-center justify-center w-16 h-16 bg-white/20 rounded-2xl mb-3 backdrop-blur-sm shadow-md text-white no-underline hover:scale-105 transition-transform">
-            <span class="material-symbols-outlined text-[36px]" style="font-variation-settings: 'FILL' 1;">school</span>
-        </a>
-        <h1 class="text-3xl font-extrabold text-white tracking-tight">AcadPrep</h1>
-        <p class="text-white/80 text-sm mt-1">Smart AI-Powered TOEIC Test Prep</p>
+    <div class="text-center mb-8 fade-up delay-1">
+        <div class="inline-flex items-center justify-center w-16 h-16 bg-white/20 rounded-2xl mb-4 backdrop-blur-sm">
+            <i class="fa-solid fa-graduation-cap text-3xl text-white"></i>
+        </div>
+        <h1 class="text-3xl font-bold text-white tracking-tight">AcadPrep</h1>
+        <p class="text-white/70 text-sm mt-1">Smart TOEIC Preparation</p>
     </div>
 
-    <!-- Login Card -->
-    <div class="glass-card bg-white rounded-3xl shadow-card p-7 sm:p-8 fade-up delay-2">
+    <!-- Card -->
+    <div class="glass-card bg-white rounded-3xl shadow-card p-8 fade-up delay-2">
         <h2 class="text-2xl font-bold text-gray-900 mb-1">Welcome back!</h2>
-        <p class="text-muted text-sm mb-6">Sign in to continue your personalized learning path.</p>
+        <p class="text-muted text-sm mb-6">Login to continue your journey.</p>
 
-        <!-- Alert Error & OTP Verification Link -->
-        @if (!string.IsNullOrEmpty(Model.Error))
+        <!-- ═══ Alert: Lỗi từ Google callback hoặc external ═══ -->
+        @if (!string.IsNullOrEmpty(externalError))
         {
-            <div id="alert-error" role="alert" class="flex items-start gap-3 rounded-xl p-4 mb-5 bg-error-bg text-error text-sm">
-                <i class="fa-solid fa-circle-exclamation mt-0.5 shrink-0 text-base"></i>
-                <div class="flex-1">
-                    <p class="m-0 font-medium">@Model.Error</p>
-                    @if (Model.RequiresOtp)
-                    {
-                        <div class="mt-2.5">
-                            <a asp-page="/Account/VerifyOtp" asp-route-email="@Model.UnverifiedEmail"
-                               class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-primary font-semibold text-[13px] shadow-sm hover:bg-gray-50 transition-colors no-underline border border-error/30">
-                                Verify OTP Code Now
-                            </a>
-                        </div>
-                    }
-                </div>
+            <div id="alert-external" role="alert"
+                 class="flex items-start gap-3 rounded-xl px-4 py-3 mb-5 bg-error-bg text-error text-sm">
+                <i class="fa-solid fa-circle-exclamation mt-0.5 shrink-0"></i>
+                <span>@externalError</span>
             </div>
         }
 
-        <!-- Standard Login Form -->
-        <form method="post" novalidate>
+        <!-- ═══ Alert: Lỗi từ Handler / Validator ═══ -->
+        @if (!string.IsNullOrEmpty(Model.Error))
+        {
+            <div id="alert-error" role="alert"
+                 class="flex items-start gap-3 rounded-xl px-4 py-3 mb-5 bg-error-bg text-error text-sm">
+                <i class="fa-solid fa-circle-exclamation mt-0.5 shrink-0"></i>
+                <span>@Model.Error</span>
+            </div>
+        }
+
+        @if (Model.RequiresOtp)
+        {
+            <p class="mb-5 text-sm text-primary"><a asp-page="/Account/VerifyOtp" asp-route-email="@Model.UnverifiedEmail">Verify your email to continue</a></p>
+        }
+        @if (TempData["SuccessMessage"] is string success)
+        {
+            <p role="status" class="mb-5 rounded-xl bg-success-bg px-4 py-3 text-sm text-success">@success</p>
+        }
+        <div asp-validation-summary="All" class="text-sm text-error mb-4"></div>
+        <!-- ═══ Form Email + Password ═══ -->
+        <form method="post" asp-page="/Account/Login" asp-route-returnUrl="@returnUrl"
+              id="login-form" novalidate class="space-y-5 fade-up delay-3">
             @Html.AntiForgeryToken()
 
-            <!-- Email Input -->
-            <div class="mb-4">
-                <label asp-for="Email" class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
-                    Email Address
-                </label>
+            <!-- Email -->
+            <div class="space-y-1">
+                <label for="email-input" class="block text-sm font-medium text-gray-700">Email Address</label>
                 <div class="input-wrap">
-                    <i class="fa-regular fa-envelope input-icon text-sm"></i>
-                    <input asp-for="Email"
+                    <span class="input-icon"><i class="fa-regular fa-envelope text-sm"></i></span>
+                    <input id="email-input"
                            type="email"
+                           name="Email"
+                           value="@Model.Email"
+                           placeholder="you@example.com"
                            autocomplete="email"
-                           placeholder="name@example.com"
-                           class="input-field h-12 rounded-xl border border-gray-300 text-sm text-gray-900 placeholder-gray-400 focus:ring-0 transition-colors"
-                           autofocus />
+                           class="input-field w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-primary transition" />
                 </div>
-                <span asp-validation-for="Email" class="text-xs text-red-600 mt-1 block font-medium"></span>
             </div>
 
-            <!-- Password Input -->
-            <div class="mb-4">
-                <div class="flex justify-between items-center mb-1.5">
-                    <label asp-for="Password" class="block text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                        Password
-                    </label>
-                    <a asp-page="/Account/ForgotPassword" class="text-xs text-accent hover:underline font-medium no-underline">
-                        Forgot password?
-                    </a>
+            <!-- Password -->
+            <div class="space-y-1">
+                <div class="flex items-center justify-between">
+                    <label for="password-input" class="block text-sm font-medium text-gray-700">Password</label>
+                    <a href="/Account/ForgotPassword" class="text-xs text-primary font-medium hover:underline">Forgot password?</a>
                 </div>
                 <div class="input-wrap">
-                    <i class="fa-solid fa-lock input-icon text-sm"></i>
-                    <input asp-for="Password"
-                           id="password-input"
+                    <span class="input-icon"><i class="fa-solid fa-lock text-sm"></i></span>
+                    <input id="password-input"
                            type="password"
-                           autocomplete="current-password"
+                           name="Password"
                            placeholder="••••••••"
-                           class="input-field h-12 rounded-xl border border-gray-300 text-sm text-gray-900 placeholder-gray-400 focus:ring-0 transition-colors" />
-                    <button type="button"
-                            id="toggle-password"
-                            onclick="togglePasswordVisibility()"
-                            class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-sm bg-transparent border-0 cursor-pointer p-1">
-                        <i id="toggle-icon" class="fa-regular fa-eye"></i>
+                           autocomplete="current-password"
+                           class="input-field w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-primary transition" />
+                    <!-- Toggle show/hide password -->
+                    <button type="button" id="toggle-password"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+                            aria-label="Show / Hide password">
+                        <i id="toggle-icon" class="fa-regular fa-eye text-sm"></i>
                     </button>
                 </div>
-                <span asp-validation-for="Password" class="text-xs text-red-600 mt-1 block font-medium"></span>
             </div>
 
-            <!-- Submit Button -->
-            <button type="submit"
-                    class="btn-primary w-full h-12 bg-primary hover:bg-primary-dark text-white font-semibold rounded-xl text-sm cursor-pointer shadow-md border-0 transition-colors mt-2">
-                Sign In with Email
+            <!-- Submit -->
+            <button type="submit" id="btn-login"
+                    class="btn-primary w-full rounded-xl bg-primary py-3 text-sm font-semibold text-white shadow-md mt-2">
+                Login
             </button>
         </form>
 
-        <!-- Divider -->
-        <div class="my-6 text-center">
-            <span class="divider-text text-xs text-gray-400 font-semibold tracking-wider uppercase">
-                OR CONTINUE WITH
-            </span>
+        <!-- ═══ Divider ═══ -->
+        <div class="flex items-center justify-center my-6 fade-up delay-3">
+            <span class="divider-text text-xs text-muted px-2">or continue with</span>
         </div>
 
-        <!-- Official Google Identity Services -->
-        <form method="post" asp-page-handler="Google" id="googleForm">
-            @Html.AntiForgeryToken()
-            <input type="hidden" asp-for="GoogleIdToken" id="googleIdToken" />
+        <!-- ═══ Google Login ═══ -->
+        <div class="fade-up delay-4">
+            <form method="post" asp-page-handler="Google" asp-route-returnUrl="@returnUrl" id="googleForm">
+                <input type="hidden" asp-for="GoogleIdToken" id="googleIdToken" />
+                <div id="g_id_onload" data-client_id="@Model.GoogleClientId" data-callback="handleCredentialResponse" data-auto_prompt="false"></div>
+                <div class="flex justify-center"><div class="g_id_signin" data-type="standard" data-theme="outline" data-size="large" data-text="signin_with" data-width="320"></div></div>
+            </form>
+        </div>
 
-            <div id="g_id_onload"
-                 data-client_id="@Model.GoogleClientId"
-                 data-context="signin"
-                 data-callback="handleCredentialResponse"
-                 data-auto_prompt="false">
-            </div>
-
-            <div class="flex justify-center w-full">
-                <div class="g_id_signin"
-                     data-type="standard"
-                     data-shape="rectangular"
-                     data-theme="outline"
-                     data-text="continue_with"
-                     data-size="large"
-                     data-logo_alignment="left"
-                     data-width="360">
-                </div>
-            </div>
-        </form>
-
-        <!-- Footer Link -->
-        <p class="text-center text-sm text-gray-600 mt-6 mb-0">
+        <!-- ═══ Register link ═══ -->
+        <p class="mt-6 text-center text-sm text-muted fade-up delay-4">
             Don't have an account?
-            <a asp-page="/Account/Register" class="text-accent font-semibold hover:underline no-underline ml-1">
-                Sign up now
-            </a>
+            <a href="/Account/Register" class="text-primary font-semibold hover:underline">Register now</a>
         </p>
     </div>
 
-    <!-- Return to Home link -->
-    <div class="text-center mt-6">
-        <a href="/" class="text-white/80 hover:text-white text-xs inline-flex items-center gap-1.5 no-underline transition-opacity">
-            <span class="material-symbols-outlined text-[16px]">arrow_back</span> Back to Home
-        </a>
-    </div>
+    <!-- Footer -->
+    <p class="mt-6 text-center text-xs text-white/50 fade-up delay-4">
+        © @DateTime.UtcNow.Year AcadPrep · All rights reserved
+    </p>
 </div>
 
-<!-- Google Identity Script -->
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
-    function handleCredentialResponse(response) {
-        if (response && response.credential) {
-            document.getElementById("googleIdToken").value = response.credential;
-            document.getElementById("googleForm").submit();
-        } else {
-            alert("Could not retrieve authentication credentials from Google.");
-        }
+    // Toggle show/hide password
+    const toggleBtn  = document.getElementById('toggle-password');
+    const passwordEl = document.getElementById('password-input');
+    const toggleIcon = document.getElementById('toggle-icon');
+
+    if (toggleBtn && passwordEl) {
+        toggleBtn.addEventListener('click', () => {
+            const isHidden = passwordEl.type === 'password';
+            passwordEl.type = isHidden ? 'text' : 'password';
+            toggleIcon.className = isHidden
+                ? 'fa-regular fa-eye-slash text-sm'
+                : 'fa-regular fa-eye text-sm';
+        });
     }
 
-    function togglePasswordVisibility() {
-        const input = document.getElementById("password-input");
-        const icon = document.getElementById("toggle-icon");
-        if (input.type === "password") {
-            input.type = "text";
-            icon.classList.remove("fa-eye");
-            icon.classList.add("fa-eye-slash");
-        } else {
-            input.type = "password";
-            icon.classList.remove("fa-eye-slash");
-            icon.classList.add("fa-eye");
-        }
+    // Loading state on form submit
+    const form    = document.getElementById('login-form');
+    const btnLogin = document.getElementById('btn-login');
+
+    if (form && btnLogin) {
+        form.addEventListener('submit', () => {
+            btnLogin.disabled = true;
+            btnLogin.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Logging in...';
+        });
     }
+</script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+function handleCredentialResponse(response) {
+    if (response?.credential) {
+        document.getElementById('googleIdToken').value = response.credential;
+        document.getElementById('googleForm').submit();
+    }
+}
 </script>
 </body>
 </html>

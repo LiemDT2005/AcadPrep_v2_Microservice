@@ -39,8 +39,11 @@ public class ResetPasswordModel(ToeicApiClient api) : PageModel
             return RedirectToPage("/Account/ForgotPassword");
         }
 
-        Email = email.Trim();
-        return Page();
+        if (!new EmailAddressAttribute().IsValid(email.Trim()))
+            return RedirectToPage("/Account/ForgotPassword");
+
+        HttpContext.Session.SetString("resetEmail", email.Trim());
+        return RedirectToPage("/Account/ForgotPassword", new { step = 2 });
     }
 
     public async Task<IActionResult> OnPostResetPasswordAsync()

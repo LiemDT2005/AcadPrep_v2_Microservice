@@ -1,3 +1,6 @@
+@{
+    var isAdmin = (Context.Session.GetString("roles") ?? "").Split(',').Contains("Admin");
+}
 <!DOCTYPE html>
 <html class="light" lang="en">
 <head>
@@ -181,10 +184,13 @@
             </div>
 
             <div class="px-md mt-sm mb-xs font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">System</div>
+            @if (isAdmin)
+            {
             <a class="flex items-center gap-sm px-md py-sm text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 cursor-pointer" href="/Admin/Dashboard">
                 <span class="material-symbols-outlined">analytics</span>
                 <span class="font-label-md text-label-md">Platform Admin</span>
             </a>
+            }
             <a class="flex items-center gap-sm px-md py-sm text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 cursor-pointer" href="/Exams">
                 <span class="material-symbols-outlined">visibility</span>
                 <span class="font-label-md text-label-md">Learner Portal (UC-3)</span>
@@ -215,6 +221,14 @@
                     <span class="text-outline-variant">•</span>
                     <a href="/Exams" class="font-label-md text-label-md text-on-surface-variant hover:text-primary font-semibold">Learner Exams</a>
                     <span class="text-outline-variant">•</span>
+
+                    @if (isAdmin)
+                    {
+                        <a href="/Admin/Dashboard" class="font-label-md text-label-md text-on-surface-variant hover:text-primary font-semibold">Reports</a>
+                        <span class="text-outline-variant">•</span>
+                    }
+                    <a href="/Account/Profile" class="font-label-md text-label-md text-on-surface-variant hover:text-primary font-semibold">Profile</a>
+                    <form method="post" asp-page="/Account/Logout"><button type="submit" class="text-sm text-error">Log out</button></form>
                     <a href="/" class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer p-1" title="Back to site">
                         <span class="material-symbols-outlined text-[20px]">home</span>
                     </a>
@@ -388,5 +402,6 @@
         }
     </script>
     @await RenderSectionAsync("Scripts", required: false)
+    <partial name="_AccountSession" />
 </body>
 </html>

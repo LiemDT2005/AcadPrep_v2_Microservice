@@ -843,3 +843,80 @@ public partial class ToeicApiClient(HttpClient http, IHttpContextAccessor httpCo
         }
         return raw;
     }
+
+    // ==========================================
+    // UC-19.1: Admin View Accounts List
+    // ==========================================
+    public async Task<UserListResponse?> GetUsersAsync(string? search = null, string? role = null, string? status = null, int pageIndex = 1, int pageSize = 10)
+    {
+        AttachToken();
+        var queryParams = new List<string>
+        {
+            $"pageIndex={pageIndex}",
+            $"pageSize={pageSize}"
+        };
+        if (!string.IsNullOrWhiteSpace(search)) queryParams.Add($"search={Uri.EscapeDataString(search.Trim())}");
+        if (!string.IsNullOrWhiteSpace(role)) queryParams.Add($"role={Uri.EscapeDataString(role.Trim())}");
+        if (!string.IsNullOrWhiteSpace(status)) queryParams.Add($"status={Uri.EscapeDataString(status.Trim())}");
+
+        var url = $"/identity/api/users?{string.Join("&", queryParams)}";
+        var res = await http.GetAsync(url);
+        if (!res.IsSuccessStatusCode) return null;
+
+        return await res.Content.ReadFromJsonAsync<UserListResponse>(JsonOpts);
+    }
+
+    // ==========================================
+    // UC-19.1: Admin Export Users CSV
+    // ==========================================
+    public async Task<(byte[]? FileBytes, string? FileName)> DownloadUsersCsvAsync()
+    {
+        AttachToken();
+        var res = await http.GetAsync("/identity/api/users/export-csv");
+        if (!res.IsSuccessStatusCode) return (null, null);
+
+        var bytes = await res.Content.ReadAsByteArrayAsync();
+        var fileName = res.Content.Headers.ContentDisposition?.FileName?.Trim('"') ?? "users.csv";
+        return (bytes, fileName);
+    }
+
+    // ==========================================
+    // UC-19.2: Admin View Account Detail
+    // ==========================================
+    public async Task<UserDetailAdminDto?> GetUserDetailAsync(string id)
+    {
+        AttachToken();
+        var res = await http.GetAsync($"/identity/api/users/{id}");
+        if (!res.IsSuccessStatusCode) return null;
+
+        return await res.Content.ReadFromJsonAsync<UserDetailAdminDto>(JsonOpts);
+    }
+
+    // ==========================================
+    // UC-19.4: Admin Assign Roles
+    // ==========================================
+    public async Task<(bool Success, string? Error)> AssignRolesAsync(string id, List<string> roles)
+    {
+        AttachToken();
+        var res = await http.PutAsJsonAsync($"/identity/api/users/{id}/roles", new { roles });
+        var raw = await res.Content.ReadAsStringAsync();
+        if (!res.IsSuccessStatusCode)
+            return (false, ExtractError(raw));
+
+        return (true, null);
+    }
+
+    // ==========================================
+    // UC-19.3: Admin Update User Status (Ban / Unban)
+    // ==========================================
+    public async Task<(bool Success, string? Error)> UpdateUserStatusAsync(string id, int status, string? reason = null)
+    {
+        AttachToken();
+        var res = await http.PutAsJsonAsync($"/identity/api/users/{id}/status", new { status, reason });
+        var raw = await res.Content.ReadAsStringAsync();
+        if (!res.IsSuccessStatusCode)
+            return (false, ExtractError(raw));
+
+        return (true, null);
+    }
+}

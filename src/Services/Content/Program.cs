@@ -1,4 +1,4 @@
-using System.Text;
+using BuildingBlocks.Common.Authentication;
 using Content.Data;
 using Content.Mappings;
 using Content.Repositories;
@@ -7,7 +7,6 @@ using Content.Services;
 using Content.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -34,21 +33,7 @@ builder.Services.AddAutoMapper(cfg =>
 }, typeof(ContentMappingProfile));
 
 // 3. JWT Authentication Setup
-var jwt = builder.Configuration.GetSection("Jwt");
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(opt =>
-    {
-        opt.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = jwt["Issuer"],
-            ValidAudience = jwt["Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt["Key"] ?? "ToeicLearning_SuperSecret_Key_For_Demo_2026!"))
-        };
-    });
+builder.Services.AddIdentityJwtAuthentication(builder.Configuration, builder.Environment);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

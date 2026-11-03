@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="../../src/Services/Identity/Identity.API/Identity.API.csproj" />
+    <ProjectReference Include="../../src/Services/Exam/Exam.csproj" />
+    <ProjectReference Include="../../src/Services/Catalog/Catalog.Infrastructure/Catalog.Infrastructure.csproj" />
+    <ProjectReference Include="../../src/Services/Learning/Learning.Infrastructure/Learning.Infrastructure.csproj" />
+    <ProjectReference Include="../../src/Services/Progress/Progress.Infrastructure/Progress.Infrastructure.csproj" />
+    <ProjectReference Include="../../src/Services/Content/Content.csproj" />
+  </ItemGroup>
+</Project>

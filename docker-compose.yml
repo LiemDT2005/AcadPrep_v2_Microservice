@@ -36,6 +36,8 @@ services:
       timeout: 5s
       start_period: 20s
       retries: 20
+    volumes:
+    - sqlserver-data:/var/opt/mssql
   identity.api:
     build:
       context: .
@@ -47,8 +49,7 @@ services:
     - ASPNETCORE_ENVIRONMENT=Development
     - ASPNETCORE_URLS=http://0.0.0.0:5001
     - Urls=http://0.0.0.0:5001
-    - ConnectionStrings__Default=Server=sqlserver,1433;Database=AcadPrep_IdentityDb;User
-      Id=sa;Password=Password123!;TrustServerCertificate=True
+    - ConnectionStrings__Default=Server=sqlserver,1433;Database=AcadPrep_IdentityDb;User Id=sa;Password=Password123!;TrustServerCertificate=True
     - Redis__ConnectionString=redis:6379
     depends_on:
     - sqlserver
@@ -65,8 +66,15 @@ services:
     - ConnectionStrings__Sqlite=Data Source=/data/content.db
     - Services__ExamApi=http://exam.api:5003
     - InternalApiKey=${ACADPREP_INTERNAL_API_KEY:-AcadPrep_Local_Exam_Content_ChangeBeforeDeploy}
+    - Jwt__PublicKeyPath=/app/keys/public_key.pem
     volumes:
     - content-data:/data
+    - type: bind
+      source: ./src/Services/Identity/Identity.API/keys/public_key.pem
+      target: /app/keys/public_key.pem
+      read_only: true
+      bind:
+        create_host_path: false
   learning.api:
     build:
       context: .
@@ -76,12 +84,12 @@ services:
     environment:
     - ASPNETCORE_ENVIRONMENT=Development
     - Urls=http://0.0.0.0:5005
-    - ConnectionStrings__Default=Server=sqlserver,1433;Database=AcadPrep_LearningDb;User
-      Id=sa;Password=Password123!;TrustServerCertificate=True
+    - ConnectionStrings__Default=Server=sqlserver,1433;Database=AcadPrep_LearningDb;User Id=sa;Password=Password123!;TrustServerCertificate=True
     - ConnectionStrings__Redis=redis:6379
     - RabbitMQ__Host=rabbitmq
     - Exam__BaseUrl=http://exam.api:5003/
     - Exam__ApiKey=${ACADPREP_INTERNAL_API_KEY:-AcadPrep_Local_Exam_Content_ChangeBeforeDeploy}
+    - Jwt__PublicKeyPath=/app/keys/public_key.pem
     depends_on:
       sqlserver:
         condition: service_healthy
@@ -91,6 +99,13 @@ services:
         condition: service_started
       exam.api:
         condition: service_started
+    volumes:
+    - type: bind
+      source: ./src/Services/Identity/Identity.API/keys/public_key.pem
+      target: /app/keys/public_key.pem
+      read_only: true
+      bind:
+        create_host_path: false
   exam.api:
     build:
       context: .
@@ -102,8 +117,7 @@ services:
     - ASPNETCORE_ENVIRONMENT=Development
     - ASPNETCORE_URLS=http://0.0.0.0:5003
     - Urls=http://0.0.0.0:5003
-    - ConnectionStrings__Default=Server=sqlserver,1433;Database=AcadPrep_ExamDb;User
-      Id=sa;Password=Password123!;TrustServerCertificate=True
+    - ConnectionStrings__Default=Server=sqlserver,1433;Database=AcadPrep_ExamDb;User Id=sa;Password=Password123!;TrustServerCertificate=True
     - RabbitMQ__Host=rabbitmq
     - RabbitMQ__Port=5672
     - RabbitMQ__UserName=guest
@@ -111,6 +125,7 @@ services:
     - Content__BaseUrl=http://content.api:5006/
     - Content__ApiKey=${ACADPREP_INTERNAL_API_KEY:-AcadPrep_Local_Exam_Content_ChangeBeforeDeploy}
     - InternalApiKey=${ACADPREP_INTERNAL_API_KEY:-AcadPrep_Local_Exam_Content_ChangeBeforeDeploy}
+    - Jwt__PublicKeyPath=/app/keys/public_key.pem
     depends_on:
       sqlserver:
         condition: service_healthy
@@ -118,6 +133,13 @@ services:
         condition: service_started
       content.api:
         condition: service_started
+    volumes:
+    - type: bind
+      source: ./src/Services/Identity/Identity.API/keys/public_key.pem
+      target: /app/keys/public_key.pem
+      read_only: true
+      bind:
+        create_host_path: false
   apigateway:
     build:
       context: .
@@ -165,8 +187,7 @@ services:
       ASPNETCORE_HTTP_PORTS: '8080'
       ASPNETCORE_URLS: http://+:8080
       Urls: http://+:8080
-      ConnectionStrings__Default: ${NOTIFICATIONS_CONNECTION_STRING:?Set NOTIFICATIONS_CONNECTION_STRING
-        explicitly}
+      ConnectionStrings__Default: ${NOTIFICATIONS_CONNECTION_STRING:?Set NOTIFICATIONS_CONNECTION_STRING explicitly}
       Jwt__PublicKeyPath: /app/keys/public_key.pem
     volumes:
     - type: bind
@@ -178,3 +199,5 @@ services:
 volumes:
   content-data: null
   identity-data: null
+  sqlserver-data:
+    name: acadprep-sqlserver-data
