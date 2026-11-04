@@ -3,7 +3,7 @@ using Content.Data;
 using Exam.Data;
 using Identity.API.Data;
 using Identity.API.Models;
-using Learning.Infrastructure.Persistence;
+using Learning.API.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.Sqlite;
