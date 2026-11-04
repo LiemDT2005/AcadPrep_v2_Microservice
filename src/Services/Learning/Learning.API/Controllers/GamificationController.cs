@@ -1,5 +1,5 @@
 using System.Security.Claims;
-using Learning.Application.Services;
+using Learning.API.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Learning.API.Controllers;
@@ -47,6 +47,6 @@ public class GamificationController(GamificationService gamificationService) : C
     public async Task<IActionResult> TriggerStreakResetCheck(CancellationToken ct = default)
     {
         await gamificationService.ResetExpiredStreaksAsync(ct);
-        return Ok(new { success = true, message = "Đã quét và làm mới trạng thái chuỗi ngày học thành công." });
+        return Ok(new { success = true, message = "Da quet va lam moi trang thai chuoi ngay hoc thanh cong." });
     }
 }

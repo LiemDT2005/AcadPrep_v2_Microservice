@@ -4,8 +4,8 @@ using Catalog.Infrastructure.Persistence;
 using Exam.Entities;
 using Exam.Data;
 using Identity.API.Models;
-using Learning.Domain.Entities;
-using Learning.Infrastructure.Persistence;
+using Learning.API.Entities;
+using Learning.API.Data;
 using Microsoft.EntityFrameworkCore;
 using Progress.Domain.Entities;
 using Progress.Infrastructure.Persistence;
@@ -98,8 +98,8 @@ internal static class DemoLearning
                     a.AttemptAnswers.Add(new AttemptAnswer { QuestionId = q.Id, IsCorrect = correct,
                         SelectedOption = correct ? q.CorrectOption : (Exam.Entities.Enums.OptionLetter)(((int)q.CorrectOption + 1) % (q.Part == 2 ? 3 : 4)) });
                 }
-                a.ListeningScore = Learning.Application.Common.ToeicScoreConverter.CalculateListeningScore(listeningCorrect);
-                a.ReadingScore = Learning.Application.Common.ToeicScoreConverter.CalculateReadingScore(readingCorrect);
+                a.ListeningScore = Learning.API.Common.ToeicScoreConverter.CalculateListeningScore(listeningCorrect);
+                a.ReadingScore = Learning.API.Common.ToeicScoreConverter.CalculateReadingScore(readingCorrect);
                 a.TotalScore = a.ListeningScore + a.ReadingScore;
                 exam.ExamAttempts.Add(a);
                 attempts.Add(a);
