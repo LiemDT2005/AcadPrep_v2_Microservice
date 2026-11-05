@@ -25,3 +25,4 @@ if ($LASTEXITCODE -eq 0) {
 } else {
     Write-Host "`nFailed to seed database. Please check logs above." -ForegroundColor Red
 }
+

@@ -9,7 +9,7 @@ Project học TOEIC theo kiến trúc **microservices + Clean Architecture + Raz
 | Frontend | ASP.NET Core **Razor Pages** |
 | API Gateway | **YARP** Reverse Proxy |
 | Auth | ASP.NET Identity + **JWT** |
-| Catalog / Progress | **Clean Architecture** (Domain → Application → Infrastructure → API) |
+| Progress | **Clean Architecture** (Domain → Application → Infrastructure → API) |
 | Content / Exam | Một project/service, chia folder Controllers → Services → Repositories → Data |
 | Database | **SQL Server 2022** + EF Core |
 | Message bus | **RabbitMQ** (`ExamCompletedEvent`) |
@@ -29,7 +29,6 @@ ToeicLearning.Microservices/
 │   │   └── BuildingBlocks.EventBus    # RabbitMQ publisher/subscriber
 │   ├── Services/
 │   │   ├── Identity/Identity.API
-│   │   ├── Catalog/   (Domain, Application, Infrastructure, API)
 │   │   ├── Exam/      (một project: sessions, attempts)
 │   │   ├── Content/   (một project: CMS và xem đề Learner)
 │   │   ├── Progress/  (Domain, Application, Infrastructure, API)
@@ -44,10 +43,7 @@ ToeicLearning.Microservices/
 1. User đăng ký / đăng nhập trên Razor Pages
       → Identity.API cấp JWT (lưu Session)
 
-2. Xem khóa học
-      → Web → YARP `/catalog/*` → Catalog.API (Clean Arch + SQL Server seed)
-
-3. Luyện đề → Chi tiết đề
+2. Luyện đề → Chi tiết đề
       → Web → YARP `/content/api/exams` → Content (metadata, Part, tags)
       → lịch sử cá nhân: Web → `/exam/api/exams/{id}/attempts/me` → Exam (JWT)
    Start Full Test / Start Practice
@@ -56,17 +52,16 @@ ToeicLearning.Microservices/
       → chọn đáp án, chuyển câu, bảng câu hỏi, đếm ngược tùy chế độ
       → chấm điểm, lưu kết quả, publish TestSubmittedEvent lên RabbitMQ
 
-4. CMS Đề thi (Admin / Content Moderator)
+3. CMS Đề thi (Admin / Content Moderator)
       → Web → YARP `/content/*` → Content (/api/cms/exams)
-      → CRUD đề thi, câu hỏi, bài đọc, series, publish / soft delete
 
-5. Learning.API subscribe event TestSubmitted / ExamCompletedEvent
+4. Learning.API subscribe event TestSubmitted / ExamCompletedEvent
       → ghi ExamAttemptRecord
       → cập nhật StudyStreak (chuỗi ngày học theo UTC+7)
       → tự động đánh giá & mở khóa danh hiệu (Achievements)
       → invalidate / cache trên Redis
 
-6. Xem Bảng xếp hạng & Tiến độ & Từ vựng Flashcards
+5. Xem Bảng xếp hạng & Tiến độ & Từ vựng Flashcards
       → Web → YARP `/learning/*` → Learning.API (đọc DB + Redis)
 ```
 
@@ -77,7 +72,6 @@ ToeicLearning.Microservices/
 | Storefront.Web | http://localhost:5100 |
 | ApiGateway | http://localhost:5080 |
 | Identity.API | http://localhost:5001/swagger |
-| Catalog.API | http://localhost:5002/swagger |
 | Exam | http://localhost:5003/swagger |
 | Content | http://localhost:5006/swagger |
 | Progress.API | http://localhost:5004/swagger |
@@ -135,7 +129,6 @@ Hoặc chạy từng project trong terminal riêng (thêm `--no-launch-profile` 
 
 ```bash
 dotnet run --project src/Services/Identity/Identity.API --no-launch-profile
-dotnet run --project src/Services/Catalog/Catalog.API --no-launch-profile
 dotnet run --project src/Services/Exam --no-launch-profile
 dotnet run --project src/Services/Content --no-launch-profile
 dotnet run --project src/Services/Progress/Progress.API --no-launch-profile
@@ -148,10 +141,9 @@ dotnet run --project src/Web/Storefront.Web --no-launch-profile
 
 1. Mở http://localhost:5100  
 2. Có thể làm bài bằng **phiên khách**, không cần chạy Identity.API hoặc đăng nhập
-3. Vào **Khóa học** → xem seed data Catalog  
-4. Vào **Luyện đề** → chọn đề → tab **Full Test** → **Start Full Test**.
-5. Hoặc tab **Practice by Part** → chọn Part, topic (tùy chọn), thời gian (hoặc **No limit**) → **START PRACTICE**.
-6. Chọn đáp án, dùng **Previous / Next** hoặc bảng số câu để di chuyển.
+3. Vào **Luyện đề** → chọn đề → tab **Full Test** → **Start Full Test**.
+4. Hoặc tab **Practice by Part** → chọn Part, topic (tùy chọn), thời gian (hoặc **No limit**) → **START PRACTICE**.
+5. Chọn đáp án, dùng **Previous / Next** hoặc bảng số câu để di chuyển.
 
 Full Test lấy toàn bộ câu hỏi và thời lượng từ đề (seed chuẩn: 200 câu, 120 phút;
 một số đề seed rút gọn có ít câu hơn, UI hiển thị số câu thực tế).
@@ -181,13 +173,12 @@ Sau khi cập nhật source, khởi động lại Content, Exam và Storefront.W
 | Path trên Gateway | Downstream |
 |---|---|
 | `/identity/*` | Identity `:5001` |
-| `/catalog/*` | Catalog `:5002` |
 | `/exam/*` | Exam `:5003` (sessions/attempts) |
 | `/content/*` | Content `:5006` (CMS và danh sách/chi tiết đề Learner) |
 | `/progress/*` | Progress `:5004` |
 | `/learning/*` | Learning `:5005` |
 
-Ví dụ: `GET http://localhost:5080/catalog/api/courses`
+Ví dụ: `GET http://localhost:5080/content/api/exams`
 
 ## Gợi ý mở rộng đề tài
 
@@ -196,7 +187,6 @@ Ví dụ: `GET http://localhost:5080/catalog/api/courses`
 - Duende IdentityServer thay JWT đơn giản
 - MongoDB cho các service phù hợp
 - Kubernetes manifests + CI/CD
-- gRPC giữa Exam ↔ Catalog
 - Unit / Integration / Contract tests
 
 ## JWT demo
@@ -283,8 +273,8 @@ Quota Billing hiện dùng `PendingBillingQuotaPolicy` theo phạm vi đã thố
 
 Chạy `dotnet run --project tools/SeedDemoData -- --local-sql` từ thư mục repository để bổ sung dữ liệu vào SQL Server local và SQLite Content. Lệnh giữ nguyên dữ liệu/tài khoản đã có và có thể chạy lại. Có tài khoản learner `hana@acadprep.com`, moderator `moderator.demo@example.test`, admin `admin.demo@example.test`; mật khẩu tài khoản demo mới là `Demo@123456`.
 
-Bộ dữ liệu gồm khóa học, bài học, đề 200 câu, lịch sử làm bài và câu trả lời, tiến độ, từ vựng, flashcard, streak và huy hiệu. Xem [hướng dẫn seed](tools/SeedDemoData/README.md) để biết các tài khoản kiểm tra trạng thái, đường dẫn database, giới hạn của đề/audio demo và cách chạy thử bằng SQLite riêng.
+Bộ dữ liệu gồm đề 200 câu, lịch sử làm bài và câu trả lời, tiến độ, từ vựng, flashcard, streak và huy hiệu. Xem [hướng dẫn seed](tools/SeedDemoData/README.md) để biết các tài khoản kiểm tra trạng thái, đường dẫn database, giới hạn của đề/audio demo và cách chạy thử bằng SQLite riêng.
 
 ### JWT sau khi tích hợp các service
 
-Identity phát token RS256. Exam, Content, Learning, Catalog và Progress xác thực bằng public key của Identity qua `Jwt:PublicKeyPath` (đường dẫn tương đối với thư mục service) hoặc `Jwt:PublicKey` (PEM). Docker Compose mount public key ở chế độ chỉ đọc cho Exam, Content và Learning. Khi publish riêng từng service, đặt `Jwt__PublicKeyPath` trỏ tới public key đã cấp cho service.
+Identity phát token RS256. Exam, Content, Learning và Progress xác thực bằng public key của Identity qua `Jwt:PublicKeyPath` (đường dẫn tương đối với thư mục service) hoặc `Jwt:PublicKey` (PEM). Docker Compose mount public key ở chế độ chỉ đọc cho Exam, Content và Learning. Khi publish riêng từng service, đặt `Jwt__PublicKeyPath` trỏ tới public key đã cấp cho service.

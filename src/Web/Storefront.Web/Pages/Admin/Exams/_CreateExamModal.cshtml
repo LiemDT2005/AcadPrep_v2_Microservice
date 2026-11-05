@@ -104,10 +104,6 @@
                     Upload Full Exam Audio to Cloudinary (.mp3, .wav, .m4a)
                 </label>
                 <input type="file" asp-for="CreateExamForm.AudioFile" accept="audio/*" class="w-full text-xs text-on-surface-variant file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer" />
-                <div class="pt-xs">
-                    <label class="text-xs font-medium text-on-surface-variant" asp-for="CreateExamForm.AudioUrl">Or paste existing Cloudinary / Audio URL (Optional)</label>
-                    <input asp-for="CreateExamForm.AudioUrl" class="mt-1 w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-md py-sm font-body-sm text-body-sm focus:outline-none focus:ring-2 focus:ring-primary-container focus:border-primary transition-all placeholder:text-outline" placeholder="https://res.cloudinary.com/..." />
-                </div>
             </div>
 
             <div class="px-0 py-0 bg-transparent flex items-center justify-between border-t border-outline-variant/30 pt-lg">

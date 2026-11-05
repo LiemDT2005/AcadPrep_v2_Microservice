@@ -61,7 +61,7 @@ public class GatewayConfigurationTests
         Assert.Equal("/{**catch-all}", route.GetProperty("Transforms")[0].GetProperty("PathPattern").GetString());
         Assert.Equal("http://localhost:5010/", proxy.GetProperty("Clusters").GetProperty("notification")
             .GetProperty("Destinations").GetProperty("d1").GetProperty("Address").GetString());
-        foreach (var service in new[] { "identity", "catalog", "exam", "progress", "learning", "content" })
+        foreach (var service in new[] { "identity", "exam", "progress", "learning", "content" })
         {
             Assert.True(proxy.GetProperty("Routes").TryGetProperty($"{service}-route", out _));
             Assert.True(proxy.GetProperty("Clusters").TryGetProperty(service, out _));

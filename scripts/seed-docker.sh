@@ -26,3 +26,4 @@ if [ $? -eq 0 ]; then
 else
     echo "Failed to seed database. Please check logs above."
 fi
+

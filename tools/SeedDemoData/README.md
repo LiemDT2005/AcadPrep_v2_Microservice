@@ -39,7 +39,6 @@ Tool không gửi email hoặc cấp OTP cố định. Các địa chỉ `exampl
 
 ## Dữ liệu bổ sung
 
-- Catalog: 3 khóa học, mỗi khóa 4 bài học, cộng dữ liệu seed sẵn.
 - Content và Exam: cùng đề `AcadPrep Demo — Office English Full Test`, 200 câu với số lượng từng Part là 6/25/39/30/30/16/54, đáp án và nhóm câu/đoạn văn. ID nội bộ của hai database độc lập.
 - Exam: mỗi learner có 4 lượt thi đã nộp, 200 câu trả lời/lượt, điểm tăng dần.
 - Learning: 15 từ mới cộng 10 từ có sẵn, sổ từ vựng, flashcard đến hạn/chưa đến hạn, streak, huy hiệu, dữ liệu phân tích theo Part cho cùng learner.
