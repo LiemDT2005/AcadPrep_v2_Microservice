@@ -1,9 +1,10 @@
 using BuildingBlocks.Common.Events;
-using Learning.Application.DTOs;
-using Learning.Application.Interfaces;
-using Learning.Application.Services;
-using Learning.Infrastructure.Messaging;
-using Learning.Infrastructure.Persistence;
+using Learning.API.DTOs;
+using Learning.API.Caching;
+using Learning.API.Messaging;
+using Learning.API.Services;
+// using Learning.API.Messaging;
+using Learning.API.Data;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;

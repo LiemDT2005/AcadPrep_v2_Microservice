@@ -1,6 +1,8 @@
+using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
-using Learning.Application.DTOs;
-using Learning.Application.Services;
+using Learning.API.DTOs;
+using Learning.API.Services;
+using Learning.API.Validation;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Learning.API.Controllers;
@@ -56,9 +58,10 @@ public class VocabularyController(VocabularyService vocabularyService) : Control
     }
 
     /// <summary>
-    /// UC-11.4: View Vocabulary List (Saved notebook with search and pagination)
+    /// UC-11.4: View Vocabulary List (Saved notebook with search, pagination, and CSV export via Accept: text/csv)
     /// </summary>
     [HttpGet("notebook")]
+    [Produces("application/json", "text/csv")]
     public async Task<IActionResult> GetSavedVocabularies(
         [FromQuery] string? searchTerm = null,
         [FromQuery] int pageNumber = 1,
@@ -82,7 +85,7 @@ public class VocabularyController(VocabularyService vocabularyService) : Control
         var result = await vocabularyService.RemoveSavedVocabularyAsync(userId, vocabId, ct);
         if (!result.IsSuccess) return BadRequest(new { error = result.Error });
 
-        return Ok(new { success = true, message = "Đã xóa từ vựng khỏi sổ tay thành công." });
+        return Ok(new { success = true, message = "Da xoa tu vung khoi so tay thanh cong." });
     }
 
     /// <summary>
@@ -98,10 +101,12 @@ public class VocabularyController(VocabularyService vocabularyService) : Control
     }
 
     /// <summary>
-    /// UC-12.2: Look Up Vocabulary (Dictionary definition, phonetic, example)
+    /// UC-12.2: Look Up Vocabulary (Dictionary definition, phonetic, example - validated with ValidEnglishWord)
     /// </summary>
     [HttpGet("lookup")]
-    public async Task<IActionResult> LookupVocabulary([FromQuery] string keyword, CancellationToken ct = default)
+    public async Task<IActionResult> LookupVocabulary(
+        [FromQuery, Required(ErrorMessage = "Tu khoa khong duoc de trong."), ValidEnglishWord] string keyword,
+        CancellationToken ct = default)
     {
         var result = await vocabularyService.LookupVocabularyAsync(keyword, ct);
         if (!result.IsSuccess) return NotFound(new { error = result.Error });

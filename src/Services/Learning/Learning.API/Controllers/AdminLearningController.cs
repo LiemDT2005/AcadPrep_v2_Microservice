@@ -1,7 +1,6 @@
-using Learning.Application.DTOs;
-using Learning.Application.Services;
+using Learning.API.DTOs;
+using Learning.API.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
 
 namespace Learning.API.Controllers;
 
@@ -12,13 +11,14 @@ public class AdminLearningController(
     GamificationService gamificationService) : ControllerBase
 {
     /// <summary>
-    /// UC-20.1: View Learning Progress Reports (Aggregated test volume over date range, Cached with Redis)
+    /// UC-20.1: View Learning Progress Reports (Aggregated test volume over date range, Cached with Redis, supports CSV via Accept: text/csv)
     /// </summary>
     [HttpGet("reports")]
+    [Produces("application/json", "text/csv")]
     public async Task<IActionResult> GetProgressReport(
-        [FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate, CancellationToken ct = default)
+        [FromQuery] AdminReportQueryRequest query, CancellationToken ct = default)
     {
-        var result = await adminService.GetProgressReportAsync(startDate, endDate, ct);
+        var result = await adminService.GetProgressReportAsync(query.StartDate, query.EndDate, ct);
         if (!result.IsSuccess) return BadRequest(new { error = result.Error });
 
         return Ok(result.Value);
@@ -37,10 +37,10 @@ public class AdminLearningController(
     }
 
     /// <summary>
-    /// UC-20.3: View Exam Statistics (Attempts, average/highest/lowest scores per exam, Cached with Redis)
+    /// UC-20.3: View Exam Statistics (Attempts, average/highest/lowest scores per exam, Cached with Redis, supports CSV via Accept: text/csv)
     /// </summary>
-    [Authorize(Roles = "Admin")]
     [HttpGet("exam-stats")]
+    [Produces("application/json", "text/csv")]
     public async Task<IActionResult> GetExamStatistics(
         [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, CancellationToken ct = default)
     {
@@ -51,7 +51,7 @@ public class AdminLearningController(
     }
 
     /// <summary>
-    /// Admin: Create New Achievement Badge
+    /// Admin: Create New Achievement Badge (Validated with ValidAchievementCondition)
     /// </summary>
     [HttpPost("achievements")]
     public async Task<IActionResult> CreateAchievement(
@@ -64,7 +64,7 @@ public class AdminLearningController(
     }
 
     /// <summary>
-    /// Admin: Update Existing Achievement Badge
+    /// Admin: Update Existing Achievement Badge (Validated with ValidAchievementCondition)
     /// </summary>
     [HttpPut("achievements/{id:int}")]
     public async Task<IActionResult> UpdateAchievement(
@@ -85,6 +85,6 @@ public class AdminLearningController(
         var result = await gamificationService.DeleteAchievementAsync(id, ct);
         if (!result.IsSuccess) return NotFound(new { error = result.Error });
 
-        return Ok(new { success = true, message = "Đã xóa danh hiệu thành công." });
+        return Ok(new { success = true, message = "Da xoa danh hieu thanh cong." });
     }
 }

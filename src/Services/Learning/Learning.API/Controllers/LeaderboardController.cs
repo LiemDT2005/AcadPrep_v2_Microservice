@@ -1,5 +1,5 @@
 using System.Security.Claims;
-using Learning.Application.Services;
+using Learning.API.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Learning.API.Controllers;
@@ -9,9 +9,10 @@ namespace Learning.API.Controllers;
 public class LeaderboardController(LeaderboardService leaderboardService) : ControllerBase
 {
     /// <summary>
-    /// UC-4: View Leaderboard (Sorted by Total Score or Study Streak)
+    /// UC-4: View Leaderboard (Sorted by Total Score or Study Streak, supports CSV export via Accept: text/csv)
     /// </summary>
     [HttpGet]
+    [Produces("application/json", "text/csv")]
     public async Task<IActionResult> GetLeaderboard([FromQuery] string? sortBy = "Score", CancellationToken ct = default)
     {
         var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) 
