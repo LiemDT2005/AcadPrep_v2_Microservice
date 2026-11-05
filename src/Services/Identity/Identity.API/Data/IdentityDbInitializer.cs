@@ -19,26 +19,38 @@ public static class IdentityDbInitializer
             }
         }
 
-        // Seed default Admin if not exists
-        var adminEmail = "admin@acadprep.com";
-        var admin = await userManager.FindByEmailAsync(adminEmail);
-        if (admin is null)
+        // Seed default accounts if not exist
+        await EnsureUserAsync(userManager, "admin@acadprep.com", "System Administrator", "Admin@123456", "Admin");
+        await EnsureUserAsync(userManager, "moderator@acadprep.com", "Content Moderator", "Moderator@123456", "Moderator");
+        await EnsureUserAsync(userManager, "moderator.demo@example.test", "Demo Moderator", "Demo@123456", "Moderator");
+        await EnsureUserAsync(userManager, "learner@acadprep.com", "Default Learner", "Learner@123456", "Learner");
+    }
+
+    private static async Task EnsureUserAsync(
+        UserManager<AppUser> userManager,
+        string email,
+        string fullName,
+        string password,
+        string role)
+    {
+        var user = await userManager.FindByEmailAsync(email);
+        if (user is null)
         {
-            var defaultAdmin = new AppUser
+            user = new AppUser
             {
-                UserName = adminEmail,
-                Email = adminEmail,
-                FullName = "System Administrator",
+                UserName = email,
+                Email = email,
+                FullName = fullName,
                 Status = UserStatus.Active,
                 AuthProvider = "Local",
                 EmailConfirmed = true,
                 CreatedAt = Common.TimeHelper.Now
             };
 
-            var result = await userManager.CreateAsync(defaultAdmin, "Admin@123456");
+            var result = await userManager.CreateAsync(user, password);
             if (result.Succeeded)
             {
-                await userManager.AddToRoleAsync(defaultAdmin, "Admin");
+                await userManager.AddToRoleAsync(user, role);
             }
         }
     }
