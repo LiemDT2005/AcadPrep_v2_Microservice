@@ -1,16 +1,18 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Notifications.API.Validation;
-using Notifications.Application.DTOs;
-using Notifications.Application.Interfaces;
-using Notifications.Application.Services;
+using Notifications.API.DTOs;
+using Notifications.API.Data;
+using Notifications.API.Repositories.Interfaces;
+using Notifications.API.Services.Interfaces;
+using Notifications.API.Services;
 
 namespace Notifications.API.Controllers;
 
 [ApiController]
 [Authorize(Roles = "Admin")]
 [Route("api/admin/notifications")]
-public class AdminNotificationsController(NotificationAdminService notifications, ICurrentUser currentUser) : ControllerBase
+public class AdminNotificationsController(INotificationAdminService notifications, ICurrentUser currentUser) : ControllerBase
 {
     [HttpPost]
     [AdminNotificationValidationFilter]
@@ -20,7 +22,14 @@ public class AdminNotificationsController(NotificationAdminService notifications
             return Unauthorized();
         var result = await notifications.CreateAsync(request, adminId, ct);
         // There is no resource GET URI in N5; do not advertise a fabricated Location.
-        return result.IsSuccess ? StatusCode(StatusCodes.Status201Created, result.Value)
-            : Problem(statusCode: 422, title: "Invalid notification request.");
+        if (result.IsSuccess) return StatusCode(StatusCodes.Status201Created, result.Value);
+        if (result.Error == NotificationAdminService.TargetNotFound)
+        {
+            ModelState.AddModelError(nameof(request.TargetUserId), NotificationAdminService.TargetNotFound);
+            return ValidationProblem(statusCode: 422, modelStateDictionary: ModelState);
+        }
+        return result.Error == NotificationAdminService.IdentityUnavailable
+            ? Problem(statusCode: 503, title: NotificationAdminService.IdentityUnavailable)
+            : Problem(statusCode: 422, title: NotificationAdminService.InvalidRequest);
     }
 }

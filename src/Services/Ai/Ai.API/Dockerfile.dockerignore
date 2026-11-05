@@ -1,0 +1,13 @@
+**
+!src/
+!src/Services/
+!src/Services/Ai/
+!src/Services/Ai/Ai.API/
+!src/Services/Ai/Ai.API/**
+**/bin/
+**/obj/
+**/*.pem
+**/*.key
+**/*.pfx
+**/.env*
+**/appsettings.Development.json

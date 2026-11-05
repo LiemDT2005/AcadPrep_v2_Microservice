@@ -1,17 +1,29 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Notifications.Application.Interfaces;
-using Notifications.Application.Services;
+using Notifications.API.Data;
+using Notifications.API.Repositories.Interfaces;
+using Notifications.API.Services.Interfaces;
+using Notifications.API.Services;
 
 namespace Notifications.API.Controllers;
 
 [ApiController]
 [Authorize]
 [Route("api/notifications")]
-public class NotificationsController(NotificationQueryService notifications, NotificationCommandService commands,
+public class NotificationsController(INotificationQueryService notifications, INotificationCommandService commands,
     ICurrentUser currentUser) : ControllerBase
 {
+    [HttpPatch("read-all")]
+    public async Task<IActionResult> MarkAllRead(CancellationToken ct)
+    {
+        if (!currentUser.IsAuthenticated || currentUser.UserId is not { } userId || userId == Guid.Empty)
+            return Unauthorized();
+
+        await commands.MarkAllReadAsync(userId, currentUser.Roles, ct);
+        return NoContent();
+    }
+
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(string id, CancellationToken ct)
     {

@@ -1,0 +1,159 @@
+@page
+@model Storefront.Web.Pages.Admin.Billing.OrdersModel
+@using Storefront.Web.Pages.Billing.Orders
+@using Storefront.Web.Pages.Admin
+@{ Layout = "_IdentityAdminLayout"; ViewData["Title"] = "Orders & Plan Grants"; }
+<div class="@AdminUi.Page">
+    <header class="@AdminUi.Header">
+        <div>
+            <p class="@AdminUi.Eyebrow">Billing</p>
+            <h2 class="@AdminUi.Title">Đơn hàng &amp; cấp gói</h2>
+            <p class="@AdminUi.Lead">
+                Theo dõi đơn thanh toán VNPay, xuất CSV theo tháng và cấp gói Pro thủ công cho Learner.
+                @if (Model.Orders is { } summary) { <span class="ml-sm text-[14px] font-semibold text-primary">@summary.TotalCount đơn</span> }
+            </p>
+        </div>
+        <a asp-page="/Admin/Billing/Revenue" class="@AdminUi.SecondaryButton self-start whitespace-nowrap lg:self-auto">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">monitoring</span>Xem doanh thu
+        </a>
+    </header>
+
+    @if (Model.Notice is not null)
+    {
+        <div role="status" class="@AdminUi.Success"><span class="material-symbols-outlined text-green-600" aria-hidden="true">check_circle</span>@Model.Notice</div>
+    }
+
+    <form method="get" id="billing-order-filter" class="@AdminUi.Card">
+        <div class="@AdminUi.CardBody grid gap-md sm:grid-cols-2 xl:grid-cols-6">
+            <div asp-validation-summary="None" class="text-[14px] text-error sm:col-span-2 xl:col-span-6 empty:hidden" role="alert"></div>
+            <div><label asp-for="Filter.Status" class="@AdminUi.Label"></label>
+                <select asp-for="Filter.Status" class="@AdminUi.Input">
+                    <option value="">Tất cả</option>
+                    @foreach (var status in new[] { "Pending", "Paid", "Failed", "Expired" }) { <option value="@status">@OrderText.Status(status)</option> }
+                </select><span asp-validation-for="Filter.Status" class="@AdminUi.FieldError"></span></div>
+            <div><label asp-for="Filter.PlanCode" class="@AdminUi.Label"></label>
+                <select asp-for="Filter.PlanCode" class="@AdminUi.Input">
+                    <option value="">Tất cả</option><option value="PRO_MONTH">PRO_MONTH</option><option value="PRO_QUARTER">PRO_QUARTER</option>
+                </select><span asp-validation-for="Filter.PlanCode" class="@AdminUi.FieldError"></span></div>
+            <div class="sm:col-span-2"><label asp-for="Filter.UserId" class="@AdminUi.Label"></label>
+                <input asp-for="Filter.UserId" placeholder="GUID người dùng" class="@AdminUi.Input font-mono" /><span asp-validation-for="Filter.UserId" class="@AdminUi.FieldError"></span></div>
+            <div><label asp-for="Filter.From" class="@AdminUi.Label"></label><input asp-for="Filter.From" type="date" class="@AdminUi.Input" /><span asp-validation-for="Filter.From" class="@AdminUi.FieldError"></span></div>
+            <div><label asp-for="Filter.To" class="@AdminUi.Label"></label><input asp-for="Filter.To" type="date" class="@AdminUi.Input" /><span asp-validation-for="Filter.To" class="@AdminUi.FieldError"></span></div>
+            <div><label for="Filter_SortBy" class="@AdminUi.Label">Sắp xếp</label>
+                <select asp-for="Filter.SortBy" class="@AdminUi.Input"><option value="createdAt">Ngày tạo</option><option value="amount">Số tiền</option></select></div>
+            <div><label for="Filter_SortDir" class="@AdminUi.Label">Thứ tự</label>
+                <select asp-for="Filter.SortDir" class="@AdminUi.Input"><option value="desc">Giảm dần</option><option value="asc">Tăng dần</option></select></div>
+            <div class="flex items-end sm:col-span-2 xl:col-span-4">
+                <button type="submit" class="@AdminUi.PrimaryButton"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">filter_list</span>Lọc</button>
+            </div>
+        </div>
+        <div class="flex flex-col gap-md border-t border-outline-variant bg-surface-bright px-lg py-md rounded-b-xl md:flex-row md:items-end">
+            <div><label asp-for="Filter.Month" class="@AdminUi.Label"></label><input asp-for="Filter.Month" type="month" class="@AdminUi.Input md:w-[200px]" /><span asp-validation-for="Filter.Month" class="@AdminUi.FieldError"></span></div>
+            <button type="submit" name="handler" value="Csv" formnovalidate class="@AdminUi.SecondaryButton self-start md:self-auto">
+                <span class="material-symbols-outlined text-[18px]" aria-hidden="true">download</span>Tải CSV theo tháng
+            </button>
+            <p class="text-[13px] text-on-surface-variant md:flex-1">CSV gồm toàn bộ đơn tạo trong tháng đã chọn (giờ Việt Nam), áp dụng trạng thái, gói và người dùng đang lọc.</p>
+        </div>
+    </form>
+
+    @if (Model.OrdersError is not null)
+    {
+        <div role="alert" class="@AdminUi.Danger"><span class="material-symbols-outlined text-red-600" aria-hidden="true">error</span>@Model.OrdersError</div>
+    }
+    @if (Model.Orders is { } result)
+    {
+        <div class="@AdminUi.Card overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="@AdminUi.Table" id="billing-admin-orders">
+                    <thead><tr class="@AdminUi.HeadRow">
+                        <th class="@AdminUi.Th">Mã đơn</th><th class="@AdminUi.Th">Người dùng</th><th class="@AdminUi.Th">Gói</th>
+                        <th class="@AdminUi.Th text-right">Số tiền</th><th class="@AdminUi.Th">Loại</th><th class="@AdminUi.Th">Trạng thái</th>
+                        <th class="@AdminUi.Th">Ngày tạo</th><th class="@AdminUi.Th">Thanh toán</th>
+                    </tr></thead>
+                    <tbody>
+                    @if (result.Items.Count == 0)
+                    {
+                        <tr><td colspan="8" class="@AdminUi.Empty" role="status">Chưa có đơn hàng phù hợp.</td></tr>
+                    }
+                    @foreach (var order in result.Items)
+                    {
+                        var (dot, tone) = AdminUi.StatusTone(order.Status);
+                        <tr class="@AdminUi.Row">
+                            <td class="@AdminUi.Td font-mono text-[13px] whitespace-nowrap">@order.OrderCode</td>
+                            <td class="@AdminUi.Td">
+                                <p class="font-semibold">@(order.UserEmail ?? "—")</p>
+                                <p class="max-w-[220px] truncate font-mono text-[11px] text-on-surface-variant" title="@order.UserId">@order.UserId</p>
+                            </td>
+                            <td class="@AdminUi.Td"><span class="inline-block whitespace-nowrap rounded-full px-3 py-[3px] text-[12px] font-semibold @AdminUi.PlanChip(order.PlanCode)">@order.PlanCode</span></td>
+                            <td class="@AdminUi.Td text-right font-semibold whitespace-nowrap">@OrderText.Money(order.Amount)</td>
+                            <td class="@AdminUi.TdMuted">@OrderText.Kind(order.Kind)</td>
+                            <td class="@AdminUi.Td" data-status="@order.Status">
+                                <span class="inline-flex items-center gap-xs whitespace-nowrap text-[13px] font-medium @tone"><span class="inline-block h-2 w-2 rounded-full @dot"></span>@OrderText.Status(order.Status)</span>
+                            </td>
+                            <td class="@AdminUi.TdMuted">@OrderText.Date(order.CreatedAt)</td>
+                            <td class="@AdminUi.TdMuted">@OrderText.Date(order.PaidAt)</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+            <nav class="flex flex-wrap items-center justify-between gap-md border-t border-outline-variant px-lg py-sm text-[14px] text-on-surface-variant" aria-label="Phân trang">
+                <span>Trang @result.PageIndex / @Math.Max(1, result.TotalPages) · @result.TotalCount đơn</span>
+                <span class="flex gap-sm">
+                    @if (result.PageIndex > 1) { <a asp-all-route-data="@Model.RouteFor(result.PageIndex - 1)" class="@AdminUi.SecondaryButton py-xs">Trang trước</a> }
+                    @if (result.PageIndex < result.TotalPages) { <a asp-all-route-data="@Model.RouteFor(result.PageIndex + 1)" class="@AdminUi.SecondaryButton py-xs">Trang sau</a> }
+                </span>
+            </nav>
+        </div>
+    }
+
+    <section class="@AdminUi.Card" aria-labelledby="grant-title">
+        <div class="@AdminUi.CardBody grid gap-lg lg:grid-cols-[1fr_2fr]">
+            <div>
+                <h3 id="grant-title" class="@AdminUi.CardTitle flex items-center gap-sm"><span class="material-symbols-outlined text-primary" aria-hidden="true">card_giftcard</span>Cấp gói Pro thủ công</h3>
+                <p class="@AdminUi.CardHint">Chỉ cấp cho tài khoản Learner đang hoạt động. Cấp gói không tạo đơn hàng và không tính vào doanh thu. Người dùng còn hạn sẽ được cộng dồn số ngày.</p>
+            </div>
+            <div class="flex flex-col gap-md">
+                @if (Model.Error is not null)
+                {
+                    <div role="alert" class="@AdminUi.Danger"><span class="material-symbols-outlined text-red-600" aria-hidden="true">error</span>@Model.Error</div>
+                }
+                @if (Model.PlansUnavailable)
+                {
+                    <div role="alert" class="@AdminUi.Danger"><span class="material-symbols-outlined text-red-600" aria-hidden="true">error</span>Chưa thể tải danh sách gói nên chưa thể cấp gói.</div>
+                }
+                else if (Model.PaidPlans.Count == 0)
+                {
+                    <p role="status" class="rounded-lg bg-surface-container-low p-md text-[14px]">Chưa có gói trả phí đang bán.</p>
+                }
+                else
+                {
+                    <form method="post" id="billing-grant" class="grid gap-md sm:grid-cols-2">
+                        <input type="hidden" asp-for="Input.RequestId" />
+                        <div class="sm:col-span-2"><label asp-for="Input.UserId" class="@AdminUi.Label"></label>
+                            <input asp-for="Input.UserId" data-user-picker="@Url.Page("/Admin/Billing/Orders", "Users")" class="@AdminUi.Input" />
+                            <span asp-validation-for="Input.UserId" class="@AdminUi.FieldError"></span></div>
+                        <div><label asp-for="Input.PlanId" class="@AdminUi.Label"></label>
+                            <select asp-for="Input.PlanId" class="@AdminUi.Input">
+                                <option value="">-- Chọn gói --</option>
+                                @foreach (var plan in Model.PaidPlans) { <option value="@plan.Id">@plan.Name (@plan.DurationDays ngày)</option> }
+                            </select><span asp-validation-for="Input.PlanId" class="@AdminUi.FieldError"></span></div>
+                        <div><label asp-for="Input.DurationDays" class="@AdminUi.Label"></label>
+                            <input asp-for="Input.DurationDays" type="number" inputmode="numeric" aria-describedby="duration-help" class="@AdminUi.Input" />
+                            <span asp-validation-for="Input.DurationDays" class="@AdminUi.FieldError"></span>
+                            <p id="duration-help" class="@AdminUi.Help">Để trống để dùng thời hạn mặc định của gói.</p></div>
+                        <div class="sm:col-span-2"><label asp-for="Input.Note" class="@AdminUi.Label"></label>
+                            <textarea asp-for="Input.Note" rows="3" class="@AdminUi.Input"></textarea><span asp-validation-for="Input.Note" class="@AdminUi.FieldError"></span></div>
+                        <div class="sm:col-span-2"><button type="submit" class="@AdminUi.PrimaryButton"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">workspace_premium</span>Cấp gói</button></div>
+                    </form>
+                }
+            </div>
+        </div>
+    </section>
+</div>
+@section Scripts {
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/billing-validation.js" asp-append-version="true"></script>
+    <script src="~/js/admin-user-picker.js" asp-append-version="true"></script>
+}

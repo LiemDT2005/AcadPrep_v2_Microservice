@@ -4,7 +4,8 @@ using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Notifications.Application.Services;
+using Notifications.API.Services;
+using Notifications.API.Repositories;
 using Xunit;
 using static Notifications.API.Tests.NotificationReadApiFactory;
 
@@ -251,7 +252,7 @@ public class NotificationReadApiTests(NotificationReadApiFactory factory) : ICla
         using var page = await GetJson(client, "/api/notifications");
         using var count = await GetJson(client, "/api/notifications/unread-count");
         Assert.Equal(before, await db.UserNotificationStates.CountAsync());
-        await new NotificationQueryService(db).GetAsync(LearnerId, new[] { "Learner" }, 1, 100, false);
+        await new NotificationQueryService(new NotificationRepository(db)).GetAsync(LearnerId, new[] { "Learner" }, 1, 100, false);
         Assert.Empty(db.ChangeTracker.Entries());
     }
 

@@ -111,6 +111,7 @@
             </div>
 
             <div class="admin-topbar-right">
+                @await Component.InvokeAsync("NotificationBadge")
                 <div class="admin-pulse-status">
                     <span class="admin-pulse-dot"></span>
                     <span>Real-time Active</span>

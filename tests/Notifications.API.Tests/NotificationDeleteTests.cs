@@ -3,7 +3,7 @@ using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using Notifications.Domain.Entities;
+using Notifications.API.Entities;
 using Xunit;
 using static Notifications.API.Tests.NotificationMarkReadApiFactory;
 using static Notifications.API.Tests.NotificationMarkReadApiTests;

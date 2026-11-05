@@ -1,0 +1,77 @@
+@page
+@model Storefront.Web.Pages.Billing.Orders.IndexModel
+@using Storefront.Web.Pages
+@using Storefront.Web.Pages.Billing.Orders
+@{ ViewData["Title"] = "Đơn hàng của tôi"; }
+<div class="@LearnerUi.Page">
+    <header class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div class="flex flex-col gap-2">
+            <p class="@LearnerUi.Eyebrow">Thanh toán</p>
+            <h1 class="@LearnerUi.Title">Đơn hàng của tôi</h1>
+            <p class="@LearnerUi.Lead">Lịch sử mua và gia hạn gói qua VNPay.</p>
+        </div>
+        <form method="get" class="flex flex-wrap items-end gap-3">
+            <div class="w-48">
+                <label for="order-status" class="@LearnerUi.Label">Trạng thái</label>
+                <select id="order-status" name="Status" class="@LearnerUi.Input">
+                    <option value="">Tất cả</option>
+                    @foreach (var status in new[] { "Pending", "Paid", "Failed", "Expired" })
+                    {
+                        <option value="@status" selected="@(Model.Status == status)">@OrderText.Status(status)</option>
+                    }
+                </select>
+            </div>
+            <button type="submit" class="@LearnerUi.PrimaryButton h-11"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">filter_list</span>Lọc</button>
+        </form>
+    </header>
+    @if (Model.Error is not null)
+    {
+        <div role="alert" class="@LearnerUi.Danger"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">error</span>@Model.Error</div>
+    }
+    else if (Model.Orders is { } result)
+    {
+        <div class="@LearnerUi.CardFlat overflow-hidden">
+            @if (result.Items.Count == 0)
+            {
+                <div role="status" class="flex flex-col items-center gap-3 px-6 py-12 text-center">
+                    <span class="material-symbols-outlined text-[40px] text-outline" aria-hidden="true">receipt_long</span>
+                    <p class="font-semibold text-on-surface">Chưa có đơn hàng.</p>
+                    <a asp-page="/Billing/Plans" class="@LearnerUi.PrimaryButton">Xem bảng giá</a>
+                </div>
+            }
+            else
+            {
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse" id="billing-orders">
+                        <thead class="@LearnerUi.TableHead"><tr>
+                            <th class="@LearnerUi.Th">Mã đơn</th><th class="@LearnerUi.Th">Gói</th><th class="@LearnerUi.Th text-right">Số tiền</th>
+                            <th class="@LearnerUi.Th">Loại</th><th class="@LearnerUi.Th">Trạng thái</th><th class="@LearnerUi.Th">Ngày tạo</th><th class="@LearnerUi.Th">Thanh toán</th>
+                        </tr></thead>
+                        <tbody>
+                        @foreach (var order in result.Items)
+                        {
+                            var (dot, tone, _) = LearnerUi.OrderTone(order.Status);
+                            <tr class="@LearnerUi.Row">
+                                <td class="@LearnerUi.Td"><a asp-page="/Billing/Orders/Details" asp-route-orderCode="@order.OrderCode" class="font-mono font-semibold text-primary hover:underline">@order.OrderCode</a></td>
+                                <td class="@LearnerUi.Td font-semibold">@order.PlanName</td>
+                                <td class="@LearnerUi.Td whitespace-nowrap text-right font-semibold">@OrderText.Money(order.Amount)</td>
+                                <td class="@LearnerUi.TdMuted">@OrderText.Kind(order.Kind)</td>
+                                <td class="@LearnerUi.Td" data-status="@order.Status"><span class="inline-flex items-center gap-1.5 whitespace-nowrap font-medium @tone"><span class="h-2 w-2 rounded-full @dot"></span>@OrderText.Status(order.Status)</span></td>
+                                <td class="@LearnerUi.TdMuted">@OrderText.Date(order.CreatedAt)</td>
+                                <td class="@LearnerUi.TdMuted">@OrderText.Date(order.PaidAt)</td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            <nav class="flex flex-wrap items-center justify-between gap-3 border-t border-outline-variant px-6 py-3 text-sm text-on-surface-variant" aria-label="Phân trang">
+                <span>Trang @result.PageIndex / @Math.Max(1, result.TotalPages) · @result.TotalCount đơn</span>
+                <span class="flex gap-2">
+                    @if (result.PageIndex > 1) { <a asp-route-pageIndex="@(result.PageIndex - 1)" asp-route-status="@Model.Status" class="@LearnerUi.SecondaryButton py-1.5">Trang trước</a> }
+                    @if (result.PageIndex < result.TotalPages) { <a asp-route-pageIndex="@(result.PageIndex + 1)" asp-route-status="@Model.Status" class="@LearnerUi.SecondaryButton py-1.5">Trang sau</a> }
+                </span>
+            </nav>
+        </div>
+    }
+</div>

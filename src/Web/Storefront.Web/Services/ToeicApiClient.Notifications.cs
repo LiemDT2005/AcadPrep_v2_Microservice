@@ -17,6 +17,9 @@ public partial class ToeicApiClient
     public Task<NotificationApiResult<object>> ReadNotificationAsync(Guid id, CancellationToken ct) =>
         SendNotificationAsync<object>(HttpMethod.Patch, $"/notification/api/notifications/{id}/read", null, ct);
 
+    public Task<NotificationApiResult<object>> ReadAllNotificationsAsync(CancellationToken ct) =>
+        SendNotificationAsync<object>(HttpMethod.Patch, "/notification/api/notifications/read-all", null, ct);
+
     public Task<NotificationApiResult<object>> DeleteNotificationAsync(Guid id, CancellationToken ct) =>
         SendNotificationAsync<object>(HttpMethod.Delete, $"/notification/api/notifications/{id}", null, ct);
 

@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Migrations.Operations;
-using Notifications.Domain.Entities;
-using Notifications.Domain.Enums;
-using Notifications.Infrastructure.Persistence;
+using Notifications.API.Entities;
+using Notifications.API.Enums;
+using Notifications.API.Data;
 using Xunit;
 
 namespace Notifications.API.Tests;
@@ -18,7 +18,8 @@ public class NotificationSchemaTests
     public void Model_ContainsOnlyNotificationAndPerUserState()
     {
         using var db = CreateContext();
-        Assert.Equal(new[] { typeof(Notification), typeof(UserNotificationState) },
+        // EmailDelivery (UC-23.3) keeps email state apart from the notification and per-user state.
+        Assert.Equal(new[] { typeof(EmailDelivery), typeof(Notification), typeof(UserNotificationState) },
             db.Model.GetEntityTypes().Select(entity => entity.ClrType).OrderBy(type => type.Name));
         Assert.Equal("Notifications", NotificationModel(db).GetTableName());
         Assert.Equal("UserNotificationStates", StateModel(db).GetTableName());
@@ -245,6 +246,7 @@ public class NotificationSchemaTests
     private static Migration GetInitialMigration(NotificationsDbContext db)
     {
         var assembly = db.GetService<IMigrationsAssembly>();
-        return assembly.CreateMigration(Assert.Single(assembly.Migrations).Value, db.Database.ProviderName!);
+        // The initial migration is unchanged; later migrations only add tables (checked separately).
+        return assembly.CreateMigration(assembly.Migrations["20261018161833_InitialNotifications"], db.Database.ProviderName!);
     }
 }

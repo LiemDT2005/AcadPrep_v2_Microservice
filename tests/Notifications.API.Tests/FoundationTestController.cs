@@ -2,7 +2,9 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Notifications.Application.Interfaces;
+using Notifications.API.Data;
+using Notifications.API.Repositories.Interfaces;
+using Notifications.API.Services.Interfaces;
 
 namespace Notifications.API.Tests;
 

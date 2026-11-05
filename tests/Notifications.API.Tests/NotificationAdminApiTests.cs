@@ -1,3 +1,4 @@
+using Notifications.API.Repositories;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -7,9 +8,12 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Notifications.Application.Interfaces;
-using Notifications.Domain.Entities;
-using Notifications.Domain.Enums;
+using Notifications.API.Data;
+using Notifications.API.Repositories.Interfaces;
+using Notifications.API.Services.Interfaces;
+using Notifications.API.Entities;
+using Notifications.API.Enums;
+using Notifications.API.DTOs;
 using Xunit;
 using static Notifications.API.Tests.NotificationMarkReadApiFactory;
 using static Notifications.API.Tests.NotificationMarkReadApiTests;
@@ -179,8 +183,8 @@ public class NotificationAdminApiTests
         using var factory = new NotificationMarkReadApiFactory();
         using var overridden = factory.WithWebHostBuilder(builder => builder.ConfigureServices(services =>
         {
-            services.RemoveAll<INotificationWriter>();
-            services.AddScoped<INotificationWriter, FailingWriter>();
+            services.RemoveAll<INotificationRepository>();
+            services.AddScoped<INotificationRepository, FailingWriter>();
         }));
         using var client = overridden.CreateClient();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer",
@@ -218,9 +222,24 @@ public class NotificationAdminApiTests
         return (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("unreadCount").GetInt32();
     }
 
-    private sealed class FailingWriter : INotificationWriter
+    // Only the admin create path is exercised; every write fails with a database error.
+    private sealed class FailingWriter : INotificationRepository
     {
         public Task AddAsync(Notification notification, CancellationToken ct = default) =>
             throw new DbUpdateException("private-diagnostic");
+        public Task<bool> TryAddAsync(Notification notification, CancellationToken ct) =>
+            throw new DbUpdateException("private-diagnostic");
+        public Task<bool> IsInAudienceAsync(Guid notificationId, Guid userId, IReadOnlyCollection<string> roles,
+            CancellationToken ct) => throw new NotSupportedException();
+        public Task<bool> IsVisibleAsync(Guid notificationId, Guid userId, IReadOnlyCollection<string> roles,
+            CancellationToken ct) => throw new NotSupportedException();
+        public Task<(IReadOnlyList<NotificationListItemDto> Items, int TotalCount)> GetVisiblePageAsync(Guid userId,
+            IReadOnlyCollection<string> roles, bool unreadOnly, long offset, int pageSize, CancellationToken ct) =>
+            throw new NotSupportedException();
+        public Task<IReadOnlyList<Guid>> GetUnreadIdsAsync(Guid userId, IReadOnlyCollection<string> roles, CancellationToken ct) => throw new NotSupportedException();
+
+        public Task<int> CountUnreadAsync(Guid userId, IReadOnlyCollection<string> roles, CancellationToken ct) =>
+            throw new NotSupportedException();
+        public Task<Guid?> FindIdBySourceEventAsync(Guid eventId, CancellationToken ct) => throw new NotSupportedException();
     }
 }

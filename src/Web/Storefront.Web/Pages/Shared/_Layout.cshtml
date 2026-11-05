@@ -1,4 +1,5 @@
 @inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@inject Storefront.Web.Services.BillingApiClient BillingApi
 @{
     var name = Context.Session.GetString("name");
     var avatar = Context.Session.GetString("avatar");
@@ -6,8 +7,31 @@
     var roles = Context.Session.GetString("roles") ?? string.Empty;
     var isAdmin = roles.Split(',').Contains("Admin");
     var isModerator = roles.Split(',').Contains("Moderator");
+    var isLearner = !string.IsNullOrEmpty(jwtToken) && roles.Split(',', StringSplitOptions.TrimEntries).Contains("Learner");
     var staffDashboard = isAdmin ? "/Admin/Dashboard" : "/Admin/Exams";
     var isAuthenticated = !string.IsNullOrEmpty(name);
+    var showProBadge = false;
+    if (isLearner && !isAdmin && !isModerator)
+    {
+        if (ViewData.Model is Storefront.Web.Pages.Billing.PlansModel plans)
+        {
+            showProBadge = plans.Current is { Status: "Active", IsPro: true };
+        }
+        else
+        {
+            using var badgeTimeout = CancellationTokenSource.CreateLinkedTokenSource(Context.RequestAborted);
+            badgeTimeout.CancelAfter(TimeSpan.FromSeconds(2));
+            try
+            {
+                var result = await BillingApi.GetMySubscriptionAsync(badgeTimeout.Token);
+                showProBadge = result.Success && result.Data is { Status: "Active", IsPro: true };
+            }
+            catch (OperationCanceledException) when (!Context.RequestAborted.IsCancellationRequested)
+            {
+                // The header still renders when Billing does not answer in time.
+            }
+        }
+    }
 
     var fallbackAvatar = $"https://api.dicebear.com/9.x/initials/svg?seed={Uri.EscapeDataString(string.IsNullOrWhiteSpace(name) ? "AcadPrep" : name)}";
     var userAvatar = string.IsNullOrWhiteSpace(avatar) ? fallbackAvatar : avatar;
@@ -104,16 +128,16 @@
     }
 
     <!-- Sticky Header -->
-    <header class="sticky top-0 z-50 bg-surface-container-lowest border-b border-outline-variant/30 w-full h-[64px] shadow-sm">
-        <div class="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop max-w-7xl mx-auto h-full">
+    <header class="sticky top-0 z-50 bg-surface-container-lowest border-b border-outline-variant/30 w-full shadow-sm">
+        <div class="storefront-header-row @(isAdmin || isModerator ? "storefront-header-row-staff" : "")">
             <!-- Brand Logo -->
-            <a class="flex items-center gap-sm group" asp-page="/Index" style="text-decoration:none;">
+            <a class="flex shrink-0 items-center gap-sm group" asp-page="/Index" style="text-decoration:none;">
                 <span class="material-symbols-outlined text-primary text-[28px]" style="font-variation-settings: 'FILL' 1;">school</span>
                 <span class="text-[20px] font-bold text-primary-container leading-[28px]">AcadPrep</span>
             </a>
 
             <!-- Navigation Links -->
-            <nav class="hidden lg:flex items-center h-full gap-md">
+            <nav class="storefront-header-nav" aria-label="Điều hướng chính">
                 <a class="h-full flex items-center px-sm text-[14px] @NavClass("/Index") transition-colors" asp-page="/Index" style="text-decoration:none;">Trang chủ</a>
                 <a class="h-full flex items-center px-sm text-[14px] @NavClass("/Courses/Index") transition-colors" asp-page="/Courses/Index" style="text-decoration:none;">Khóa học</a>
                 <a class="h-full flex items-center px-sm text-[14px] @NavClass("/Exams/Index") transition-colors" asp-page="/Exams/Index" style="text-decoration:none;">Luyện đề</a>
@@ -138,7 +162,21 @@
             </nav>
 
             <!-- Trailing Actions -->
-            <div class="flex items-center gap-md">
+            <div class="storefront-header-actions flex shrink-0 items-center gap-2 xl:gap-md whitespace-nowrap">
+                @if (isLearner)
+                {
+                    <details class="relative text-sm">
+                        <summary class="cursor-pointer whitespace-nowrap font-semibold text-primary">Upgrade</summary>
+                        <nav aria-label="Upgrade" class="absolute right-0 top-full z-50 mt-2 w-44 rounded-lg border border-outline-variant bg-surface-container-lowest p-2 shadow-lg">
+                            <a asp-page="/Billing/Plans" class="block rounded px-3 py-2 hover:bg-surface-container-low">Bảng giá</a>
+                            <a asp-page="/Billing/Orders/Index" class="block rounded px-3 py-2 hover:bg-surface-container-low">Đơn hàng của tôi</a>
+                        </nav>
+                    </details>
+                }
+                else if (!hasUser)
+                {
+                    <a asp-page="/Billing/Plans" class="text-sm font-semibold text-primary hover:underline">Upgrade</a>
+                }
                 @if (hasUser && (isAdmin || isModerator))
                 {
                     <a href="@staffDashboard" class="text-sm font-semibold text-primary hover:underline">Dashboard</a>
@@ -147,8 +185,14 @@
                 @if (hasUser)
                 {
                     <a asp-page="/Account/Profile" class="flex items-center gap-2 hover:opacity-80 transition" style="text-decoration:none;" title="Tài khoản">
-                        <img src="@userAvatar" alt="@userName" class="w-8 h-8 rounded-full object-cover border border-primary/20 shadow-sm" />
-                        <span class="text-sm font-semibold text-on-surface hidden sm:inline">@userName</span>
+                        <span class="flex flex-col items-center gap-0.5">
+                            <img src="@userAvatar" alt="@userName" class="w-8 h-8 rounded-full object-cover border border-primary/20 shadow-sm" />
+                            @if (showProBadge)
+                            {
+                                <span class="storefront-pro-badge">PRO</span>
+                            }
+                        </span>
+                        <span class="hidden max-w-28 truncate text-sm font-semibold text-on-surface xl:block">@userName</span>
                     </a>
                     <form method="post" asp-page="/Account/Logout" class="inline m-0">
                         @Html.AntiForgeryToken()
@@ -204,6 +248,13 @@
     }
 
     @await RenderSectionAsync("Scripts", required: false)
+
+    @* AcadPrep AI Tutor widget (UC-22.1), Learner sessions only — approved shared layout change (Huy, 2026-11-05). *@
+    @if (isLearner)
+    {
+        @await Component.InvokeAsync("AiChatWidget")
+        <script src="~/js/ai-chat-widget.js" asp-append-version="true"></script>
+    }
 
     <partial name="_AccountSession" />
 

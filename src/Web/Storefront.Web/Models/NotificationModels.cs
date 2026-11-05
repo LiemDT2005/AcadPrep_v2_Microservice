@@ -31,6 +31,6 @@ public class NotificationInput
         ErrorMessage = "Đối tượng nhận không hợp lệ.")]
     public string Audience { get; set; } = "All";
 
-    [Display(Name = "ID người nhận"), NotificationAudience]
+    [Display(Name = "Người nhận"), NotificationAudience]
     public string? TargetUserId { get; set; }
 }

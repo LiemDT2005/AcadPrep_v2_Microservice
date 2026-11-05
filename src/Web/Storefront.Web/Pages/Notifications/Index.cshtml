@@ -1,46 +1,104 @@
 @page
 @model Storefront.Web.Pages.Notifications.IndexModel
-@{ ViewData["Title"] = "Thông báo"; }
-<section class="max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop py-xl">
-    <div class="flex flex-wrap justify-between items-center gap-md mb-lg">
-        <div><h1 class="text-headline-lg font-bold">Thông báo</h1><p class="text-on-surface-variant">Cập nhật dành cho bạn</p></div>
-        @if (Model.CanSendNotifications) { <a asp-page="/Admin/Notifications/Create" class="text-primary font-semibold">Gửi thông báo (Admin)</a> }
-    </div>
-    @if (Model.Notice is not null) { <p role="status" class="rounded-lg bg-surface-container-low p-md mb-md">@Model.Notice</p> }
-    <form method="get" class="flex flex-wrap gap-md items-end mb-lg">
-        <div><label asp-for="UnreadOnly" class="block font-semibold">Bộ lọc</label>
-            <select asp-for="UnreadOnly" class="rounded-lg border-outline-variant"><option value="false">Tất cả</option><option value="true">Chưa đọc</option></select></div>
-        <div><label asp-for="PageSize" class="block font-semibold">Số thông báo mỗi trang</label><input asp-for="PageSize" type="number" min="1" max="100" class="rounded-lg border-outline-variant w-24" /></div>
-        <button class="rounded-lg bg-primary text-white px-md py-sm" type="submit">Áp dụng / Làm mới</button>
+@using Storefront.Web.Pages
+@{
+    ViewData["Title"] = "Thông báo";
+    Layout = Model.CanSendNotifications ? "_IdentityAdminLayout" : Model.IsModerator ? "_ModeratorLayout" : "_Layout";
+    // Dashboard layouts already add padding around the page content.
+    var container = Model.CanSendNotifications || Model.IsModerator ? "max-w-[1280px] mx-auto w-full flex flex-col gap-6" : LearnerUi.Page;
+}
+<p id="notification-action-status" role="status" aria-live="polite" class="mx-auto w-full max-w-7xl px-margin-mobile text-sm text-primary empty:hidden md:px-margin-desktop"></p>
+<section id="notification-panel" class="@container">
+    <header class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div class="flex flex-col gap-2">
+            <p class="@LearnerUi.Eyebrow">Notifications</p>
+            <h1 class="@LearnerUi.Title">Thông báo</h1>
+            <p class="@LearnerUi.Lead">Cập nhật dành cho bạn</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-3">
+            @if (Model.CanSendNotifications)
+            {
+                <a asp-page="/Admin/Notifications/Create" class="@LearnerUi.SecondaryButton"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">campaign</span>Gửi thông báo (Admin)</a>
+            }
+            <form method="post" asp-page-handler="ReadAll" asp-route-pageIndex="@Model.PageIndex" asp-route-pageSize="@Model.PageSize" asp-route-unreadOnly="@Model.UnreadOnly">
+                <button type="submit" class="@LearnerUi.PrimaryButton"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">done_all</span>Đánh dấu đã đọc tất cả</button>
+            </form>
+        </div>
+    </header>
+
+    @if (Model.Notice is not null)
+    {
+        <div role="status" class="@LearnerUi.Success"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">check_circle</span>@Model.Notice</div>
+    }
+
+    <form method="get" class="@LearnerUi.Card flex flex-wrap items-start gap-4 py-4">
+        <div class="w-44">
+            <label asp-for="UnreadOnly" class="@LearnerUi.Label">Bộ lọc</label>
+            <select asp-for="UnreadOnly" class="@LearnerUi.Input"><option value="false">Tất cả</option><option value="true">Chưa đọc</option></select>
+        </div>
+        <div class="w-48">
+            <label asp-for="PageSize" class="@LearnerUi.Label">Số thông báo mỗi trang</label>
+            <input asp-for="PageSize" type="number" inputmode="numeric" class="@LearnerUi.Input" />
+            <span asp-validation-for="PageSize" class="@LearnerUi.FieldError"></span>
+        </div>
+        <button class="@LearnerUi.SecondaryButton mt-[26px] h-11" type="submit"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">refresh</span>Áp dụng / Làm mới</button>
     </form>
+
     @if (Model.Error is not null)
     {
-        <p role="alert" class="rounded-xl bg-error-container text-on-error-container p-lg">@Model.Error</p>
+        <div role="alert" class="@LearnerUi.Danger"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">error</span>@Model.Error</div>
     }
     else if (Model.Notifications is { } resultPage)
     {
-        @if (resultPage.Items.Count == 0) { <p class="rounded-xl bg-surface-container-lowest p-lg border border-outline-variant/30">Chưa có thông báo trong trang này.</p> }
-        <div class="flex flex-col gap-md">
-        @foreach (var item in resultPage.Items)
-        {
-            <article class="rounded-xl bg-surface-container-lowest border border-outline-variant/30 p-lg shadow-sm">
-                <div class="flex flex-wrap justify-between gap-sm"><h2 class="text-headline-sm font-semibold break-words">@item.Title</h2><span class="text-body-sm text-primary">@(item.IsRead ? "Đã đọc" : "Chưa đọc")</span></div>
-                <p class="text-body-sm text-on-surface-variant my-sm">@item.Type · <time datetime="@item.CreatedAt.ToString("O")">@item.CreatedAt.ToOffset(TimeSpan.FromHours(7)).ToString("dd/MM/yyyy HH:mm") (UTC+7)</time></p>
-                <p class="whitespace-pre-wrap break-words">@item.Content</p>
-                <div class="flex flex-wrap gap-md mt-md">
-                    @if (!item.IsRead)
-                    {
-                        <form method="post" asp-page-handler="Read"><input type="hidden" name="id" value="@item.Id" /><input type="hidden" asp-for="PageIndex" /><input type="hidden" asp-for="PageSize" /><input type="hidden" asp-for="UnreadOnly" /><button type="submit" class="rounded-lg bg-primary text-white px-md py-sm">Đánh dấu đã đọc</button></form>
-                    }
-                    <form method="post" asp-page-handler="Delete" onsubmit="return confirm('Xóa thông báo khỏi danh sách cá nhân?');"><input type="hidden" name="id" value="@item.Id" /><input type="hidden" asp-for="PageIndex" /><input type="hidden" asp-for="PageSize" /><input type="hidden" asp-for="UnreadOnly" /><button type="submit" class="rounded-lg border border-outline-variant text-error px-md py-sm">Xóa</button></form>
+        <div class="@LearnerUi.CardFlat overflow-hidden">
+            @if (resultPage.Items.Count == 0)
+            {
+                <div class="flex flex-col items-center gap-3 px-6 py-12 text-center">
+                    <span class="material-symbols-outlined text-[40px] text-outline" aria-hidden="true">notifications_off</span>
+                    <p class="font-semibold text-on-surface">Chưa có thông báo trong trang này.</p>
                 </div>
-            </article>
-        }
+            }
+            <ul class="divide-y divide-outline-variant">
+            @foreach (var item in resultPage.Items)
+            {
+                var icon = item.Type switch { "Subscription" => "workspace_premium", "Reminder" => "alarm", _ => "campaign" };
+                <li>
+                    <article class="flex gap-4 px-6 py-5 @(item.IsRead ? "" : "bg-primary/5")">
+                        <span class="material-symbols-outlined h-10 w-10 shrink-0 rounded-full p-2 text-[24px] @(item.IsRead ? "bg-surface-container text-on-surface-variant" : "bg-primary/10 text-primary")" aria-hidden="true">@icon</span>
+                        <div class="min-w-0 flex-1">
+                            <div class="flex flex-wrap items-start justify-between gap-2">
+                                <h2 class="break-words text-base @(item.IsRead ? "font-semibold" : "font-bold") text-on-surface">@item.Title</h2>
+                                <span class="inline-flex items-center gap-1.5 whitespace-nowrap text-xs font-semibold @(item.IsRead ? "text-on-surface-variant" : "text-primary")">
+                                    <span class="h-2 w-2 rounded-full @(item.IsRead ? "bg-outline-variant" : "bg-primary")"></span>@(item.IsRead ? "Đã đọc" : "Chưa đọc")
+                                </span>
+                            </div>
+                            <p class="mt-0.5 text-xs text-on-surface-variant">@item.Type · <time datetime="@item.CreatedAt.ToString("O")">@item.CreatedAt.ToOffset(TimeSpan.FromHours(7)).ToString("dd/MM/yyyy HH:mm") (UTC+7)</time></p>
+                            <p class="mt-2 whitespace-pre-wrap break-words text-sm text-on-surface">@item.Content</p>
+                            <div class="mt-3 flex flex-wrap gap-2">
+                                @if (!item.IsRead)
+                                {
+                                    <form method="post" asp-page-handler="Read"><input type="hidden" name="id" value="@item.Id" /><input type="hidden" asp-for="PageIndex" /><input type="hidden" asp-for="PageSize" /><input type="hidden" asp-for="UnreadOnly" /><button type="submit" class="@LearnerUi.SecondaryButton px-4 py-2"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">mark_email_read</span>Đánh dấu đã đọc</button></form>
+                                }
+                                <form method="post" asp-page-handler="Delete" data-confirm="Xóa thông báo này khỏi danh sách của bạn?" data-confirm-text="Xóa"><input type="hidden" name="id" value="@item.Id" /><input type="hidden" asp-for="PageIndex" /><input type="hidden" asp-for="PageSize" /><input type="hidden" asp-for="UnreadOnly" /><button type="submit" class="@LearnerUi.DangerButton"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">delete</span>Xóa</button></form>
+                            </div>
+                        </div>
+                    </article>
+                </li>
+            }
+            </ul>
+            <nav aria-label="Phân trang thông báo" class="flex flex-wrap items-center justify-between gap-3 border-t border-outline-variant px-6 py-3 text-sm text-on-surface-variant">
+                <span>Trang @resultPage.PageIndex / @Math.Max(1, resultPage.TotalPages) · @resultPage.TotalCount thông báo</span>
+                <span class="flex gap-2">
+                    @if (resultPage.PageIndex > 1) { <a asp-route-pageIndex="@(resultPage.PageIndex - 1)" asp-route-pageSize="@resultPage.PageSize" asp-route-unreadOnly="@Model.UnreadOnly" class="@LearnerUi.SecondaryButton py-1.5">Trang trước</a> }
+                    @if (resultPage.PageIndex < resultPage.TotalPages) { <a asp-route-pageIndex="@(resultPage.PageIndex + 1)" asp-route-pageSize="@resultPage.PageSize" asp-route-unreadOnly="@Model.UnreadOnly" class="@LearnerUi.SecondaryButton py-1.5">Trang sau</a> }
+                </span>
+            </nav>
         </div>
-        <nav aria-label="Phân trang thông báo" class="flex flex-wrap gap-md items-center mt-lg">
-            @if (resultPage.PageIndex > 1) { <a asp-route-pageIndex="@(resultPage.PageIndex - 1)" asp-route-pageSize="@resultPage.PageSize" asp-route-unreadOnly="@Model.UnreadOnly" class="text-primary">Trang trước</a> }
-            <span>Trang @resultPage.PageIndex / @Math.Max(1, resultPage.TotalPages) · @resultPage.TotalCount thông báo</span>
-            @if (resultPage.PageIndex < resultPage.TotalPages) { <a asp-route-pageIndex="@(resultPage.PageIndex + 1)" asp-route-pageSize="@resultPage.PageSize" asp-route-unreadOnly="@Model.UnreadOnly" class="text-primary">Trang sau</a> }
-        </nav>
     }
 </section>
+@section Scripts {
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/acadprep-confirm.js" asp-append-version="true"></script>
+    <script src="~/js/notification-actions.js" asp-append-version="true"></script>
+}

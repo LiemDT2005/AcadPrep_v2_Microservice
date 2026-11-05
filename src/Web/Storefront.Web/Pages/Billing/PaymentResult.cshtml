@@ -1,0 +1,54 @@
+@page
+@model Storefront.Web.Pages.Billing.PaymentResultModel
+@using Storefront.Web.Pages
+@using Storefront.Web.Pages.Billing.Orders
+@{ ViewData["Title"] = "Kết quả thanh toán"; }
+<div class="@LearnerUi.NarrowPage">
+    <header class="flex flex-col gap-2">
+        <p class="@LearnerUi.Eyebrow">Thanh toán</p>
+        <h1 class="@LearnerUi.Title">Kết quả thanh toán</h1>
+    </header>
+    @if (Model.Warning is not null)
+    {
+        <div role="alert" class="@LearnerUi.Danger"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">warning</span>@Model.Warning</div>
+    }
+    @if (Model.Error is not null)
+    {
+        <div role="alert" class="@LearnerUi.Danger"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">error</span>@Model.Error</div>
+    }
+    @if (Model.Order is { } order)
+    {
+        var message = order.Status switch
+        {
+            "Paid" => "Thanh toán thành công. Gói của bạn đã được kích hoạt.",
+            "Failed" => "Thanh toán không thành công. Bạn có thể thử lại.",
+            "Expired" => "Đơn hàng đã hết hạn thanh toán.",
+            _ => "Đang chờ xác nhận thanh toán từ VNPay."
+        };
+        var (iconTone, icon) = order.Status switch
+        {
+            "Paid" => ("bg-emerald-50 text-emerald-600", "check_circle"),
+            "Failed" => ("bg-red-50 text-red-600", "cancel"),
+            "Expired" => ("bg-surface-container text-on-surface-variant", "hourglass_disabled"),
+            _ => ("bg-amber-50 text-amber-600", "schedule")
+        };
+        <article class="@LearnerUi.CardFlat overflow-hidden" id="billing-payment-result" data-status="@order.Status">
+            <div class="flex flex-col items-center gap-3 px-6 py-8 text-center">
+                <span class="material-symbols-outlined rounded-full p-3 text-[40px] @iconTone" aria-hidden="true">@icon</span>
+                <p class="text-xl font-bold text-on-surface">@message</p>
+            </div>
+            <dl class="grid gap-x-6 gap-y-4 border-t border-outline-variant px-6 py-5 text-sm sm:grid-cols-2">
+                <div><dt class="text-on-surface-variant">Mã đơn</dt><dd><strong class="font-mono">@order.OrderCode</strong></dd></div>
+                <div><dt class="text-on-surface-variant">Gói</dt><dd class="font-semibold">@order.PlanName · @OrderText.Money(order.Amount)</dd></div>
+                <div><dt class="text-on-surface-variant">Trạng thái</dt><dd class="font-semibold">@OrderText.Status(order.Status)</dd></div>
+                @if (order.PaidAt is not null) { <div><dt class="text-on-surface-variant">Thanh toán lúc</dt><dd class="font-semibold">@OrderText.Date(order.PaidAt)</dd></div> }
+            </dl>
+            <div class="flex flex-wrap gap-3 border-t border-outline-variant px-6 py-4">
+                @if (order.Status == "Pending") { <a asp-page="/Billing/PaymentResult" asp-route-orderCode="@order.OrderCode" class="@LearnerUi.PrimaryButton"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">refresh</span>Tải lại trạng thái</a> }
+                @if (order.Status is "Failed" or "Expired") { <a asp-page="/Billing/Checkout" class="@LearnerUi.PrimaryButton">Thanh toán lại</a> }
+                <a asp-page="/Billing/Plans" asp-fragment="my-plan" class="@(order.Status == "Paid" ? LearnerUi.PrimaryButton : LearnerUi.SecondaryButton)">Gói của tôi</a>
+                <a asp-page="/Billing/Orders/Details" asp-route-orderCode="@order.OrderCode" class="@LearnerUi.SecondaryButton">Chi tiết đơn</a>
+            </div>
+        </article>
+    }
+</div>

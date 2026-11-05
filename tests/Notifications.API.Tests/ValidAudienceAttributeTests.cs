@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
-using Notifications.Application.DTOs;
-using Notifications.Application.Validation;
+using Notifications.API.DTOs;
+using Notifications.API.Validation;
 using Xunit;
 
 namespace Notifications.API.Tests;

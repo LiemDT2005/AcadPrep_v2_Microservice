@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using Notifications.Application.Services;
-using Notifications.Infrastructure.Persistence;
+using Notifications.API.Services;
+using Notifications.API.Data;
+using Notifications.API.Repositories;
 using Xunit;
 
 namespace Notifications.API.Tests;

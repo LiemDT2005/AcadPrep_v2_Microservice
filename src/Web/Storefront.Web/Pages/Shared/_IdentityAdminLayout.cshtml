@@ -1,3 +1,14 @@
+@{
+    var isAdmin = (Context.Session.GetString("roles") ?? "").Split(',', StringSplitOptions.TrimEntries).Contains("Admin");
+    // Notification, Billing and AI admin pages (Huy): same item style and icon set as the entries above.
+    var serviceLinks = new (string Page, string Label, string Icon)[]
+    {
+        ("/Admin/Notifications/Create", "Notifications", "campaign"),
+        ("/Admin/Billing/Orders", "Orders & Grants", "receipt_long"),
+        ("/Admin/Billing/Revenue", "Revenue", "payments"),
+        ("/Admin/Ai/Usage", "AI Tokens", "smart_toy")
+    };
+}
 <!DOCTYPE html>
 <html class="light" lang="en">
    <head>
@@ -134,7 +145,7 @@
                Exam Stats
                </a>
             </li>
-            @if ((Context.Session.GetString("roles") ?? "").Split(',').Contains("Admin"))
+            @if (isAdmin)
             {
             <li>
                <a class="flex items-center gap-md px-md py-sm rounded-lg transition-colors duration-200 text-[14px] font-medium @GetActiveClasses("/Admin/Users")" href="/Admin/Users">
@@ -142,7 +153,16 @@
                Account Management
                </a>
             </li>
-
+            <li class="mt-md px-md pb-xs text-[11px] font-semibold uppercase tracking-[0.12em] text-surface-variant/70" role="presentation">Services</li>
+            @foreach (var link in serviceLinks)
+            {
+                <li>
+                    <a asp-page="@link.Page" class="flex items-center gap-md px-md py-sm rounded-lg transition-colors duration-200 text-[14px] font-medium @GetActiveClasses(link.Page)">
+                    <span class="material-symbols-outlined text-[20px]">@link.Icon</span>
+                    @link.Label
+                    </a>
+                </li>
+            }
             }
          </ul>
       </nav>
@@ -155,12 +175,22 @@
                <h1 class="text-[20px] font-bold text-on-surface">@ViewData["Title"]</h1>
             </div>
             <div class="flex items-center gap-md">
+               @await Component.InvokeAsync("NotificationBadge")
                <span class="bg-secondary-container text-on-secondary px-sm py-xs rounded-full text-[12px] font-semibold">Admin Role</span>
 
                <a href="/Account/Profile" class="text-sm font-semibold text-primary">@(Context.Session.GetString("name") ?? "Profile")</a>
                <form method="post" asp-page="/Account/Logout"><button type="submit" class="text-sm text-error">Log out</button></form>
             </div>
          </header>
+         @if (isAdmin)
+         {
+             <nav aria-label="Quản trị dịch vụ" class="flex shrink-0 gap-4 overflow-x-auto border-b border-outline-variant px-4 py-2 text-sm md:hidden">
+                 @foreach (var link in serviceLinks)
+                 {
+                     <a asp-page="@link.Page" class="shrink-0 text-primary hover:underline">@link.Label</a>
+                 }
+             </nav>
+         }
          <!-- Scrollable Canvas -->
          <main class="min-w-0 flex-1 overflow-y-auto p-4 md:p-margin-desktop bg-surface">
             @RenderBody()

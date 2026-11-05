@@ -1,9 +1,11 @@
-# Build from the repository root; send only Notification and BuildingBlocks.Common source.
+# Build from the repository root; send only Notification and BuildingBlocks.Common/EventBus source.
 **
 !src/
 !src/BuildingBlocks/
 !src/BuildingBlocks/BuildingBlocks.Common/
 !src/BuildingBlocks/BuildingBlocks.Common/**
+!src/BuildingBlocks/BuildingBlocks.EventBus/
+!src/BuildingBlocks/BuildingBlocks.EventBus/**
 !src/Services/
 !src/Services/Notification/
 !src/Services/Notification/**

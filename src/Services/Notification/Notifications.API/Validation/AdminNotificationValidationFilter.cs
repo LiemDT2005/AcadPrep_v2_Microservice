@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Notifications.Application.Validation;
+using Notifications.API.Validation;
 
 namespace Notifications.API.Validation;
 

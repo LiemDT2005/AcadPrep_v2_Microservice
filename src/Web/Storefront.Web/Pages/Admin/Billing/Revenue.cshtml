@@ -1,0 +1,96 @@
+@page
+@model Storefront.Web.Pages.Admin.Billing.RevenueModel
+@using Storefront.Web.Pages.Billing.Orders
+@using Storefront.Web.Pages.Admin
+@{ Layout = "_IdentityAdminLayout"; ViewData["Title"] = "Revenue"; }
+<div class="@AdminUi.Page">
+    <header class="@AdminUi.Header">
+        <div>
+            <p class="@AdminUi.Eyebrow">Billing</p>
+            <h2 class="@AdminUi.Title">Thống kê doanh thu</h2>
+            <p class="@AdminUi.Lead">Doanh thu tính theo ngày thanh toán của đơn đã thanh toán (giờ Việt Nam). Số đơn theo trạng thái tính theo ngày tạo đơn. Cấp gói thủ công không tính vào doanh thu.</p>
+        </div>
+        <a asp-page="/Admin/Billing/Orders" class="@AdminUi.SecondaryButton self-start whitespace-nowrap lg:self-auto">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">receipt_long</span>Xem đơn hàng
+        </a>
+    </header>
+
+    <form method="get" id="billing-revenue-filter" class="@AdminUi.Card @AdminUi.CardBody flex flex-wrap items-start gap-md">
+        <div class="min-w-[170px]"><label asp-for="Filter.From" class="@AdminUi.Label"></label><input asp-for="Filter.From" type="date" class="@AdminUi.Input" /><span asp-validation-for="Filter.From" class="@AdminUi.FieldError"></span></div>
+        <div class="min-w-[170px]"><label asp-for="Filter.To" class="@AdminUi.Label"></label><input asp-for="Filter.To" type="date" class="@AdminUi.Input" /><span asp-validation-for="Filter.To" class="@AdminUi.FieldError"></span></div>
+        <div class="min-w-[140px]"><label asp-for="Filter.GroupBy" class="@AdminUi.Label"></label>
+            <select asp-for="Filter.GroupBy" class="@AdminUi.Input"><option value="day">Ngày</option><option value="month">Tháng</option></select>
+            <span asp-validation-for="Filter.GroupBy" class="@AdminUi.FieldError"></span></div>
+        <div class="flex flex-wrap gap-sm pt-[22px]">
+            <button type="submit" class="@AdminUi.PrimaryButton"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">filter_list</span>Xem</button>
+            <button type="submit" name="handler" value="Csv" class="@AdminUi.SecondaryButton"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">download</span>Tải CSV</button>
+        </div>
+    </form>
+
+    @if (Model.Error is not null)
+    {
+        <div role="alert" class="@AdminUi.Danger"><span class="material-symbols-outlined text-red-600" aria-hidden="true">error</span>@Model.Error</div>
+    }
+    @if (Model.Revenue is { } revenue)
+    {
+        var kpis = new (string Label, string Value, string Icon, string Tone)[]
+        {
+            ("Doanh thu", OrderText.Money(revenue.Totals.Revenue), "payments", "text-primary"),
+            ("Thành công", revenue.Totals.PaidCount.ToString(), "check_circle", "text-emerald-600"),
+            ("Thất bại", revenue.Totals.FailedCount.ToString(), "cancel", "text-red-600"),
+            ("Chờ thanh toán", revenue.Totals.PendingCount.ToString(), "schedule", "text-amber-600"),
+            ("Hết hạn", revenue.Totals.ExpiredCount.ToString(), "hourglass_disabled", "text-gray-600")
+        };
+        <div class="grid gap-md sm:grid-cols-2 xl:grid-cols-5" id="billing-revenue-totals">
+            @foreach (var kpi in kpis)
+            {
+                <article class="@AdminUi.Kpi">
+                    <div class="flex items-start justify-between gap-sm">
+                        <p class="@AdminUi.KpiLabel">@kpi.Label</p>
+                        <span class="material-symbols-outlined text-[22px] @kpi.Tone" aria-hidden="true">@kpi.Icon</span>
+                    </div>
+                    <p class="@AdminUi.KpiValue @kpi.Tone">@kpi.Value</p>
+                </article>
+            }
+        </div>
+
+        <section class="@AdminUi.Card" aria-labelledby="revenue-chart-title">
+            <div class="flex items-center justify-between border-b border-outline-variant px-lg py-md">
+                <h3 id="revenue-chart-title" class="@AdminUi.CardTitle">Doanh thu và đơn thanh toán theo @(Model.Filter.GroupBy == "month" ? "tháng" : "ngày")</h3>
+            </div>
+            <div class="@AdminUi.CardBody">
+                <canvas id="billing-revenue-chart" aria-label="Biểu đồ doanh thu" role="img" class="max-h-[360px]"></canvas>
+            </div>
+        </section>
+        <script type="application/json" id="billing-revenue-data">@Html.Raw(Model.ChartJson.Replace("<", "\\u003c"))</script>
+
+        <section class="@AdminUi.Card overflow-hidden" aria-labelledby="revenue-table-title">
+            <h3 id="revenue-table-title" class="@AdminUi.CardTitle border-b border-outline-variant px-lg py-md">Chi tiết theo kỳ</h3>
+            <div class="max-h-[420px] overflow-auto">
+                <table class="@AdminUi.Table" id="billing-revenue-points">
+                    <thead class="sticky top-0"><tr class="@AdminUi.HeadRow"><th class="@AdminUi.Th">Kỳ</th><th class="@AdminUi.Th text-right">Doanh thu</th><th class="@AdminUi.Th text-right">Đơn thanh toán</th></tr></thead>
+                    <tbody>
+                    @foreach (var point in revenue.Points)
+                    {
+                        <tr class="@AdminUi.Row">
+                            <td class="@AdminUi.TdMuted">@point.Period</td>
+                            <td class="@AdminUi.Td text-right @(point.Revenue > 0 ? "font-semibold" : "text-on-surface-variant")">@OrderText.Money(point.Revenue)</td>
+                            <td class="@AdminUi.Td text-right">@point.PaidCount</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    }
+</div>
+@section Scripts {
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/billing-validation.js" asp-append-version="true"></script>
+    @if (Model.Revenue is not null)
+    {
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+        <script src="~/js/billing-revenue.js" asp-append-version="true"></script>
+    }
+}

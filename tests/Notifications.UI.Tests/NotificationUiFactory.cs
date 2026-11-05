@@ -17,8 +17,11 @@ public class NotificationUiFactory : WebApplicationFactory<ToeicApiClient>
     {
         builder.UseEnvironment("Development");
         // WebApplicationFactory resolves the referenced app's content root from its build manifest.
-        builder.ConfigureServices(services => services.AddHttpClient<ToeicApiClient>()
-            .ConfigurePrimaryHttpMessageHandler(() => Backend));
+        builder.ConfigureServices(services =>
+        {
+            services.AddHttpClient<ToeicApiClient>().ConfigurePrimaryHttpMessageHandler(() => Backend);
+            services.AddHttpClient<BillingApiClient>().ConfigurePrimaryHttpMessageHandler(() => Backend);
+        });
     }
 }
 
@@ -34,6 +37,7 @@ public class NotificationBackend : HttpMessageHandler
     public int WriteStatus { get; set; } = 204;
     public int CreateStatus { get; set; } = 201;
     public bool Empty { get; set; }
+    public NotificationPage? PageOverride { get; set; }
     public ConcurrentQueue<(string Method, string Path, bool Bearer)> Calls { get; } = new();
     public string? CreatedBody { get; private set; }
 
@@ -47,8 +51,14 @@ public class NotificationBackend : HttpMessageHandler
         if (path == "/identity/api/auth/me") return Json(IdentityStatus, new UserProfileDto(UserId.ToString(),
             "test@example.test", "Test User", null, "Active", Roles.ToList(), DateTime.UtcNow, null));
         if (path.EndsWith("unread-count")) return Json(CountStatus, new NotificationUnreadCount(5));
+        if (path == "/billing/api/subscriptions/me") return Json(200, new BillingSubscription("Free", "FREE", "Free", false, null, null, null));
+        if (path == "/progress/api/progress/me") return Json(404, new { });
+        // Identity's existing Admin user search, used by the recipient picker.
+        if (request.Method == HttpMethod.Get && path.StartsWith("/identity/api/users?"))
+            return Json(200, new UserListResponse([new UserListItemDto(UserId.ToString(), "learner@example.test",
+                "<b>Learner</b>", null, "Active", "Local", DateTime.UtcNow, null, ["Learner"])], 1, 1, 8, 1));
         if (request.Method == HttpMethod.Get && path.StartsWith("/notification/api/notifications?"))
-            return Json(ListStatus, new NotificationPage(Empty ? [] : [new NotificationItem(NotificationId,
+            return Json(ListStatus, PageOverride ?? new NotificationPage(Empty ? [] : [new NotificationItem(NotificationId,
                 "<script>alert(1)</script>", "<img src=x onerror=alert(2)>", "System",
                 new DateTimeOffset(2026, 10, 19, 0, 0, 0, TimeSpan.Zero), false, null)], 2, 20, Empty ? 0 : 45, Empty ? 0 : 3));
         if (request.Method == HttpMethod.Post && path == "/notification/api/admin/notifications")

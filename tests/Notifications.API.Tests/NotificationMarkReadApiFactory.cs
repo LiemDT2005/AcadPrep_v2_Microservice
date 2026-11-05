@@ -1,13 +1,15 @@
+using Notifications.API.Repositories;
 using System.Collections.Concurrent;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Notifications.Application.Interfaces;
-using Notifications.Domain.Entities;
-using Notifications.Domain.Enums;
-using Notifications.Infrastructure.Persistence;
+using Notifications.API.Data;
+using Notifications.API.Repositories.Interfaces;
+using Notifications.API.Services.Interfaces;
+using Notifications.API.Entities;
+using Notifications.API.Enums;
 
 namespace Notifications.API.Tests;
 
@@ -31,12 +33,12 @@ public class NotificationMarkReadApiFactory : NotificationsApiFactory
                 .UseSqlite(connectionString).Options));
             services.RemoveAll<INotificationsDbContext>();
             services.AddScoped<INotificationsDbContext>(provider => provider.GetRequiredService<SqliteReadDbContext>());
-            services.RemoveAll<INotificationReadStateStore>();
-            services.AddScoped<INotificationReadStateStore>(provider =>
+            services.RemoveAll<INotificationStateRepository>();
+            services.AddScoped<INotificationStateRepository>(provider =>
                 new SqliteMarkReadStore(provider.GetRequiredService<SqliteReadDbContext>(), Race));
-            services.RemoveAll<INotificationWriter>();
-            services.AddScoped<INotificationWriter>(provider =>
-                new NotificationWriter(provider.GetRequiredService<SqliteReadDbContext>()));
+            services.RemoveAll<INotificationRepository>();
+            services.AddScoped<INotificationRepository>(provider =>
+                new NotificationRepository(provider.GetRequiredService<SqliteReadDbContext>()));
             services.RemoveAll<TimeProvider>();
             services.AddSingleton<TimeProvider>(Clock);
         });
@@ -111,7 +113,7 @@ public class ReadRaceControl
     public ConcurrentQueue<DateTime> SuccessfulUpdates { get; } = new();
 }
 
-public class SqliteMarkReadStore(SqliteReadDbContext db, ReadRaceControl race) : NotificationReadStateStore(db)
+public class SqliteMarkReadStore(SqliteReadDbContext db, ReadRaceControl race) : NotificationStateRepository(db)
 {
     protected override async Task<int> DeleteExistingStateAsync(Guid notificationId, Guid userId, DateTime deletedAt,
         CancellationToken ct)

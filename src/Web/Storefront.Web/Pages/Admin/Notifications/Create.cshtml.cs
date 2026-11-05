@@ -13,6 +13,9 @@ public class CreateModel(ToeicApiClient api) : NotificationPageModel(api)
 
     public void OnGet() { }
 
+    // Recipient suggestions (any role, any status, same rule as the backend recipient check).
+    public Task<IActionResult> OnGetUsersAsync(string? q) => Storefront.Web.Pages.Admin.AdminUserLookup.SearchAsync(Api, q, null, null);
+
     public async Task<IActionResult> OnPostAsync(CancellationToken ct)
     {
         if (!ModelState.IsValid) return Page();
@@ -24,7 +27,17 @@ public class CreateModel(ToeicApiClient api) : NotificationPageModel(api)
             Notice = "Đã gửi thông báo thành công.";
             return RedirectToPage();
         }
-        if (result.Status is 400 or 422)
+        // Format/audience rules are validated on this page first, so a 422 on targetUserId means the
+        // backend could not find the recipient at Identity.
+        if (result.Status == 422 && Input.Audience == "User" &&
+            result.Errors?.Keys.Any(key => key.Equals("targetUserId", StringComparison.OrdinalIgnoreCase)) == true)
+        {
+            ModelState.AddModelError("Input.TargetUserId", "Người dùng không tồn tại.");
+            Error = "Không tìm thấy người nhận. Vui lòng kiểm tra ID người dùng.";
+        }
+        else if (result.Status == 503)
+            Error = "Chưa thể xác minh người nhận. Vui lòng thử lại sau.";
+        else if (result.Status is 400 or 422)
         {
             foreach (var field in result.Errors ?? new Dictionary<string, string[]>())
             {

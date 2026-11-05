@@ -1,6 +1,6 @@
 using System.Net;
 using Microsoft.EntityFrameworkCore;
-using Notifications.Domain.Entities;
+using Notifications.API.Entities;
 using Xunit;
 using static Notifications.API.Tests.NotificationMarkReadApiFactory;
 using static Notifications.API.Tests.NotificationMarkReadApiTests;

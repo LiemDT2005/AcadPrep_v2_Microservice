@@ -1,15 +1,14 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json.Serialization;
 using Microsoft.OpenApi.Models;
-using Notifications.API.Authentication;
 using Notifications.API.Errors;
-using Notifications.Application;
-using Notifications.Infrastructure;
+using Notifications.API;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddApplication().AddInfrastructure(builder.Configuration);
-builder.Services.AddNotificationAuthentication(builder.Configuration);
+builder.Services.AddJwtAuthentication(builder.Configuration, builder.Environment);
 builder.Services.AddProblemDetails(options => options.CustomizeProblemDetails = context =>
 {
     context.ProblemDetails.Instance = context.HttpContext.Request.Path;

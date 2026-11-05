@@ -1,0 +1,106 @@
+@page
+@model Storefront.Web.Pages.Billing.PlansModel
+@using Storefront.Web.Pages
+@{
+    ViewData["Title"] = "Gói học";
+    var vi = System.Globalization.CultureInfo.GetCultureInfo("vi-VN");
+}
+<div class="@LearnerUi.Page">
+    <header class="flex flex-col gap-2">
+        <p class="@LearnerUi.Eyebrow">Gói học</p>
+        <h1 class="@LearnerUi.Title">Chọn gói phù hợp với lộ trình của bạn</h1>
+        <p class="@LearnerUi.Lead">Bắt đầu miễn phí, nâng cấp Pro để luyện đề không giới hạn. Thanh toán an toàn qua VNPay, còn hạn thì số ngày được cộng dồn.</p>
+    </header>
+
+    @if (Model.PaymentError is not null)
+    {
+        <div role="alert" class="@LearnerUi.Danger"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">error</span>@Model.PaymentError</div>
+    }
+    @if (Model.Error is not null)
+    {
+        <div role="alert" class="@LearnerUi.Danger"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">error</span>@Model.Error</div>
+    }
+    else if (Model.Plans.Count == 0)
+    {
+        <p role="status" class="@LearnerUi.Info">Hiện chưa có gói học được công bố.</p>
+    }
+    else
+    {
+        var proPlans = Model.Plans.Where(plan => plan.Code != "FREE" && plan.Price > 0).ToArray();
+        <div class="grid gap-6 lg:grid-cols-[2fr_3fr] lg:items-stretch">
+            @foreach (var plan in Model.Plans.Where(plan => plan.Code == "FREE" || plan.Price <= 0))
+            {
+                var current = Model.IsCurrent(plan);
+                <article class="@LearnerUi.Card flex flex-col gap-4 @(current ? "border-primary ring-2 ring-primary/20" : "")">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <h2 class="text-xl font-bold text-on-surface">@plan.Name</h2>
+                            @if (!string.IsNullOrWhiteSpace(plan.Description)) { <p class="mt-1 text-sm text-on-surface-variant">@plan.Description</p> }
+                        </div>
+                        <span class="material-symbols-outlined rounded-full bg-surface-container p-2 text-[22px] text-on-surface-variant" aria-hidden="true">school</span>
+                    </div>
+                    @if (current)
+                    {
+                        <p class="inline-flex w-fit items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                            <span class="material-symbols-outlined text-[14px]" aria-hidden="true">check_circle</span>Gói hiện tại@(Model.Current!.DaysRemaining is int days ? $" · còn {days} ngày" : "")
+                        </p>
+                    }
+                    <p class="text-3xl font-bold text-on-surface">@plan.Price.ToString("N0", vi) đ</p>
+                    @if (plan.DurationDays > 0) { <p class="text-sm text-on-surface-variant">@plan.DurationDays ngày</p> }
+                    <div class="border-t border-outline-variant pt-4"><partial name="_PlanLimits" model="plan" /></div>
+                </article>
+            }
+            @if (proPlans.Length > 0)
+            {
+                var sharedLimits = proPlans.All(plan => plan.Limits.OrderBy(limit => limit.Feature)
+                    .SequenceEqual(proPlans[0].Limits.OrderBy(limit => limit.Feature)));
+                var isPro = Model.Current?.IsPro == true;
+                <article class="relative flex flex-col gap-5 overflow-hidden rounded-xl border-2 @(isPro ? "border-primary ring-2 ring-primary/20" : "border-primary/40") bg-surface-container-lowest p-6 shadow-md">
+                    <div class="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-primary/10" aria-hidden="true"></div>
+                    <div class="relative flex items-start justify-between gap-3">
+                        <div>
+                            <p class="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-white">
+                                <span class="material-symbols-outlined text-[14px]" aria-hidden="true">workspace_premium</span>Pro
+                            </p>
+                            <h2 class="mt-3 text-xl font-bold text-on-surface">Luyện thi không giới hạn</h2>
+                        </div>
+                        @if (isPro)
+                        {
+                            <p class="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">Gói hiện tại · còn @Model.Current!.DaysRemaining ngày</p>
+                        }
+                    </div>
+                    @if (sharedLimits) { <div class="relative"><partial name="_PlanLimits" model="proPlans[0]" /></div> }
+                    <div class="relative grid gap-4 sm:grid-cols-2">
+                        @foreach (var plan in proPlans)
+                        {
+                            var best = plan.DurationDays == proPlans.Max(item => item.DurationDays) && proPlans.Length > 1;
+                            <div id="plan-@plan.Id" class="flex scroll-mt-24 flex-col gap-3 rounded-xl border @(best ? "border-primary bg-primary/5" : "border-outline-variant bg-white") p-5">
+                                <div class="flex items-center justify-between gap-2">
+                                    <h3 class="font-semibold text-on-surface">@plan.Name</h3>
+                                    @if (best) { <span class="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-700">Tiết kiệm nhất</span> }
+                                </div>
+                                @if (!string.IsNullOrWhiteSpace(plan.Description)) { <p class="text-sm text-on-surface-variant">@plan.Description</p> }
+                                <p><span class="text-2xl font-bold text-primary">@plan.Price.ToString("N0", vi) đ</span><span class="text-sm text-on-surface-variant"> / @plan.DurationDays ngày</span></p>
+                                @if (!sharedLimits) { <partial name="_PlanLimits" model="plan" /> }
+                                @if (Model.IsLearner)
+                                {
+                                    <form method="post" asp-page-handler="Pay" class="mt-auto">
+                                        <input type="hidden" name="planId" value="@plan.Id" />
+                                        <button type="submit" class="@LearnerUi.PrimaryButton w-full">
+                                            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">@(Model.Current?.Status is "Active" or "Expired" ? "autorenew" : "shopping_cart")</span>
+                                            @(Model.Current?.Status is "Active" or "Expired" ? $"Gia hạn thêm {plan.DurationDays} ngày" : "Mua gói")
+                                        </button>
+                                    </form>
+                                }
+                            </div>
+                        }
+                    </div>
+                    <p class="relative flex items-center gap-2 text-xs text-on-surface-variant">
+                        <span class="material-symbols-outlined text-[16px]" aria-hidden="true">lock</span>Thanh toán qua cổng VNPay. Đơn chờ thanh toán có hiệu lực 15 phút.
+                    </p>
+                </article>
+            }
+        </div>
+    }
+    @if (Model.IsLearner) { <partial name="_PlanDetails" model="Model" /> }
+</div>

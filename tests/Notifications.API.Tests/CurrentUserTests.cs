@@ -1,6 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
-using Notifications.API.Authentication;
+using Notifications.API.Services;
 using Xunit;
 
 namespace Notifications.API.Tests;

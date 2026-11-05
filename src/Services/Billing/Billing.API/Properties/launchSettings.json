@@ -1,0 +1,13 @@
+{
+  "profiles": {
+    "Billing.API": {
+      "commandName": "Project",
+      "launchBrowser": false,
+      "applicationUrl": "http://localhost:5011",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "Jwt__PublicKeyPath": "../../Identity/Identity.API/keys/public_key.pem"
+      }
+    }
+  }
+}

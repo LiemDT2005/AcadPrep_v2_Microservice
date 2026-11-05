@@ -1,6 +1,7 @@
+using Notifications.API.Repositories;
 using Microsoft.EntityFrameworkCore;
-using Notifications.Domain.Entities;
-using Notifications.Infrastructure.Persistence;
+using Notifications.API.Entities;
+using Notifications.API.Data;
 using Xunit;
 
 namespace Notifications.API.Tests;
@@ -17,7 +18,7 @@ public class SqlServerReadStateConflictTests
     [InlineData(2601, "Duplicate key with index 'IX_Notifications_SourceEventId'.", false)]
     public void ErrorClassification_RequiresExpectedNumberAndExactStateKey(int number, string message, bool expected)
     {
-        Assert.Equal(expected, NotificationReadStateStore.IsExpectedSqlServerDuplicate(number, message));
+        Assert.Equal(expected, NotificationStateRepository.IsExpectedSqlServerDuplicate(number, message));
     }
 
     [Fact]
@@ -29,7 +30,7 @@ public class SqlServerReadStateConflictTests
             new UserNotificationState()));
     }
 
-    private sealed class ConflictProbe(NotificationsDbContext db) : NotificationReadStateStore(db)
+    private sealed class ConflictProbe(NotificationsDbContext db) : NotificationStateRepository(db)
     {
         public bool IsExpected(DbUpdateException exception, UserNotificationState state) => IsDuplicateStateConflict(exception, state);
     }

@@ -1,0 +1,146 @@
+@page
+@model Storefront.Web.Pages.Admin.Ai.UsageModel
+@using Storefront.Web.Pages.Billing.Orders
+@using Storefront.Web.Pages.Admin
+@{
+    Layout = "_IdentityAdminLayout";
+    ViewData["Title"] = "AI Tokens";
+    var vi = Storefront.Web.Pages.Admin.Ai.UsageModel.Vi;
+    string Number(long value) => value.ToString("N0", vi);
+    var planNames = new Dictionary<string, string> { ["FREE"] = "Miễn phí", ["PRO_MONTH"] = "Pro 1 tháng", ["PRO_QUARTER"] = "Pro 3 tháng" };
+}
+<div class="@AdminUi.Page">
+    <header class="@AdminUi.Header">
+        <div>
+            <p class="@AdminUi.Eyebrow">AI Tutor</p>
+            <h2 class="@AdminUi.Title">Quản lý token AI</h2>
+            <p class="@AdminUi.Lead">Cửa sổ 24 giờ bắt đầu từ lần chat được trả lời đầu tiên. Thay đổi hạn mức có hiệu lực ngay cho các lượt chat sau.</p>
+        </div>
+    </header>
+
+    @if (Model.Notice is not null)
+    {
+        <div role="status" class="@AdminUi.Success"><span class="material-symbols-outlined text-green-600" aria-hidden="true">check_circle</span>@Model.Notice</div>
+    }
+    @if (Model.Error is not null)
+    {
+        <div role="alert" class="@AdminUi.Danger"><span class="material-symbols-outlined text-red-600" aria-hidden="true">error</span>@Model.Error</div>
+    }
+
+    <section aria-labelledby="limits-title" class="flex flex-col gap-md">
+        <h3 id="limits-title" class="@AdminUi.CardTitle">Hạn mức mỗi cửa sổ 24 giờ</h3>
+        @if (Model.LimitsError is not null)
+        {
+            <div role="alert" class="@AdminUi.Danger"><span class="material-symbols-outlined text-red-600" aria-hidden="true">error</span>@Model.LimitsError</div>
+        }
+        <div class="grid gap-md md:grid-cols-3">
+            @foreach (var limit in Model.Limits)
+            {
+                <form method="post" asp-page-handler="Limit" class="ai-limit-form @AdminUi.Kpi flex flex-col gap-sm">
+                    <input type="hidden" name="Limit.PlanCode" value="@limit.PlanCode" />
+                    <div class="flex items-start justify-between gap-sm">
+                        <div>
+                            <p class="@AdminUi.KpiLabel">@limit.PlanCode</p>
+                            <p class="text-[14px] text-on-surface-variant">@(planNames.GetValueOrDefault(limit.PlanCode, limit.PlanCode))</p>
+                        </div>
+                        <span class="material-symbols-outlined text-[22px] text-primary" aria-hidden="true">@(limit.PlanCode == "FREE" ? "bolt" : "workspace_premium")</span>
+                    </div>
+                    <p class="@AdminUi.KpiValue text-primary">@Number(limit.TokenLimit) <span class="text-[14px] font-medium text-on-surface-variant">token</span></p>
+                    <label class="@AdminUi.Label mt-sm" for="limit-@limit.PlanCode">Hạn mức mới</label>
+                    <div class="flex gap-sm">
+                        <input id="limit-@limit.PlanCode" name="Limit.TokenLimit" type="number" inputmode="numeric" value="@limit.TokenLimit"
+                               data-val="true" data-val-aitokenlimit="@Storefront.Web.Validation.AiTokenLimitAttribute.Message" data-val-aitokenlimit-max="100000000"
+                               data-val-required="@Storefront.Web.Validation.AiTokenLimitAttribute.Message" class="@AdminUi.Input" />
+                        <button type="submit" class="@AdminUi.PrimaryButton">Lưu</button>
+                    </div>
+                    <span class="@AdminUi.FieldError field-validation-valid" data-valmsg-for="Limit.TokenLimit" data-valmsg-replace="true"></span>
+                </form>
+            }
+        </div>
+    </section>
+
+    <section class="@AdminUi.Card overflow-hidden" aria-labelledby="windows-title">
+        <div class="flex flex-col gap-md border-b border-outline-variant px-lg py-md md:flex-row md:items-end md:justify-between">
+            <div>
+                <h3 id="windows-title" class="@AdminUi.CardTitle">Cửa sổ đang hoạt động</h3>
+                <p class="@AdminUi.CardHint">Người dùng đã chat trong 24 giờ qua, sắp xếp theo số token đã dùng.</p>
+            </div>
+            <form method="get" class="flex flex-wrap items-start gap-sm">
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-3 top-[10px] text-[18px] text-outline" aria-hidden="true">search</span>
+                    <label asp-for="UserId" class="sr-only"></label>
+                    <input asp-for="UserId" placeholder="Lọc theo ID người dùng" class="@AdminUi.Input pl-10 font-mono sm:w-[320px]" />
+                    <span asp-validation-for="UserId" class="@AdminUi.FieldError"></span>
+                </div>
+                <button type="submit" class="@AdminUi.PrimaryButton"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">filter_list</span>Lọc</button>
+            </form>
+        </div>
+        @if (Model.Rows is { } rows)
+        {
+            var items = rows.GetProperty("items");
+            <div class="overflow-x-auto" id="ai-usage-table">
+                <table class="@AdminUi.Table">
+                    <thead><tr class="@AdminUi.HeadRow">
+                        <th class="@AdminUi.Th">Người dùng</th><th class="@AdminUi.Th">Gói</th><th class="@AdminUi.Th">Đã dùng / Hạn mức</th>
+                        <th class="@AdminUi.Th text-right">Còn lại</th><th class="@AdminUi.Th">Bắt đầu</th><th class="@AdminUi.Th">Đặt lại lúc</th>
+                        <th class="@AdminUi.Th">Trạng thái</th><th class="@AdminUi.Th text-right">Thao tác</th>
+                    </tr></thead>
+                    <tbody>
+                    @if (items.GetArrayLength() == 0)
+                    {
+                        <tr><td colspan="8" class="@AdminUi.Empty" role="status">Chưa có người dùng nào đang dùng AI trong 24 giờ qua.</td></tr>
+                    }
+                    @foreach (var row in items.EnumerateArray())
+                    {
+                        var used = row.GetProperty("tokensUsed").GetInt64();
+                        var cap = row.GetProperty("tokenLimit").GetInt64();
+                        var percent = cap <= 0 ? 100 : (int)Math.Min(100, Math.Ceiling(used * 100.0 / cap));
+                        var locked = row.GetProperty("locked").GetBoolean();
+                        var plan = row.GetProperty("planCode").GetString() ?? "";
+                        <tr class="@AdminUi.Row">
+                            <td class="@AdminUi.Td"><span class="block max-w-[240px] truncate font-mono text-[12px]" title="@row.GetProperty("userId").GetString()">@row.GetProperty("userId").GetString()</span></td>
+                            <td class="@AdminUi.Td"><span class="inline-block whitespace-nowrap rounded-full px-3 py-[3px] text-[12px] font-semibold @AdminUi.PlanChip(plan)">@plan</span></td>
+                            <td class="@AdminUi.Td min-w-[180px]">
+                                <p class="text-[13px] font-medium">@Number(used) / @Number(cap)</p>
+                                <div class="mt-xs h-1.5 w-full rounded-full bg-surface-container-high" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="@percent">
+                                    <div class="h-1.5 rounded-full @(locked || percent >= 100 ? "bg-red-500" : percent >= 80 ? "bg-amber-500" : "bg-primary")" style="width:@percent%"></div>
+                                </div>
+                            </td>
+                            <td class="@AdminUi.Td text-right whitespace-nowrap">@Number(row.GetProperty("remaining").GetInt64())</td>
+                            <td class="@AdminUi.TdMuted">@OrderText.Date(row.GetProperty("windowStart").GetDateTimeOffset())</td>
+                            <td class="@AdminUi.TdMuted">@OrderText.Date(row.GetProperty("resetAt").GetDateTimeOffset())</td>
+                            <td class="@AdminUi.Td">
+                                <span class="inline-flex items-center gap-xs whitespace-nowrap text-[13px] font-medium @(locked ? "text-red-700" : "text-emerald-700")">
+                                    <span class="inline-block h-2 w-2 rounded-full @(locked ? "bg-red-500" : "bg-emerald-500")"></span>@(locked ? "Đã khóa" : "Đang dùng")
+                                </span>
+                            </td>
+                            <td class="@AdminUi.Td text-right">
+                                <form method="post" asp-page-handler="Reset" data-confirm="Đặt lại hạn mức 24 giờ của người dùng này? Số token đã dùng trong cửa sổ hiện tại sẽ về 0." data-confirm-text="Đặt lại">
+                                    <input type="hidden" name="resetUserId" value="@row.GetProperty("userId").GetString()" />
+                                    <button type="submit" class="@AdminUi.DangerButton"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">restart_alt</span>Đặt lại</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+            var pageIndex = rows.GetProperty("pageIndex").GetInt32();
+            var totalPages = rows.GetProperty("totalPages").GetInt32();
+            <nav class="flex flex-wrap items-center justify-between gap-md border-t border-outline-variant px-lg py-sm text-[14px] text-on-surface-variant" aria-label="Phân trang">
+                <span>Trang @pageIndex / @Math.Max(1, totalPages)</span>
+                <span class="flex gap-sm">
+                    @if (pageIndex > 1) { <a asp-route-pageIndex="@(pageIndex - 1)" asp-route-userId="@Model.UserId" class="@AdminUi.SecondaryButton py-xs">Trang trước</a> }
+                    @if (pageIndex < totalPages) { <a asp-route-pageIndex="@(pageIndex + 1)" asp-route-userId="@Model.UserId" class="@AdminUi.SecondaryButton py-xs">Trang sau</a> }
+                </span>
+            </nav>
+        }
+    </section>
+</div>
+@section Scripts {
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/billing-validation.js" asp-append-version="true"></script>
+    <script src="~/js/ai-admin-validation.js" asp-append-version="true"></script>
+    <script src="~/js/acadprep-confirm.js" asp-append-version="true"></script>
+}

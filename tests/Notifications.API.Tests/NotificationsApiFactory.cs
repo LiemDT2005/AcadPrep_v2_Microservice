@@ -15,6 +15,7 @@ public class NotificationsApiFactory : WebApplicationFactory<Program>
     private readonly RSA signingKey = RSA.Create(2048);
     public string EnvironmentName { get; init; } = "Production";
     public Guid UserId { get; } = Guid.NewGuid();
+    public FakeIdentity Identity { get; } = new();
     public const string Issuer = "ToeicLearning.Identity";
     public const string Audience = "ToeicLearning.Clients";
     public const string KeyId = "acadprep-rsa-key-1";
@@ -31,10 +32,18 @@ public class NotificationsApiFactory : WebApplicationFactory<Program>
                 ["Jwt:PublicKeyPath"] = "",
                 ["Jwt:PublicKey"] = signingKey.ExportSubjectPublicKeyInfoPem(),
                 // No server is running here: startup, /health and tests must not connect.
-                ["ConnectionStrings:Default"] = "Server=127.0.0.1,1;Database=NotificationsFoundationTests;Integrated Security=True;Connect Timeout=1;Encrypt=True"
+                ["ConnectionStrings:Default"] = "Server=127.0.0.1,1;Database=NotificationsFoundationTests;Integrated Security=True;Connect Timeout=1;Encrypt=True",
+                ["Identity:BaseUrl"] = "http://identity.test/",
+                // The reminder subscriber is exercised directly by tests; never touch a real broker.
+                ["BackgroundJobs:Enabled"] = "false"
             }));
-        builder.ConfigureServices(services => services.AddControllers()
-            .AddApplicationPart(typeof(FoundationTestController).Assembly));
+        builder.ConfigureServices(services =>
+        {
+            services.AddControllers().AddApplicationPart(typeof(FoundationTestController).Assembly);
+            // Test-only Identity simulator; production calls Identity's real Admin API.
+            services.AddHttpClient<Notifications.API.Services.Interfaces.IIdentityUserClient,
+                Notifications.API.Services.IdentityUserClient>().ConfigurePrimaryHttpMessageHandler(() => Identity);
+        });
         builder.ConfigureLogging(logging => logging.SetMinimumLevel(LogLevel.Critical));
     }
 
@@ -59,4 +68,30 @@ public class NotificationsApiFactory : WebApplicationFactory<Program>
         base.Dispose(disposing);
         if (disposing) signingKey.Dispose();
     }
+}
+
+// Test-only Identity Admin API simulator (GET /api/users/{id}): every user exists unless listed as missing.
+public class FakeIdentity : HttpMessageHandler
+{
+    public HashSet<Guid> Missing { get; } = [];
+    public int? ForceStatus { get; set; }
+    public bool Throw { get; set; }
+    public List<(string Path, string? Token)> Calls { get; } = [];
+
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
+    {
+        var path = request.RequestUri!.AbsolutePath;
+        lock (Calls) Calls.Add((path, request.Headers.Authorization?.Parameter));
+        if (Throw) throw new HttpRequestException("Simulated Identity outage.");
+        if (ForceStatus is { } forced) return Task.FromResult(new HttpResponseMessage((System.Net.HttpStatusCode)forced));
+        var id = Guid.Parse(path.Split('/').Last());
+        return Task.FromResult(Missing.Contains(id)
+            ? new HttpResponseMessage(System.Net.HttpStatusCode.NotFound)
+            : new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+            {
+                Content = System.Net.Http.Json.JsonContent.Create(new { id = id.ToString(), roles = new[] { "Learner" }, status = "Banned" })
+            });
+    }
+
+    protected override void Dispose(bool disposing) { }
 }

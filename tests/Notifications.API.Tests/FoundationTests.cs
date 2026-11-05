@@ -4,7 +4,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Notifications.Infrastructure.Persistence;
+using Notifications.API.Data;
 using Xunit;
 
 namespace Notifications.API.Tests;
@@ -31,8 +31,10 @@ public class FoundationTests : IClassFixture<NotificationsApiFactory>
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<NotificationsDbContext>();
         Assert.Equal("Microsoft.EntityFrameworkCore.SqlServer", db.Database.ProviderName);
-        Assert.Equal(2, db.Model.GetEntityTypes().Count());
-        Assert.EndsWith("_InitialNotifications", Assert.Single(db.Database.GetMigrations()));
+        Assert.Equal(3, db.Model.GetEntityTypes().Count());
+        Assert.Equal(new[] { "20261018161833_InitialNotifications", "20261105105336_AddEmailDeliveries" },
+            db.Database.GetMigrations().ToArray());
+        Assert.False(db.Database.HasPendingModelChanges());
         Assert.Equal(System.Data.ConnectionState.Closed, db.Database.GetDbConnection().State);
     }
 

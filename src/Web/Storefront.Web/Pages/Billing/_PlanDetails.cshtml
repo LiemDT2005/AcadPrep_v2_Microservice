@@ -1,0 +1,121 @@
+@model Storefront.Web.Pages.Billing.PlansModel
+@using Storefront.Web.Pages
+@{
+    var vi = System.Globalization.CultureInfo.GetCultureInfo("vi-VN");
+    // Vietnam has no DST: display UTC+7; the API remains the source of truth in UTC.
+    string Date(DateTimeOffset? value) => value is null ? "—"
+        : value.Value.ToOffset(TimeSpan.FromHours(7)).ToString("dd/MM/yyyy HH:mm", vi);
+}
+<section id="my-plan" class="flex scroll-mt-24 flex-col gap-6 border-t border-outline-variant pt-6" aria-labelledby="my-plan-title">
+    <div class="flex flex-wrap items-end justify-between gap-3">
+        <div>
+            <p class="@LearnerUi.Eyebrow">Tài khoản</p>
+            <h2 id="my-plan-title" class="@LearnerUi.Title text-2xl">Gói của tôi</h2>
+        </div>
+        <a asp-page="/Billing/Orders/Index" class="@LearnerUi.SecondaryButton">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">receipt_long</span>Lịch sử đơn hàng
+        </a>
+    </div>
+    @if (Model.SubscriptionError is not null)
+    {
+        <div role="alert" class="@LearnerUi.Danger"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">error</span>@Model.SubscriptionError</div>
+    }
+    else if (Model.Current is { } sub)
+    {
+        var (label, tone, icon) = sub.Status switch
+        {
+            "Active" => ("Đang hoạt động", "bg-emerald-50 text-emerald-700", "verified"),
+            "Expired" => ("Đã hết hạn", "bg-red-50 text-red-700", "event_busy"),
+            _ => ("Miễn phí", "bg-surface-container text-on-surface-variant", "school")
+        };
+        <div class="grid gap-6 lg:grid-cols-2">
+            <article class="@LearnerUi.Card flex flex-col gap-4">
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wide text-on-surface-variant">Trạng thái</p>
+                        <p class="mt-1 text-xl font-bold text-on-surface" data-status="@sub.Status">@label</p>
+                    </div>
+                    <span class="material-symbols-outlined rounded-full p-2 text-[22px] @tone" aria-hidden="true">@icon</span>
+                </div>
+                <p class="text-sm">Gói hiện tại: <strong>@sub.PlanName</strong></p>
+                @if (sub.Status == "Active")
+                {
+                    <dl class="grid grid-cols-2 gap-3 rounded-lg bg-surface-container-low p-4 text-sm">
+                        <div><dt class="text-on-surface-variant">Bắt đầu</dt><dd class="font-semibold">@Date(sub.StartDate)</dd></div>
+                        <div><dt class="text-on-surface-variant">Hết hạn</dt><dd class="font-semibold">@Date(sub.EndDate)</dd></div>
+                    </dl>
+                    <p class="text-sm">Còn lại: <strong>@sub.DaysRemaining ngày</strong></p>
+                }
+                else if (sub.Status == "Expired")
+                {
+                    <p class="text-sm text-on-surface-variant">Gói trả phí gần nhất đã hết hạn lúc @Date(sub.EndDate). Bạn đang dùng gói miễn phí.</p>
+                }
+                else
+                {
+                    <p class="text-sm text-on-surface-variant">Bạn chưa đăng ký gói trả phí.</p>
+                }
+            </article>
+
+            @if (Model.Usage is { } aiUsage)
+            {
+                @if (aiUsage.Ai.Available)
+                {
+                    var limit = aiUsage.Ai.TokenLimit;
+                    var used = aiUsage.Ai.TokensUsed ?? 0;
+                    var percent = limit is > 0 ? (int)Math.Min(100, Math.Ceiling(used * 100.0 / limit.Value)) : 0;
+                    <article class="@LearnerUi.Card flex flex-col gap-4" id="billing-ai-usage">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <p class="text-xs font-semibold uppercase tracking-wide text-on-surface-variant">Trợ lý AI · 24 giờ</p>
+                                <p class="mt-1 text-sm">Đã dùng: <strong>@(aiUsage.Ai.TokensUsed?.ToString("N0", vi))</strong> token</p>
+                            </div>
+                            <span class="material-symbols-outlined rounded-full bg-primary/10 p-2 text-[22px] text-primary" aria-hidden="true">smart_toy</span>
+                        </div>
+                        <div class="h-2 w-full rounded-full bg-surface-container-high" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="@percent">
+                            <div class="h-2 rounded-full @(percent >= 100 ? "bg-red-500" : percent >= 80 ? "bg-amber-500" : "bg-primary")" style="width:@percent%"></div>
+                        </div>
+                        <dl class="grid grid-cols-2 gap-3 text-sm">
+                            <div><dt class="text-on-surface-variant">Hạn mức</dt><dd class="font-semibold">@(limit.HasValue ? limit.Value.ToString("N0", vi) + " token" : "Không giới hạn")</dd></div>
+                            @if (aiUsage.Ai.Remaining.HasValue) { <div><dt class="text-on-surface-variant">Còn lại</dt><dd class="font-semibold">@aiUsage.Ai.Remaining.Value.ToString("N0", vi) token</dd></div> }
+                            <div class="col-span-2"><dt class="text-on-surface-variant">Làm mới lúc</dt><dd class="font-semibold">@Date(aiUsage.Ai.ResetAt)</dd></div>
+                        </dl>
+                    </article>
+                }
+                else
+                {
+                    <p role="status" class="@LearnerUi.Info self-start" id="billing-ai-usage">Chưa tải được dữ liệu AI.</p>
+                }
+            }
+        </div>
+
+        <section class="@LearnerUi.CardFlat overflow-hidden" aria-labelledby="usage-title">
+            <h3 id="usage-title" class="border-b border-outline-variant px-6 py-4 text-lg font-bold text-on-surface">Hạn mức sử dụng</h3>
+            @if (Model.UsageError is not null)
+            {
+                <div role="alert" class="@LearnerUi.Danger m-6"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">error</span>@Model.UsageError</div>
+            }
+            else if (Model.Usage is { } usage)
+            {
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse" id="billing-usage">
+                        <thead class="@LearnerUi.TableHead"><tr><th class="@LearnerUi.Th">Tính năng</th><th class="@LearnerUi.Th">Hạn mức</th><th class="@LearnerUi.Th">Đã dùng</th><th class="@LearnerUi.Th">Làm mới lúc</th></tr></thead>
+                        <tbody>
+                        @foreach (var item in usage.Features)
+                        {
+                            var feature = item.Feature switch { "FullTest" => "Bài thi đầy đủ", "Practice" => "Luyện tập", "Vocab" => "Từ vựng đang lưu", _ => item.Feature };
+                            var period = item.Period switch { "Daily" => "ngày", "Monthly" => "tháng", "Lifetime" => "tổng", _ => item.Period };
+                            <tr class="@LearnerUi.Row">
+                                <td class="@LearnerUi.Td font-semibold">@feature</td>
+                                <td class="@LearnerUi.Td">@(item.LimitValue.HasValue ? $"{item.LimitValue} / {period}" : "Không giới hạn")</td>
+                                <td class="@LearnerUi.TdMuted">@(item.UsageAvailable && item.Used.HasValue ? item.Used.ToString() : item.LimitValue.HasValue ? "Chưa có dữ liệu" : "—")</td>
+                                <td class="@LearnerUi.TdMuted">@(item.ResetAt.HasValue ? Date(item.ResetAt) : "—")</td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+                <p class="border-t border-outline-variant px-6 py-3 text-xs text-on-surface-variant">Số lượt đã dùng sẽ hiển thị khi hệ thống đếm lượt được kết nối.</p>
+            }
+        </section>
+    }
+</section>

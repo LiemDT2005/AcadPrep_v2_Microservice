@@ -6,10 +6,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Notifications.Application.Interfaces;
-using Notifications.Domain.Entities;
-using Notifications.Domain.Enums;
-using Notifications.Infrastructure.Persistence;
+using Notifications.API.Data;
+using Notifications.API.Repositories.Interfaces;
+using Notifications.API.Services.Interfaces;
+using Notifications.API.Entities;
+using Notifications.API.Enums;
 using Xunit;
 
 namespace Notifications.API.Tests;

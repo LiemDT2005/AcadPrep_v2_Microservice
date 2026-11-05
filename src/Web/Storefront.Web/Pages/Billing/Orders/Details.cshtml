@@ -1,0 +1,47 @@
+@page
+@model Storefront.Web.Pages.Billing.Orders.DetailsModel
+@using Storefront.Web.Pages
+@using Storefront.Web.Pages.Billing.Orders
+@{ ViewData["Title"] = "Chi tiết đơn hàng"; }
+<div class="@LearnerUi.NarrowPage">
+    <a asp-page="/Billing/Orders/Index" class="@LearnerUi.Back"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_back</span>Đơn hàng của tôi</a>
+    <header class="flex flex-col gap-2">
+        <p class="@LearnerUi.Eyebrow">Thanh toán</p>
+        <h1 class="@LearnerUi.Title">Chi tiết đơn hàng</h1>
+    </header>
+    @if (Model.NotFoundOrder)
+    {
+        <p role="alert" class="@LearnerUi.Info">Không tìm thấy đơn hàng.</p>
+    }
+    else if (Model.Error is not null)
+    {
+        <div role="alert" class="@LearnerUi.Danger"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">error</span>@Model.Error</div>
+    }
+    else if (Model.Order is { } order)
+    {
+        var (dot, tone, icon) = LearnerUi.OrderTone(order.Status);
+        <article class="@LearnerUi.CardFlat overflow-hidden" id="billing-order">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant px-6 py-5">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-on-surface-variant">Mã đơn</p>
+                    <p class="font-mono text-lg font-bold text-on-surface">@order.OrderCode</p>
+                </div>
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-surface-container-low px-3 py-1 text-sm font-semibold @tone" data-status="@order.Status">
+                    <span class="material-symbols-outlined text-[18px]" aria-hidden="true">@icon</span>@OrderText.Status(order.Status)
+                </span>
+            </div>
+            <dl class="grid gap-x-6 gap-y-4 px-6 py-5 text-sm sm:grid-cols-2">
+                <div><dt class="text-on-surface-variant">Gói</dt><dd class="font-semibold">@order.PlanName</dd></div>
+                <div><dt class="text-on-surface-variant">Số tiền</dt><dd class="text-lg font-bold text-primary">@OrderText.Money(order.Amount)</dd></div>
+                <div><dt class="text-on-surface-variant">Loại</dt><dd class="font-semibold">@OrderText.Kind(order.Kind)</dd></div>
+                <div><dt class="text-on-surface-variant">Ngày tạo</dt><dd class="font-semibold">@OrderText.Date(order.CreatedAt)</dd></div>
+                <div><dt class="text-on-surface-variant">Hạn thanh toán</dt><dd class="font-semibold">@OrderText.Date(order.ExpiresAt)</dd></div>
+                <div><dt class="text-on-surface-variant">Thanh toán lúc</dt><dd class="font-semibold">@OrderText.Date(order.PaidAt)</dd></div>
+            </dl>
+            @if (order.Status is "Failed" or "Expired")
+            {
+                <div class="border-t border-outline-variant px-6 py-4"><a asp-page="/Billing/Plans" class="@LearnerUi.PrimaryButton">Thanh toán lại</a></div>
+            }
+        </article>
+    }
+</div>

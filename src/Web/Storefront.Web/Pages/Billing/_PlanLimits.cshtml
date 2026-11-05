@@ -1,0 +1,13 @@
+@model Storefront.Web.Models.BillingPlan
+<ul class="flex flex-col gap-2 text-sm text-on-surface">
+    @foreach (var limit in Model.Limits)
+    {
+        var feature = limit.Feature switch { "FullTest" => "Bài thi đầy đủ", "Practice" => "Luyện tập", "Vocab" => "Từ vựng", _ => limit.Feature };
+        var period = limit.Period switch { "Daily" => "ngày", "Monthly" => "tháng", "Lifetime" => "tổng", _ => limit.Period };
+        var unlimited = !limit.LimitValue.HasValue;
+        <li class="flex items-start gap-2">
+            <span class="material-symbols-outlined text-[18px] @(unlimited ? "text-primary" : "text-emerald-600")" aria-hidden="true">@(unlimited ? "all_inclusive" : "check")</span>
+            <span>@feature: <strong class="font-semibold">@(limit.LimitValue.HasValue ? (limit.Feature == "Vocab" && limit.Period == "Lifetime" ? $"Tối đa {limit.LimitValue} từ đang lưu" : $"{limit.LimitValue} / {period}") : "Không giới hạn")</strong></span>
+        </li>
+    }
+</ul>

@@ -381,6 +381,64 @@ body.admin-body {
   gap: 1rem;
 }
 
+/* The account management layout uses plain CSS instead of the Tailwind runtime. */
+.admin-topbar [data-notification-menu] { position: relative; }
+.admin-topbar [data-notification-toggle] {
+  display: inline-flex;
+  align-items: center;
+  gap: .25rem;
+  padding: .5rem;
+  color: var(--admin-ink);
+  text-decoration: none;
+}
+.admin-topbar [data-notification-toggle] span:not(.material-symbols-outlined) {
+  padding: 0 .35rem;
+  border-radius: 1rem;
+  background: #b42318;
+  color: white;
+  font-size: .75rem;
+}
+.admin-topbar #notification-menu-panel {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  background: white;
+  border: 1px solid var(--admin-border);
+  border-radius: .75rem;
+  box-shadow: 0 8px 24px #0002;
+  overflow: hidden;
+  white-space: normal;
+}
+.admin-topbar #notification-menu-panel > :is(div, p, a, button) { padding: .5rem .75rem; }
+.admin-topbar #notification-menu-panel > div { display: flex; justify-content: space-between; }
+.admin-topbar #notification-menu-panel > a { display: block; text-align: center; }
+.admin-topbar [data-notification-menu-list] {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  max-height: 360px;
+  overflow-y: auto;
+}
+.admin-topbar [data-notification-id] {
+  display: block;
+  width: 100%;
+  padding: .5rem .75rem;
+  border: 0;
+  border-top: 1px solid var(--admin-border);
+  background: white;
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.admin-topbar [data-notification-id][data-read="false"] { background: #f5f2ff; }
+.admin-topbar [data-notification-id] span { display: block; }
+.admin-topbar [data-notification-content].line-clamp-2 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
 .admin-pulse-status {
   display: flex;
   align-items: center;

@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using System.Security.Cryptography;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Hosting;
@@ -5,11 +6,12 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Options;
-using Notifications.API.Authentication;
+using Microsoft.IdentityModel.Tokens;
 using Xunit;
 
 namespace Notifications.API.Tests;
 
+// Authentication uses the shared BuildingBlocks helper (like Exam) plus this service's stricter post-configuration.
 public class JwtConfigurationTests
 {
     [Fact]
@@ -27,6 +29,8 @@ public class JwtConfigurationTests
         Assert.True(validation.ValidateIssuerSigningKey);
         Assert.True(validation.RequireExpirationTime);
         Assert.True(validation.RequireSignedTokens);
+        Assert.Equal(ClaimTypes.Role, validation.RoleClaimType);
+        Assert.Equal(TimeSpan.Zero, validation.ClockSkew);
         Assert.Equal(new[] { "RS256" }, validation.ValidAlgorithms);
     }
 
@@ -48,6 +52,17 @@ public class JwtConfigurationTests
         }
     }
 
+    [Fact]
+    public void OnlyPublicKeyParametersAreKept()
+    {
+        // Only public parameters are kept for signature validation.
+        using var rsa = RSA.Create(2048);
+        using var provider = CreateProvider(rsa.ExportSubjectPublicKeyInfoPem());
+        var key = Assert.IsType<RsaSecurityKey>(GetOptions(provider).TokenValidationParameters.IssuerSigningKey);
+        Assert.Null(key.Parameters.D);
+        Assert.Null(key.Rsa);
+    }
+
     [Theory]
     [InlineData("missing")]
     [InlineData("unreadable")]
@@ -55,7 +70,8 @@ public class JwtConfigurationTests
     [InlineData("private")]
     [InlineData("weak")]
     [InlineData("ambiguous")]
-    public void InvalidKeyConfiguration_FailsClosedWithoutDisclosingKey(string reason)
+    [InlineData("issuer")]
+    public void InvalidConfiguration_FailsClosedWithoutDisclosingKey(string reason)
     {
         using var rsa = RSA.Create(reason == "weak" ? 1024 : 2048);
         var pem = reason switch
@@ -66,29 +82,28 @@ public class JwtConfigurationTests
             _ => rsa.ExportSubjectPublicKeyInfoPem()
         };
         using var provider = CreateProvider(pem,
-            reason is "unreadable" or "ambiguous" ? "missing-public-key.pem" : null);
+            reason is "unreadable" or "ambiguous" ? "missing-public-key.pem" : null,
+            issuer: reason == "issuer" ? "" : NotificationsApiFactory.Issuer);
         var exception = Assert.Throws<OptionsValidationException>(() => GetOptions(provider));
-        if (pem is not null) Assert.DoesNotContain(pem, exception.Message);
-        Assert.DoesNotContain("missing-public-key.pem", exception.Message);
+        if (pem is not null) Assert.DoesNotContain(pem, exception.ToString());
+        Assert.DoesNotContain("missing-public-key.pem", exception.ToString());
     }
 
     private static JwtBearerOptions GetOptions(ServiceProvider provider) => provider
         .GetRequiredService<IOptionsMonitor<JwtBearerOptions>>().Get(JwtBearerDefaults.AuthenticationScheme);
 
-    private static ServiceProvider CreateProvider(string? pem, string? path = null)
+    private static ServiceProvider CreateProvider(string? pem, string? path = null, string? issuer = NotificationsApiFactory.Issuer)
     {
         var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
         {
-            ["Jwt:Issuer"] = NotificationsApiFactory.Issuer,
+            ["Jwt:Issuer"] = issuer,
             ["Jwt:Audience"] = NotificationsApiFactory.Audience,
-            ["Jwt:KeyId"] = NotificationsApiFactory.KeyId,
             ["Jwt:PublicKey"] = pem,
             ["Jwt:PublicKeyPath"] = path
         }).Build();
         var services = new ServiceCollection();
         services.AddLogging();
-        services.AddSingleton<IWebHostEnvironment>(new TestEnvironment());
-        services.AddNotificationAuthentication(configuration);
+        services.AddJwtAuthentication(configuration, new TestEnvironment());
         return services.BuildServiceProvider();
     }
 

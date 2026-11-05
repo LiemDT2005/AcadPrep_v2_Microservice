@@ -1,0 +1,89 @@
+@* AcadPrep AI Tutor: FTOEIC-style floating widget + conversation picker + usage ring/popover (Huy, 2026-11-05). *@
+@* Tailwind display utilities (flex) would otherwise override the hidden attribute the script toggles. *@
+<style>#ai-chat-widget [hidden] { display: none !important; }</style>
+<div id="ai-chat-widget" class="fixed bottom-3 right-3 sm:bottom-4 sm:right-4 z-50 flex flex-col items-end pointer-events-none"
+     data-endpoint="@Url.Page("/Ai/Chat")">
+    @Html.AntiForgeryToken()
+    <div id="ai-chat-window" hidden role="dialog" aria-label="AcadPrep AI Tutor"
+         style="width: clamp(280px, 92vw, 400px); height: clamp(240px, calc(100dvh - 160px), 560px);"
+         class="relative bg-surface-container-lowest rounded-2xl shadow-2xl border border-outline-variant overflow-hidden mb-2 sm:mb-3 flex flex-col pointer-events-auto">
+        <div class="bg-primary px-3 py-2.5 flex items-center gap-2 text-on-primary shrink-0">
+            <span class="material-symbols-outlined text-[22px]" aria-hidden="true">smart_toy</span>
+            <div class="min-w-0 flex-1">
+                <h3 class="font-semibold text-[14px] leading-tight truncate">AcadPrep AI Tutor</h3>
+                <button type="button" id="ai-session-toggle" class="text-[11px] opacity-90 truncate max-w-full flex items-center gap-0.5 hover:underline" aria-haspopup="listbox" aria-expanded="false">
+                    <span id="ai-session-title">Cuộc trò chuyện mới</span><span class="material-symbols-outlined text-[14px]" aria-hidden="true">expand_more</span>
+                </button>
+            </div>
+            <button type="button" id="ai-usage-ring" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/20" aria-haspopup="dialog" aria-expanded="false" aria-label="Hạn mức sử dụng">
+                <svg viewBox="0 0 36 36" class="w-6 h-6 -rotate-90" aria-hidden="true">
+                    <circle cx="18" cy="18" r="15" fill="none" stroke="currentColor" stroke-opacity="0.35" stroke-width="4"></circle>
+                    <circle id="ai-usage-ring-value" cx="18" cy="18" r="15" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-dasharray="94.25" stroke-dashoffset="94.25"></circle>
+                </svg>
+            </button>
+            <button type="button" id="ai-chat-new" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/20" title="Cuộc trò chuyện mới" aria-label="Cuộc trò chuyện mới"><span class="material-symbols-outlined text-[18px]">add_comment</span></button>
+            <button type="button" id="ai-chat-delete" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/20" title="Xóa cuộc trò chuyện" aria-label="Xóa cuộc trò chuyện" disabled><span class="material-symbols-outlined text-[18px]">delete</span></button>
+            <button type="button" id="ai-chat-close" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/20" title="Đóng" aria-label="Đóng"><span class="material-symbols-outlined text-[20px]">close</span></button>
+        </div>
+
+        <div id="ai-session-menu" hidden role="listbox" aria-label="Cuộc trò chuyện"
+             class="absolute left-2 right-2 top-14 z-20 max-h-64 overflow-y-auto bg-surface-container-lowest border border-outline-variant rounded-xl shadow-lg p-1 text-[13px]"></div>
+
+        <div id="ai-usage-popover" hidden role="dialog" aria-label="Hạn mức sử dụng"
+             class="absolute right-2 top-14 z-20 w-64 bg-surface-container-lowest border border-outline-variant rounded-xl shadow-lg p-3 text-[13px] text-on-surface">
+            <div class="flex items-baseline justify-between mb-1">
+                <span class="font-semibold">Hạn mức 24 giờ</span>
+                <span id="ai-usage-percent" class="font-semibold">0%</span>
+            </div>
+            <div class="h-2 rounded-full bg-surface-container-high overflow-hidden" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="ai-usage-bar">
+                <div id="ai-usage-bar-value" class="h-full bg-primary rounded-full" style="width:0%"></div>
+            </div>
+            <p id="ai-usage-numbers" class="mt-2 text-on-surface-variant">Chưa sử dụng</p>
+            <p id="ai-usage-remaining" class="text-on-surface-variant"></p>
+            <p id="ai-usage-reset" class="text-on-surface-variant"></p>
+            <button type="button" id="ai-usage-see-all" class="mt-2 text-primary font-semibold hover:underline">Xem tất cả</button>
+        </div>
+
+        <div id="ai-usage-detail" hidden class="absolute inset-0 top-[52px] z-10 bg-surface-container-lowest p-4 overflow-y-auto text-[13px] text-on-surface">
+            <button type="button" id="ai-usage-back" class="text-primary flex items-center gap-1 mb-3"><span class="material-symbols-outlined text-[16px]">arrow_back</span>Quay lại trò chuyện</button>
+            <h4 class="font-semibold mb-1">Hạn mức 24 giờ</h4>
+            <div class="flex items-baseline justify-between"><span id="ai-detail-numbers" class="text-on-surface-variant">Chưa sử dụng</span><span id="ai-detail-percent" class="font-semibold">0%</span></div>
+            <div class="h-2 rounded-full bg-surface-container-high overflow-hidden my-2"><div id="ai-detail-bar" class="h-full bg-primary rounded-full" style="width:0%"></div></div>
+            <p id="ai-detail-reset" class="text-on-surface-variant mb-4"></p>
+            <h4 class="font-semibold mb-2">7 ngày gần nhất</h4>
+            <div id="ai-daily-chart" class="relative h-36 flex items-end gap-2 border-b border-outline-variant pb-0" role="img" aria-label="Biểu đồ token theo ngày"></div>
+            <div id="ai-daily-labels" class="flex gap-2 mt-1 text-[11px] text-on-surface-variant"></div>
+            <p id="ai-daily-total" class="mt-3 text-on-surface-variant"></p>
+        </div>
+
+        <div id="ai-chat-messages" class="flex-1 overflow-y-auto min-h-0 p-3 flex flex-col gap-3 bg-surface-container-low text-[13px] sm:text-[14px]" aria-live="polite"></div>
+
+        <div id="ai-lock-banner" hidden class="px-3 py-2 bg-error-container text-on-error-container text-[13px] flex items-center gap-2 shrink-0" role="alert">
+            <span id="ai-lock-text" class="flex-1">Bạn đã dùng hết hạn mức hôm nay.</span>
+            <button type="button" id="ai-lock-retry" class="rounded-lg border border-current px-2 py-1 font-semibold">Thử lại</button>
+        </div>
+
+        <form id="ai-chat-form" class="p-2.5 bg-surface-container-lowest border-t border-outline-variant flex items-end gap-2 shrink-0">
+            <label for="ai-chat-input" class="sr-only">Tin nhắn</label>
+            <textarea id="ai-chat-input" rows="1" maxlength="2000" class="flex-1 resize-none bg-surface-container-low border border-outline-variant rounded-xl px-3 py-2 text-[13px] sm:text-[14px] focus:outline-none focus:border-primary max-h-[100px] overflow-y-auto" placeholder="Hỏi AI về từ vựng, ngữ pháp, TOEIC..."></textarea>
+            <button type="submit" id="ai-chat-send" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-primary flex items-center justify-center text-white shrink-0 disabled:opacity-50 disabled:cursor-not-allowed" aria-label="Gửi" disabled>
+                <span class="material-symbols-outlined text-[18px]">send</span>
+            </button>
+        </form>
+    </div>
+
+    <button type="button" id="ai-chat-toggle" class="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-primary text-white shadow-lg flex items-center justify-center hover:-translate-y-0.5 transition pointer-events-auto" aria-label="Mở AcadPrep AI Tutor" aria-expanded="false">
+        <span class="material-symbols-outlined text-[26px]">smart_toy</span>
+    </button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.1/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.9/purify.min.js"></script>
+<style>
+    #ai-chat-widget .ai-bubble { line-height: 1.5; overflow-wrap: anywhere; }
+    #ai-chat-widget .ai-bubble p { margin-bottom: .5rem; } #ai-chat-widget .ai-bubble p:last-child { margin-bottom: 0; }
+    #ai-chat-widget .ai-bubble ul { list-style: disc; padding-left: 1.25rem; } #ai-chat-widget .ai-bubble ol { list-style: decimal; padding-left: 1.25rem; }
+    #ai-chat-widget .ai-bubble code { background: rgba(0,0,0,.05); padding: 0 .25rem; border-radius: .25rem; font-family: monospace; }
+    #ai-chat-widget .ai-bubble pre { background: rgba(0,0,0,.05); padding: .5rem; border-radius: .25rem; overflow-x: auto; }
+</style>
+<script src="~/js/acadprep-confirm.js" asp-append-version="true"></script>

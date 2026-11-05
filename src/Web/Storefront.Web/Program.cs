@@ -15,6 +15,15 @@ builder.Services.AddHttpClient<ToeicApiClient>(client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["GatewayUrl"] ?? "http://localhost:5080");
 });
+builder.Services.AddHttpClient<BillingApiClient>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["GatewayUrl"] ?? "http://localhost:5080");
+});
+builder.Services.AddHttpClient<AiApiClient>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["GatewayUrl"] ?? "http://localhost:5080");
+    client.Timeout = AiApiClient.ChatTimeout;
+});
 
 var app = builder.Build();
 

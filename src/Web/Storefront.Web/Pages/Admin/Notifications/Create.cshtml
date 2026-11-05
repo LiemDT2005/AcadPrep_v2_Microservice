@@ -1,22 +1,78 @@
 @page
 @model Storefront.Web.Pages.Admin.Notifications.CreateModel
-@{ ViewData["Title"] = "Gửi thông báo"; }
-<section class="max-w-3xl mx-auto px-margin-mobile md:px-margin-desktop py-xl">
-    <a asp-page="/Notifications/Index" class="text-primary">← Danh sách thông báo</a>
-    <h1 class="text-headline-lg font-bold my-lg">Gửi thông báo hệ thống</h1>
-    @if (Model.Notice is not null) { <p role="status" class="rounded-lg bg-tertiary-container text-on-tertiary-container p-md mb-md">@Model.Notice</p> }
-    @if (Model.Error is not null) { <p role="alert" class="rounded-lg bg-error-container text-on-error-container p-md mb-md">@Model.Error</p> }
-    <form method="post" id="notification-create" class="rounded-xl bg-surface-container-lowest border border-outline-variant/30 p-lg shadow-sm flex flex-col gap-md">
-        <div asp-validation-summary="All" class="text-error" role="alert"></div>
-        <div><label asp-for="Input.Title" class="block font-semibold mb-sm"></label><input asp-for="Input.Title" class="w-full rounded-lg border-outline-variant" /><span asp-validation-for="Input.Title" class="text-error text-body-sm"></span></div>
-        <div><label asp-for="Input.Content" class="block font-semibold mb-sm"></label><textarea asp-for="Input.Content" rows="7" class="w-full rounded-lg border-outline-variant"></textarea><span asp-validation-for="Input.Content" class="text-error text-body-sm"></span><p class="text-body-sm text-on-surface-variant">Nội dung được hiển thị dạng văn bản.</p></div>
-        <div><label asp-for="Input.Audience" class="block font-semibold mb-sm"></label><select asp-for="Input.Audience" class="w-full rounded-lg border-outline-variant"><option value="All">Tất cả</option><option value="User">Một người dùng</option><option value="Learner">Learner</option><option value="Moderator">Moderator</option></select><span asp-validation-for="Input.Audience" class="text-error text-body-sm"></span></div>
-        <div><label asp-for="Input.TargetUserId" class="block font-semibold mb-sm"></label><input asp-for="Input.TargetUserId" aria-describedby="target-help" class="w-full rounded-lg border-outline-variant" /><span asp-validation-for="Input.TargetUserId" class="text-error text-body-sm"></span><p id="target-help" class="text-body-sm text-on-surface-variant">Chỉ nhập GUID khi chọn một người dùng. Các đối tượng khác phải để trống.</p></div>
-        <button type="submit" class="rounded-lg bg-primary text-white font-semibold px-lg py-sm self-start">Gửi thông báo</button>
-    </form>
-</section>
+@using Storefront.Web.Pages.Admin
+@{ Layout = "_IdentityAdminLayout"; ViewData["Title"] = "Notifications"; }
+<div class="@AdminUi.Page">
+    <header class="@AdminUi.Header">
+        <div>
+            <p class="@AdminUi.Eyebrow">Notifications</p>
+            <h2 class="@AdminUi.Title">Gửi thông báo hệ thống</h2>
+            <p class="@AdminUi.Lead">Gửi cho tất cả, theo vai trò hoặc cho một tài khoản. Người nhận thấy ngay trong chuông thông báo.</p>
+        </div>
+        <a asp-page="/Notifications/Index" class="@AdminUi.SecondaryButton self-start whitespace-nowrap lg:self-auto">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">notifications</span>Thông báo của tôi
+        </a>
+    </header>
+
+    @if (Model.Notice is not null)
+    {
+        <div role="status" class="@AdminUi.Success"><span class="material-symbols-outlined text-green-600" aria-hidden="true">check_circle</span>@Model.Notice</div>
+    }
+    @if (Model.Error is not null)
+    {
+        <div role="alert" class="@AdminUi.Danger"><span class="material-symbols-outlined text-red-600" aria-hidden="true">error</span>@Model.Error</div>
+    }
+
+    <div class="grid gap-lg lg:grid-cols-[3fr_2fr] lg:items-start">
+        <form method="post" id="notification-create" class="@AdminUi.Card @AdminUi.CardBody flex flex-col gap-md">
+            <div asp-validation-summary="All" class="text-[14px] text-error [&_li]:list-disc [&_ul]:pl-lg" role="alert"></div>
+            <div><label asp-for="Input.Title" class="@AdminUi.Label"></label>
+                <input asp-for="Input.Title" class="@AdminUi.Input" data-preview="title" />
+                <span asp-validation-for="Input.Title" class="@AdminUi.FieldError"></span></div>
+            <div><label asp-for="Input.Content" class="@AdminUi.Label"></label>
+                <textarea asp-for="Input.Content" rows="7" class="@AdminUi.Input" data-preview="content"></textarea>
+                <span asp-validation-for="Input.Content" class="@AdminUi.FieldError"></span>
+                <p class="@AdminUi.Help">Nội dung được hiển thị dạng văn bản.</p></div>
+            <div class="grid gap-md sm:grid-cols-2">
+                <div><label asp-for="Input.Audience" class="@AdminUi.Label"></label>
+                    <select asp-for="Input.Audience" class="@AdminUi.Input" data-audience>
+                        <option value="All">Tất cả</option><option value="User">Một người dùng</option><option value="Learner">Learner</option><option value="Moderator">Moderator</option>
+                    </select><span asp-validation-for="Input.Audience" class="@AdminUi.FieldError"></span></div>
+                <div data-target-field><label asp-for="Input.TargetUserId" class="@AdminUi.Label"></label>
+                    <input asp-for="Input.TargetUserId" data-user-picker="@Url.Page("/Admin/Notifications/Create", "Users")" aria-describedby="target-help" class="@AdminUi.Input" />
+                    <span asp-validation-for="Input.TargetUserId" class="@AdminUi.FieldError"></span></div>
+            </div>
+            <p id="target-help" class="@AdminUi.Help -mt-sm">Chỉ dùng khi chọn "Một người dùng": gõ email hoặc tên rồi chọn tài khoản (hoặc dán ID). Các đối tượng khác để trống.</p>
+            <div class="flex justify-end border-t border-outline-variant pt-md">
+                <button type="submit" class="@AdminUi.PrimaryButton"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">send</span>Gửi thông báo</button>
+            </div>
+        </form>
+
+        <aside class="@AdminUi.Card overflow-hidden" aria-labelledby="preview-title">
+            <h3 id="preview-title" class="@AdminUi.CardTitle border-b border-outline-variant px-lg py-md">Xem trước trong chuông</h3>
+            <div class="p-lg">
+                <div class="rounded-xl border border-outline-variant">
+                    <div class="flex items-start gap-sm bg-primary/5 px-md py-sm">
+                        <span class="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary" aria-hidden="true"></span>
+                        <div class="min-w-0">
+                            <p class="font-semibold text-on-surface" data-preview-title>Tiêu đề thông báo</p>
+                            <p class="whitespace-pre-line text-[13px] text-on-surface-variant" data-preview-content>Nội dung sẽ hiển thị ở đây.</p>
+                            <p class="mt-0.5 text-[12px] text-primary">Vừa xong · Chưa đọc</p>
+                        </div>
+                    </div>
+                </div>
+                <dl class="mt-md grid grid-cols-[auto_1fr] gap-x-md gap-y-xs text-[13px]">
+                    <dt class="text-on-surface-variant">Đối tượng</dt><dd class="font-semibold" data-preview-audience>Tất cả</dd>
+                    <dt class="text-on-surface-variant">Loại</dt><dd>System</dd>
+                </dl>
+            </div>
+        </aside>
+    </div>
+</div>
 @section Scripts {
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <partial name="_ValidationScriptsPartial" />
     <script src="~/js/notification-validation.js" asp-append-version="true"></script>
+    <script src="~/js/admin-user-picker.js" asp-append-version="true"></script>
+    <script src="~/js/admin-notification-preview.js" asp-append-version="true"></script>
 }

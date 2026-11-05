@@ -206,7 +206,7 @@
     <div class="flex-1 flex flex-col md:ml-64 h-screen">
         
         <!-- TopNavBar -->
-        <header class="flex justify-between items-center h-16 px-md bg-surface border-b border-outline-variant w-full z-10 shrink-0">
+        <header class="relative z-30 flex justify-between items-center h-16 px-md bg-surface border-b border-outline-variant w-full shrink-0">
             <div class="flex items-center gap-md">
                 <h1 class="font-headline-sm text-headline-sm text-primary font-bold">@ViewData["Title"]</h1>
                 <span class="bg-primary-fixed text-on-primary-fixed-variant px-2.5 py-1 rounded-full font-label-sm text-label-sm">Moderator / CMS</span>
@@ -227,6 +227,7 @@
                         <a href="/Admin/Dashboard" class="font-label-md text-label-md text-on-surface-variant hover:text-primary font-semibold">Reports</a>
                         <span class="text-outline-variant">•</span>
                     }
+                    @await Component.InvokeAsync("NotificationBadge")
                     <a href="/Account/Profile" class="font-label-md text-label-md text-on-surface-variant hover:text-primary font-semibold">Profile</a>
                     <form method="post" asp-page="/Account/Logout"><button type="submit" class="text-sm text-error">Log out</button></form>
                     <a href="/" class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer p-1" title="Back to site">

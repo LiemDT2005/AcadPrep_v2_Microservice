@@ -3,7 +3,7 @@ using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using Notifications.Domain.Entities;
+using Notifications.API.Entities;
 using Xunit;
 using static Notifications.API.Tests.NotificationMarkReadApiFactory;
 
@@ -11,6 +11,28 @@ namespace Notifications.API.Tests;
 
 public class NotificationMarkReadApiTests
 {
+    [Fact]
+    public async Task ReadAllMarksOnlyVisibleUnreadNotificationsForTheCaller()
+    {
+        using var factory = await CreateFactory();
+        using var client = Client(factory);
+        using var response = await client.PatchAsync("/api/notifications/read-all", null);
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+
+        Assert.True((await factory.StateAsync(1))!.IsRead);
+        Assert.True((await factory.StateAsync(3))!.IsRead);
+        Assert.Null(await factory.StateAsync(2));
+        Assert.Null(await factory.StateAsync(5));
+        Assert.True((await factory.StateAsync(8))!.IsDeleted);
+        Assert.False((await factory.StateAsync(8))!.IsRead);
+        using var count = JsonDocument.Parse(await client.GetStringAsync("/api/notifications/unread-count"));
+        Assert.Equal(0, count.RootElement.GetProperty("unreadCount").GetInt32());
+
+        var readAt = (await factory.StateAsync(1))!.ReadAt;
+        using var repeated = await client.PatchAsync("/api/notifications/read-all", null);
+        Assert.Equal(HttpStatusCode.NoContent, repeated.StatusCode);
+        Assert.Equal(readAt, (await factory.StateAsync(1))!.ReadAt);
+    }
     [Theory]
     [InlineData("anonymous")]
     [InlineData("invalid")]

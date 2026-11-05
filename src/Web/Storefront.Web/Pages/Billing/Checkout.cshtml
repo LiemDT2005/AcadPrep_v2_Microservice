@@ -1,0 +1,58 @@
+@page
+@model Storefront.Web.Pages.Billing.CheckoutModel
+@using Storefront.Web.Pages
+@using Storefront.Web.Pages.Billing.Orders
+@{ ViewData["Title"] = Model.Input.Renew ? "Gia hạn gói" : "Thanh toán gói"; }
+<div class="@LearnerUi.NarrowPage">
+    <a asp-page="/Billing/Plans" class="@LearnerUi.Back"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_back</span>Bảng giá</a>
+    <header class="flex flex-col gap-2">
+        <p class="@LearnerUi.Eyebrow">Thanh toán</p>
+        <h1 class="@LearnerUi.Title">@(Model.Input.Renew ? "Gia hạn gói" : "Thanh toán gói")</h1>
+        <p class="@LearnerUi.Lead">Chọn gói rồi chuyển sang cổng VNPay để hoàn tất.</p>
+    </header>
+    @if (Model.Error is not null)
+    {
+        <div role="alert" class="@LearnerUi.Danger"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">error</span>@Model.Error</div>
+    }
+    @if (Model.PlansUnavailable)
+    {
+        <div role="alert" class="@LearnerUi.Danger"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">error</span>Chưa thể tải danh sách gói. Vui lòng thử lại sau.</div>
+    }
+    else if (Model.PaidPlans.Count == 0)
+    {
+        <p role="status" class="@LearnerUi.Info">Hiện chưa có gói trả phí đang bán.</p>
+    }
+    else
+    {
+        <form method="post" id="billing-checkout" class="@LearnerUi.Card flex flex-col gap-5">
+            <input type="hidden" asp-for="Input.Renew" />
+            <fieldset class="flex flex-col gap-3">
+                <legend class="mb-2 text-sm font-semibold text-on-surface">Chọn gói</legend>
+                @foreach (var plan in Model.PaidPlans)
+                {
+                    <label class="flex cursor-pointer items-center gap-4 rounded-xl border border-outline-variant p-4 transition hover:border-primary has-[:checked]:border-primary has-[:checked]:bg-primary/5 has-[:checked]:ring-2 has-[:checked]:ring-primary/15">
+                        <input type="radio" asp-for="Input.PlanId" value="@plan.Id" checked="@(Model.Input.PlanId == plan.Id)" class="h-4 w-4 accent-primary" />
+                        <span class="flex-1">
+                            <span class="block font-semibold text-on-surface">@plan.Name</span>
+                            <span class="block text-sm text-on-surface-variant">@plan.DurationDays ngày</span>
+                        </span>
+                        <span class="text-lg font-bold text-primary">@OrderText.Money(plan.Price)</span>
+                    </label>
+                }
+                <span asp-validation-for="Input.PlanId" class="@LearnerUi.FieldError"></span>
+            </fieldset>
+            <div class="flex items-start gap-3 rounded-lg bg-surface-container-low p-4 text-sm text-on-surface-variant">
+                <span class="material-symbols-outlined text-[20px] text-primary" aria-hidden="true">info</span>
+                <p>Bạn sẽ được chuyển sang cổng VNPay. Còn hạn thì số ngày được cộng dồn. Đơn chờ thanh toán có hiệu lực 15 phút; bấm lại cùng gói sẽ mở lại đúng đơn đang chờ.</p>
+            </div>
+            <button type="submit" class="@LearnerUi.PrimaryButton self-start">
+                <span class="material-symbols-outlined text-[18px]" aria-hidden="true">lock</span>Thanh toán qua VNPay
+            </button>
+        </form>
+    }
+</div>
+@section Scripts {
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/billing-validation.js" asp-append-version="true"></script>
+}

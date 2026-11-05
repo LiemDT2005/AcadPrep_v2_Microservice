@@ -1,13 +1,14 @@
+using Notifications.API.Repositories;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using Notifications.Application.DTOs;
-using Notifications.Domain.Entities;
-using Notifications.Domain.Enums;
-using Notifications.Infrastructure.Persistence;
+using Notifications.API.DTOs;
+using Notifications.API.Entities;
+using Notifications.API.Enums;
+using Notifications.API.Data;
 using Xunit;
 
 namespace Notifications.API.Tests;
@@ -205,7 +206,7 @@ public class NotificationSqlServerIntegrationTests
             Converters = { new JsonStringEnumConverter() }
         });
 
-    private sealed class ConflictProbe(NotificationsDbContext db) : NotificationReadStateStore(db)
+    private sealed class ConflictProbe(NotificationsDbContext db) : NotificationStateRepository(db)
     {
         public bool Expected(DbUpdateException exception, UserNotificationState state) => IsDuplicateStateConflict(exception, state);
     }

@@ -1,12 +1,14 @@
+using Notifications.API.Repositories;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Notifications.Application.Interfaces;
-using Notifications.Domain.Entities;
-using Notifications.Domain.Enums;
-using Notifications.Infrastructure.Persistence;
+using Notifications.API.Data;
+using Notifications.API.Repositories.Interfaces;
+using Notifications.API.Services.Interfaces;
+using Notifications.API.Entities;
+using Notifications.API.Enums;
 using Xunit;
 
 namespace Notifications.API.Tests;
@@ -63,8 +65,8 @@ public class SqlServerNotificationFactory : NotificationsApiFactory
             services.AddScoped(_ => OpenContext());
             services.RemoveAll<INotificationsDbContext>();
             services.AddScoped<INotificationsDbContext>(p => p.GetRequiredService<NotificationsDbContext>());
-            services.RemoveAll<INotificationReadStateStore>();
-            services.AddScoped<INotificationReadStateStore>(p => new ObservedSqlServerStateStore(
+            services.RemoveAll<INotificationStateRepository>();
+            services.AddScoped<INotificationStateRepository>(p => new ObservedSqlServerStateStore(
                 p.GetRequiredService<NotificationsDbContext>(), Race));
         });
     }
@@ -142,7 +144,7 @@ public class SqlServerRaceControl
 }
 
 public class ObservedSqlServerStateStore(NotificationsDbContext db, SqlServerRaceControl race)
-    : NotificationReadStateStore(db)
+    : NotificationStateRepository(db)
 {
     protected override async Task InsertStateAsync(UserNotificationState state, CancellationToken ct)
     {

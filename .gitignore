@@ -22,3 +22,12 @@ tests/Identity.E2EHost/
 tests/Identity.E2EHost.Tests/
 tests/Identity.Startup.Tests/
 tests/Identity.TestSetup/
+
+# Local secrets for Docker Compose (read automatically from the repo root). Never commit real values.
+.env
+.env.*
+!.env.example
+
+# Local review evidence and generated test output
+/artifacts/ui-review-*/
+TestResults/

@@ -1,0 +1,13 @@
+{
+  "profiles": {
+    "Ai.API": {
+      "commandName": "Project",
+      "launchBrowser": false,
+      "applicationUrl": "http://localhost:5012",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "Jwt__PublicKeyPath": "../../Identity/Identity.API/keys/public_key.pem"
+      }
+    }
+  }
+}

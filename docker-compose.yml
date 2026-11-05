@@ -158,6 +158,8 @@ services:
     - ReverseProxy__Clusters__learning__Destinations__d1__Address=http://learning.api:5005/
     - ReverseProxy__Clusters__identity__Destinations__d1__Address=http://identity.api:5001/
     - ReverseProxy__Clusters__notification__Destinations__d1__Address=http://notifications.api:8080/
+    - ReverseProxy__Clusters__billing__Destinations__d1__Address=http://billing.api:8080/
+    - ReverseProxy__Clusters__ai__Destinations__d1__Address=http://ai.api:8080/
     extra_hosts:
     - host.docker.internal:host-gateway
     depends_on:
@@ -189,8 +191,22 @@ services:
       ASPNETCORE_HTTP_PORTS: '8080'
       ASPNETCORE_URLS: http://+:8080
       Urls: http://+:8080
-      ConnectionStrings__Default: ${NOTIFICATIONS_CONNECTION_STRING:-Server=sqlserver,1433;Database=AcadPrep_NotificationsDb;User Id=sa;Password=Password123!;TrustServerCertificate=True}
+      ConnectionStrings__Default: "${NOTIFICATIONS_CONNECTION_STRING:?Set NOTIFICATIONS_CONNECTION_STRING in .env}"
       Jwt__PublicKeyPath: /app/keys/public_key.pem
+      # Admin notifications verify the recipient through Identity's existing Admin API (container DNS).
+      Identity__BaseUrl: http://identity.api:5001/
+      # Billing reminder events (UC-23.3); same local broker settings as exam.api.
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: '5672'
+      RabbitMQ__UserName: guest
+      RabbitMQ__Password: guest
+      # Real SMTP from the environment only (never committed). Empty Host/From: in-app notification only.
+      Smtp__Host: ${SMTP_HOST:-}
+      Smtp__Port: ${SMTP_PORT:-587}
+      Smtp__User: ${SMTP_USER:-}
+      Smtp__Password: ${SMTP_PASSWORD:-}
+      Smtp__From: ${SMTP_FROM:-}
+      Smtp__FromName: ${SMTP_FROM_NAME:-}
     volumes:
     - type: bind
       source: ./src/Services/Identity/Identity.API/keys/public_key.pem
@@ -201,6 +217,80 @@ services:
     depends_on:
       sqlserver:
         condition: service_healthy
+      identity.api:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
+  billing.api:
+    build:
+      context: .
+      dockerfile: src/Services/Billing/Billing.API/Dockerfile
+    ports:
+      - "5011:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Default: "${BILLING_CONNECTION_STRING:?Set BILLING_CONNECTION_STRING in .env}"
+      Jwt__PublicKeyPath: /app/keys/public_key.pem
+      # Grant verifies the recipient through Identity's existing Admin API (container DNS, not localhost).
+      Identity__BaseUrl: http://identity.api:5001/
+      # Revenue statistics cache (UC-21.5); Redis failures fall back to the database.
+      Redis__ConnectionString: redis:6379
+      # VNPay sandbox credentials from .env only (UC-21.2); empty = checkout returns 503.
+      Vnpay__TmnCode: ${VNPAY_TMN_CODE:-}
+      Vnpay__HashSecret: ${VNPAY_HASH_SECRET:-}
+      # UC-23.2 AI usage section reads ai-service through container DNS.
+      AiService__BaseUrl: http://ai.api:8080/
+      # Reminder/expiry events go through the outbox to RabbitMQ (UC-23.3).
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: '5672'
+      RabbitMQ__UserName: guest
+      RabbitMQ__Password: guest
+    volumes:
+      - type: bind
+        source: ./src/Services/Identity/Identity.API/keys/public_key.pem
+        target: /app/keys/public_key.pem
+        read_only: true
+        bind:
+          create_host_path: false
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      identity.api:
+        condition: service_started
+      redis:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
+
+  ai.api:
+    build:
+      context: .
+      dockerfile: src/Services/Ai/Ai.API/Dockerfile
+    ports:
+      - "5012:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Default: "${AI_CONNECTION_STRING:?Set AI_CONNECTION_STRING in .env}"
+      Jwt__PublicKeyPath: /app/keys/public_key.pem
+      # Gemini key from .env only (never committed or logged).
+      Gemini__ApiKey: ${GEMINI_API_KEY:-}
+      # Effective plan for token limits (Billing GET /api/subscriptions/me with the learner's JWT).
+      Billing__BaseUrl: http://billing.api:8080/
+    volumes:
+      - type: bind
+        source: ./src/Services/Identity/Identity.API/keys/public_key.pem
+        target: /app/keys/public_key.pem
+        read_only: true
+        bind:
+          create_host_path: false
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      billing.api:
+        condition: service_started
+
 volumes:
   content-data: null
   identity-data: null
