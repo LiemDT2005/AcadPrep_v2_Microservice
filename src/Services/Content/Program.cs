@@ -1,4 +1,4 @@
-using System.Text;
+using BuildingBlocks.Common.Authentication;
 using Content.Data;
 using Content.Mappings;
 using Content.Repositories;
@@ -7,22 +7,26 @@ using Content.Services;
 using Content.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Database & Infrastructure
-var connStr = builder.Configuration.GetConnectionString("Sqlite") ?? "Data Source=content.db";
+// 1. Database & Infrastructure (Docker SQL Server primary)
+var connStr = builder.Configuration.GetConnectionString("Default")
+    ?? "Server=localhost,1433;Database=AcadPrep_ContentDb;User Id=sa;Password=Password123!;TrustServerCertificate=True";
 builder.Services.AddDbContext<ContentDbContext>(options =>
-    options.UseSqlite(connStr));
+    options.UseSqlServer(connStr, sql =>
+    {
+        sql.EnableRetryOnFailure();
+        sql.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+    }));
 
 builder.Services.AddScoped<IContentDbContext>(sp => sp.GetRequiredService<ContentDbContext>());
 
 // 2. HttpClient & Service Injections
 builder.Services.AddHttpClient<IExamAttemptChecker, HttpExamAttemptChecker>(client =>
 {
-    client.Timeout = TimeSpan.FromMilliseconds(500);
+    client.Timeout = TimeSpan.FromSeconds(2);
 });
 builder.Services.AddScoped<IExamRepository, ExamRepository>();
 builder.Services.AddScoped<IExamSeriesRepository, ExamSeriesRepository>();
@@ -34,21 +38,7 @@ builder.Services.AddAutoMapper(cfg =>
 }, typeof(ContentMappingProfile));
 
 // 3. JWT Authentication Setup
-var jwt = builder.Configuration.GetSection("Jwt");
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(opt =>
-    {
-        opt.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = jwt["Issuer"],
-            ValidAudience = jwt["Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt["Key"] ?? "ToeicLearning_SuperSecret_Key_For_Demo_2026!"))
-        };
-    });
+builder.Services.AddIdentityJwtAuthentication(builder.Configuration, builder.Environment);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -105,6 +95,7 @@ app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapGet("/", () => Results.Redirect("/swagger"));
 app.MapGet("/health", () => Results.Ok(new { status = "Healthy", service = "Content" }));
 
 app.Run();

@@ -1,11 +1,14 @@
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Storefront.Web.Models;
+using Storefront.Web.Pages.Admin.Exams.Questions;
 using Storefront.Web.Services;
 
 namespace Storefront.Web.Pages.Admin.Exams;
 
-public class IndexModel(ToeicApiClient api) : PageModel
+public class IndexModel(ToeicApiClient api, IWebHostEnvironment env) : PageModel
 {
     public List<AdminExamListItem> Exams { get; set; } = [];
     public List<AdminExamSeries> ExamSeries { get; set; } = [];
@@ -68,13 +71,23 @@ public class IndexModel(ToeicApiClient api) : PageModel
             return Page();
         }
 
+        var audioUrl = CreateExamForm.AudioUrl?.Trim();
+        if (CreateExamForm.AudioFile != null && CreateExamForm.AudioFile.Length > 0)
+        {
+            var uploadedUrl = await QuestionMediaUploadHelper.SaveFileAsync(env, CreateExamForm.AudioFile, "audio");
+            if (!string.IsNullOrWhiteSpace(uploadedUrl))
+            {
+                audioUrl = uploadedUrl;
+            }
+        }
+
         var request = new AdminCreateExamRequest(
             CreateExamForm.Title.Trim(),
             CreateExamForm.ExamType ?? "Full Test",
             CreateExamForm.Description?.Trim(),
             CreateExamForm.Duration,
             CreateExamForm.ExamSeriesId,
-            CreateExamForm.AudioUrl?.Trim()
+            audioUrl
         );
 
         var (createdId, error) = await api.CreateAdminExamAsync(request);
@@ -167,4 +180,5 @@ public class CreateExamFormModel
     public int Duration { get; set; } = 120;
     public int ExamSeriesId { get; set; }
     public string? AudioUrl { get; set; }
+    public IFormFile? AudioFile { get; set; }
 }

@@ -1,4 +1,4 @@
-﻿@page "/Admin/Exams/{examId:int}/Questions/Create/Listening"
+@page "/Admin/Exams/{examId:int}/Questions/Create/Listening"
 @model Storefront.Web.Pages.Admin.Exams.Questions.ListeningModel
 @{
     Layout = "_ModeratorLayout";
@@ -45,7 +45,7 @@
         <input type="hidden" asp-for="Form.GroupId" />
 
         <!-- Left: Wizard Steps -->
-        <div class="lg:col-span-7 qc-form-card min-h-[400px]">
+        <div class="lg:col-span-12 qc-form-card min-h-[400px]">
         
         <!-- ============================================== -->
         <!-- STEP 1: Media & Group Configuration -->
@@ -361,7 +361,7 @@
         </div>
 
         <!-- Right: Live Preview Panel -->
-        <div class="lg:col-span-5 qc-preview-panel">
+        <div class="hidden qc-preview-panel">
             <div class="qc-preview-panel__label">
                 <span class="material-symbols-outlined">visibility</span>
                 Learner Live Preview

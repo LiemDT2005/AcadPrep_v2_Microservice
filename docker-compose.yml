@@ -50,11 +50,12 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - Urls=http://0.0.0.0:5006
-      - ConnectionStrings__Sqlite=Data Source=/data/content.db
+      - ConnectionStrings__Default=Server=sqlserver,1433;Database=AcadPrep_ContentDb;User Id=sa;Password=Password123!;TrustServerCertificate=True
       - Services__ExamApi=http://exam.api:5003
       - InternalApiKey=${ACADPREP_INTERNAL_API_KEY:-AcadPrep_Local_Exam_Content_ChangeBeforeDeploy}
-    volumes:
-      - content-data:/data
+    depends_on:
+      sqlserver:
+        condition: service_healthy
 
   learning.api:
     build:
@@ -145,7 +146,4 @@ services:
       - apigateway
 
 volumes:
-  content-data:
   identity-data:
-
-
