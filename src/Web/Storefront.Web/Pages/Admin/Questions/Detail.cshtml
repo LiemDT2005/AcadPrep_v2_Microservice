@@ -3,7 +3,7 @@
 @{
     Layout = "_ModeratorLayout";
     var q = Model.Question;
-    ViewData["Title"] = $"Question #{q.QuestionNumber} (Part {q.Part}) - Detail";
+    ViewData["Title"] = $"Question #{q.QuestionNumber} (Part {q.Part}) - Edit";
 
     string builderEditUrl = q.Part switch
     {
@@ -21,36 +21,12 @@
 <div class="w-full flex flex-col gap-lg pb-12">
     <!-- BREADCRUMB -->
     <nav class="qc-breadcrumb" aria-label="Breadcrumb">
-        <a href="/Admin/Questions">Question Bank</a>
+        <a href="/Admin/Exams">Exams</a>
+        <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+        <a href="/Admin/Exams/Edit?id=@q.ExamId">@q.ExamTitle</a>
         <span class="material-symbols-outlined text-[14px]">chevron_right</span>
         <span class="qc-breadcrumb-current">Question #@q.QuestionNumber (Part @q.Part)</span>
     </nav>
-
-    <!-- ALERTS -->
-    @if (!string.IsNullOrEmpty(Model.SuccessMessage))
-    {
-        <div class="bg-tertiary-fixed/30 border border-tertiary text-on-tertiary-fixed-variant rounded-xl p-md flex items-center justify-between shadow-sm">
-            <div class="flex items-center gap-sm">
-                <span class="material-symbols-outlined text-tertiary">check_circle</span>
-                <span class="font-body-md font-medium">@Model.SuccessMessage</span>
-            </div>
-            <button type="button" onclick="this.parentElement.remove()" class="text-on-tertiary-fixed-variant hover:opacity-75">
-                <span class="material-symbols-outlined text-sm">close</span>
-            </button>
-        </div>
-    }
-    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
-    {
-        <div class="bg-error-container border border-error text-on-error-container rounded-xl p-md flex items-center justify-between shadow-sm">
-            <div class="flex items-center gap-sm">
-                <span class="material-symbols-outlined text-error">error</span>
-                <span class="font-body-md font-medium">@Model.ErrorMessage</span>
-            </div>
-            <button type="button" onclick="this.parentElement.remove()" class="text-on-error-container hover:opacity-75">
-                <span class="material-symbols-outlined text-sm">close</span>
-            </button>
-        </div>
-    }
 
     <!-- HERO HEADER -->
     <div class="qc-page-hero">
@@ -80,9 +56,9 @@
             </div>
 
             <div class="flex items-center gap-sm flex-wrap">
-                <a href="/Admin/Questions" class="qc-btn-ghost">
+                <a href="/Admin/Exams/Edit?id=@q.ExamId" class="qc-btn-ghost">
                     <span class="material-symbols-outlined text-[18px]">arrow_back</span>
-                    Back to List
+                    Back to Exam Studio
                 </a>
                 <a href="@builderEditUrl" class="qc-btn-secondary">
                     <span class="material-symbols-outlined text-[18px]">open_in_new</span>
@@ -97,155 +73,12 @@
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-lg items-start">
-        <!-- LEFT 7 COLS: QUESTION PREVIEW & EMBEDDED EXAMS (UC-17.3) -->
-        <div class="lg:col-span-7 flex flex-col gap-lg">
-            <!-- Question Content Card -->
-            <div class="qc-section-card flex flex-col gap-md">
-                <div class="qc-section-title">
-                    <span class="material-symbols-outlined">visibility</span>
-                    <h3>Question Preview &amp; Answer Breakdown (UC-17.3)</h3>
-                </div>
-
-                @if (!string.IsNullOrEmpty(q.QuestionGroupName))
-                {
-                    <div class="p-sm rounded-lg bg-primary/5 border border-primary/20 flex items-center gap-xs text-primary font-label-md text-label-md">
-                        <span class="material-symbols-outlined text-[18px]">folder_special</span>
-                        Belongs to Set/Group: <strong>@q.QuestionGroupName</strong>
-                    </div>
-                }
-
-                @if (!string.IsNullOrEmpty(q.PassageContent))
-                {
-                    <div class="p-md rounded-xl bg-surface-container-low border border-outline-variant/30">
-                        <span class="font-label-sm text-label-sm uppercase text-outline font-bold block mb-xs">Reading Passage Content</span>
-                        <div class="font-body-sm text-body-sm text-on-surface whitespace-pre-line leading-relaxed">@q.PassageContent</div>
-                    </div>
-                }
-
-                @if (!string.IsNullOrEmpty(q.ImageUrl) || !string.IsNullOrEmpty(q.PassageImageUrl))
-                {
-                    <div class="p-md rounded-xl bg-surface-container-low border border-outline-variant/30">
-                        <span class="font-label-sm text-label-sm uppercase text-outline font-bold block mb-xs">Attached Photograph / Graphic</span>
-                        <img src="@(q.ImageUrl ?? q.PassageImageUrl)" alt="Question Graphic" class="max-h-72 rounded-lg object-contain border border-outline-variant/20" />
-                    </div>
-                }
-
-                @if (!string.IsNullOrEmpty(q.AudioUrl))
-                {
-                    <div class="p-md rounded-xl bg-surface-container-low border border-outline-variant/30 flex flex-col gap-xs">
-                        <div class="flex items-center justify-between">
-                            <span class="font-label-sm text-label-sm uppercase text-outline font-bold flex items-center gap-1">
-                                <span class="material-symbols-outlined text-primary text-sm">audiotrack</span>
-                                Audio Track
-                            </span>
-                            @if (q.AudioStartSecond.HasValue && q.AudioEndSecond.HasValue)
-                            {
-                                <span class="text-xs font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-full">
-                                    Segment: @(q.AudioStartSecond)s → @(q.AudioEndSecond)s
-                                </span>
-                            }
-                        </div>
-                        <audio controls src="@q.AudioUrl" class="w-full mt-1"></audio>
-                    </div>
-                }
-
-                <!-- Stem -->
-                <div class="p-md rounded-xl bg-surface border border-outline-variant/25">
-                    <span class="font-label-sm text-label-sm uppercase text-outline font-bold block mb-1">Question Stem</span>
-                    <p class="font-title-md text-title-md font-semibold text-on-surface">
-                        Q@(q.QuestionNumber). @(string.IsNullOrWhiteSpace(q.QuestionText) ? "(Audio-only prompt)" : q.QuestionText)
-                    </p>
-                </div>
-
-                <!-- Options -->
-                <div class="flex flex-col gap-sm">
-                    <span class="font-label-sm text-label-sm uppercase text-outline font-bold">Answer Choices</span>
-                    @foreach (var opt in q.Options.OrderBy(o => o.OptionLetter))
-                    {
-                        var isCorrect = opt.OptionLetter == q.CorrectOption;
-                        <div class="flex items-center justify-between p-3.5 rounded-xl border transition-all @(isCorrect ? "bg-tertiary-fixed/25 border-tertiary text-on-tertiary-fixed-variant font-bold" : "bg-surface border-outline-variant/30 text-on-surface")">
-                            <div class="flex items-center gap-sm">
-                                <span class="w-7 h-7 rounded-full flex items-center justify-center font-label-md text-label-md @(isCorrect ? "bg-tertiary text-on-tertiary" : "bg-surface-container text-on-surface-variant")">
-                                    @opt.OptionLetter
-                                </span>
-                                <span class="font-body-md text-body-md">@opt.OptionText</span>
-                            </div>
-                            @if (isCorrect)
-                            {
-                                <span class="inline-flex items-center gap-1 text-xs font-bold text-tertiary bg-tertiary-fixed/40 px-2.5 py-1 rounded-full">
-                                    <span class="material-symbols-outlined text-[15px]">check_circle</span>
-                                    Correct Answer
-                                </span>
-                            }
-                        </div>
-                    }
-                </div>
-
-                <!-- Explanation -->
-                <div class="p-md rounded-xl bg-primary/5 border border-primary/20">
-                    <span class="font-label-sm text-label-sm uppercase text-primary font-bold flex items-center gap-1 mb-1">
-                        <span class="material-symbols-outlined text-[16px]">lightbulb</span>
-                        Explanation / Solution Rationale
-                    </span>
-                    <p class="font-body-sm text-body-sm text-on-surface leading-relaxed">
-                        @(string.IsNullOrWhiteSpace(q.Explanation) ? "No explanation provided yet." : q.Explanation)
-                    </p>
-                </div>
-            </div>
-
-            <!-- Embedded Exams Card (UC-17.3: Chi tiết câu hỏi + các đề đang nhúng) -->
-            <div class="qc-section-card flex flex-col gap-md">
-                <div class="qc-section-title">
-                    <span class="material-symbols-outlined">inventory_2</span>
-                    <h3>Embedded Exams (@q.EmbeddedExams.Count)</h3>
-                </div>
-                <p class="font-body-xs text-body-xs text-on-surface-variant -mt-2">
-                    List of exams currently embedding this question in Content Service.
-                </p>
-
-                <div class="flex flex-col gap-sm">
-                    @foreach (var ex in q.EmbeddedExams)
-                    {
-                        <div class="p-md rounded-xl border border-outline-variant/30 bg-surface flex flex-col sm:flex-row sm:items-center justify-between gap-sm">
-                            <div>
-                                <div class="flex items-center gap-sm flex-wrap">
-                                    <span class="font-label-xs text-label-xs text-outline font-bold">EXAM #@ex.ExamId</span>
-                                    <span class="px-2 py-0.5 rounded text-xs font-semibold bg-primary/10 text-primary">@ex.ExamType</span>
-                                    @if (ex.IsActive)
-                                    {
-                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-tertiary-fixed text-on-tertiary-fixed-variant">
-                                            <span class="material-symbols-outlined text-[13px]">visibility</span>
-                                            Published (Active)
-                                        </span>
-                                    }
-                                    else
-                                    {
-                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary-container text-on-secondary-container">
-                                            @ex.Status
-                                        </span>
-                                    }
-                                </div>
-                                <h4 class="font-title-md text-title-md font-bold text-on-surface mt-1">@ex.ExamTitle</h4>
-                                <p class="font-body-xs text-body-xs text-on-surface-variant mt-0.5">
-                                    Series: @(ex.ExamSeriesName ?? "General") · Duration: @ex.Duration mins
-                                </p>
-                            </div>
-                            <div class="flex items-center gap-xs">
-                                <a href="/Admin/Exams/Detail?id=@ex.ExamId" class="qc-btn-ghost text-xs py-1.5 px-3">View Exam</a>
-                                <a href="/Admin/Exams/Edit?id=@ex.ExamId" class="qc-btn-secondary text-xs py-1.5 px-3">Edit Exam Tree</a>
-                            </div>
-                        </div>
-                    }
-                </div>
-            </div>
-        </div>
-
-        <!-- RIGHT 5 COLS: QUICK UPDATE QUESTION / AUDIO / ANSWERS FORM (UC-17.4) -->
-        <div class="lg:col-span-5">
+        <!-- LEFT 8 COLS: UPDATE QUESTION / AUDIO / ANSWERS FORM (UC-17.4) -->
+        <div class="lg:col-span-8">
             <div class="qc-section-card flex flex-col gap-md">
                 <div class="qc-section-title">
                     <span class="material-symbols-outlined">edit_square</span>
-                    <h3>Update Question / Audio / Answers (UC-17.4)</h3>
+                    <h3>Edit Question, Audio &amp; Answer Choices (UC-17.4)</h3>
                 </div>
 
                 <form method="post" asp-page-handler="Update" asp-route-id="@q.Id" enctype="multipart/form-data" class="flex flex-col gap-md">
@@ -253,8 +86,8 @@
                     <input type="hidden" asp-for="EditForm.AudioUrl" />
                     <input type="hidden" asp-for="EditForm.ImageUrl" />
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-sm">
-                        <div class="flex flex-col gap-2xs sm:col-span-2">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-sm">
+                        <div class="flex flex-col gap-2xs">
                             <label class="qc-label">Embedded Exam</label>
                             <select asp-for="EditForm.ExamId" class="qc-select">
                                 @foreach (var ex in Model.Exams)
@@ -304,7 +137,7 @@
                         <textarea asp-for="EditForm.QuestionText" rows="3" class="qc-textarea"></textarea>
                     </div>
 
-                    <div class="grid grid-cols-1 gap-sm p-sm rounded-xl bg-surface-container-low/50 border border-outline-variant/20">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-sm p-sm rounded-xl bg-surface-container-low/50 border border-outline-variant/20">
                         <div class="flex flex-col gap-2xs">
                             <label class="qc-label">Replace Audio File (.mp3 / .wav)</label>
                             <input type="file" asp-for="EditForm.AudioFile" accept="audio/*" class="text-xs text-on-surface-variant" />
@@ -354,6 +187,53 @@
                         Save Changes
                     </button>
                 </form>
+            </div>
+        </div>
+
+        <!-- RIGHT 4 COLS: EMBEDDED EXAMS INFO (UC-17.3) -->
+        <div class="lg:col-span-4 flex flex-col gap-lg">
+            <div class="qc-section-card flex flex-col gap-md">
+                <div class="qc-section-title">
+                    <span class="material-symbols-outlined">inventory_2</span>
+                    <h3>Embedded Exams (@q.EmbeddedExams.Count)</h3>
+                </div>
+                <p class="font-body-xs text-body-xs text-on-surface-variant -mt-2">
+                    Exams currently embedding this question in Content Service.
+                </p>
+
+                <div class="flex flex-col gap-sm">
+                    @foreach (var ex in q.EmbeddedExams)
+                    {
+                        <div class="p-md rounded-xl border border-outline-variant/30 bg-surface flex flex-col gap-sm">
+                            <div>
+                                <div class="flex items-center gap-sm flex-wrap">
+                                    <span class="font-label-xs text-label-xs text-outline font-bold">EXAM #@ex.ExamId</span>
+                                    <span class="px-2 py-0.5 rounded text-xs font-semibold bg-primary/10 text-primary">@ex.ExamType</span>
+                                    @if (ex.IsActive)
+                                    {
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-tertiary-fixed text-on-tertiary-fixed-variant">
+                                            <span class="material-symbols-outlined text-[13px]">visibility</span>
+                                            Published
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary-container text-on-secondary-container">
+                                            @ex.Status
+                                        </span>
+                                    }
+                                </div>
+                                <h4 class="font-title-md text-title-md font-bold text-on-surface mt-1">@ex.ExamTitle</h4>
+                                <p class="font-body-xs text-body-xs text-on-surface-variant mt-0.5">
+                                    Series: @(ex.ExamSeriesName ?? "General") · Duration: @ex.Duration mins
+                                </p>
+                            </div>
+                            <div class="flex items-center gap-xs">
+                                <a href="/Admin/Exams/Edit?id=@ex.ExamId" class="qc-btn-secondary text-xs py-1.5 px-3 w-full justify-center">Open Exam Studio</a>
+                            </div>
+                        </div>
+                    }
+                </div>
             </div>
         </div>
     </div>

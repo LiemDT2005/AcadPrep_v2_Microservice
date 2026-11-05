@@ -1,4 +1,4 @@
-﻿@page "/Admin/Exams/{examId:int}/Questions/Create/ListeningQuestion"
+@page "/Admin/Exams/{examId:int}/Questions/Create/ListeningQuestion"
 @model Storefront.Web.Pages.Admin.Exams.Questions.ListeningQuestionModel
 @{
     Layout = "_ModeratorLayout";
@@ -30,7 +30,7 @@
     <partial name="_ValidationAlerts" model="new ValidationAlertsViewModel { ErrorMessage = Model.ErrorMessage, ValidationErrors = Model.ValidationErrors }" />
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-lg items-start">
-        <form method="post" enctype="multipart/form-data" class="lg:col-span-7 qc-form-card" novalidate>
+        <form method="post" enctype="multipart/form-data" class="lg:col-span-12 qc-form-card" novalidate>
             <input type="hidden" asp-for="Form.Part" />
             <input type="hidden" asp-for="Form.EditId" />
 
@@ -238,7 +238,7 @@
             </div>
         </form>
 
-        <div class="lg:col-span-5 qc-preview-panel">
+        <div class="hidden qc-preview-panel">
             <div class="qc-preview-panel__label">
                 <span class="material-symbols-outlined">visibility</span>
                 Learner Live Preview

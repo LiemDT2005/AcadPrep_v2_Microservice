@@ -11,17 +11,22 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Database & Infrastructure
-var connStr = builder.Configuration.GetConnectionString("Sqlite") ?? "Data Source=content.db";
+// 1. Database & Infrastructure (Docker SQL Server primary)
+var connStr = builder.Configuration.GetConnectionString("Default")
+    ?? "Server=localhost,1433;Database=AcadPrep_ContentDb;User Id=sa;Password=Password123!;TrustServerCertificate=True";
 builder.Services.AddDbContext<ContentDbContext>(options =>
-    options.UseSqlite(connStr));
+    options.UseSqlServer(connStr, sql =>
+    {
+        sql.EnableRetryOnFailure();
+        sql.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+    }));
 
 builder.Services.AddScoped<IContentDbContext>(sp => sp.GetRequiredService<ContentDbContext>());
 
 // 2. HttpClient & Service Injections
 builder.Services.AddHttpClient<IExamAttemptChecker, HttpExamAttemptChecker>(client =>
 {
-    client.Timeout = TimeSpan.FromMilliseconds(500);
+    client.Timeout = TimeSpan.FromSeconds(2);
 });
 builder.Services.AddScoped<IExamRepository, ExamRepository>();
 builder.Services.AddScoped<IExamSeriesRepository, ExamSeriesRepository>();
@@ -90,6 +95,7 @@ app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapGet("/", () => Results.Redirect("/swagger"));
 app.MapGet("/health", () => Results.Ok(new { status = "Healthy", service = "Content" }));
 
 app.Run();

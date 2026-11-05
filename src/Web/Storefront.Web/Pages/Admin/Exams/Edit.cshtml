@@ -2,7 +2,7 @@
 @model Storefront.Web.Pages.Admin.Exams.EditModel
 @{
     Layout = "_ModeratorLayout";
-    ViewData["Title"] = "Edit Exam - " + Model.Exam.Title;
+    ViewData["Title"] = "Exam Studio - " + Model.Exam.Title;
 
     var structure = Storefront.Web.Pages.Admin.Exams.ExamStructureViewModel.From(
         Model.Exam,
@@ -15,19 +15,684 @@
         Exam = Model.Exam,
         TotalQuestions = structure.TotalQuestions,
         IsReadOnly = false,
-        BreadcrumbCurrent = "Edit Exam",
+        BreadcrumbCurrent = "Exam Studio (Edit & Review)",
         HeroIcon = "edit_note"
     };
+
+    var allQuestions = (Model.Exam.Questions ?? []).OrderBy(q => q.QuestionNumber).ToList();
 }
 
 <link rel="stylesheet" href="~/css/admin-question-create.css" />
 
-<div class="w-full flex flex-col gap-lg pb-12">
+<div class="w-full flex flex-col gap-md pb-12">
     <partial name="_ExamPageHero" model="hero" />
     <partial name="_ExamAlerts" model="structure" />
-    <partial name="_ExamMetadataForm" model="Model" />
-    <partial name="_ExamStructureProgress" model="structure" />
-    <partial name="_ExamQuestionTree" model="structure" />
+
+    <!-- SYNCHRONIZED 2-COLUMN SPLIT LAYOUT: LEFT = EDIT & TOEIC BUILDER | RIGHT = LIVE EXAM REVIEW -->
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-lg items-start">
+
+        <!-- ===================================================================== -->
+        <!-- LEFT COLUMN (6 COLS): EDIT EXAM, ADD QUESTION & CREATE PASSAGE        -->
+        <!-- ===================================================================== -->
+        <div class="xl:col-span-6 flex flex-col gap-md">
+
+            <!-- Studio Mode Switcher Tabs -->
+            <div class="bg-surface-container-lowest p-1.5 rounded-2xl border border-outline-variant/40 shadow-sm flex flex-wrap gap-1">
+                <button type="button" id="studioTabBtn-builder" onclick="switchStudioTab('builder')"
+                        class="flex-1 py-2.5 px-3 rounded-xl font-label-md text-label-md font-bold transition-all flex items-center justify-center gap-xs bg-primary text-on-primary shadow-sm cursor-pointer">
+                    <span class="material-symbols-outlined text-[18px]">dashboard_customize</span>
+                    <span>1. TOEIC Builder (Part 1–7)</span>
+                </button>
+                <button type="button" id="studioTabBtn-passages" onclick="switchStudioTab('passages')"
+                        class="flex-1 py-2.5 px-3 rounded-xl font-label-md text-label-md font-semibold transition-all flex items-center justify-center gap-xs text-on-surface-variant hover:bg-surface-container cursor-pointer">
+                    <span class="material-symbols-outlined text-[18px]">menu_book</span>
+                    <span>2. Passages (@Model.ExamPassages.Count)</span>
+                </button>
+                <button type="button" id="studioTabBtn-metadata" onclick="switchStudioTab('metadata')"
+                        class="flex-1 py-2.5 px-3 rounded-xl font-label-md text-label-md font-semibold transition-all flex items-center justify-center gap-xs text-on-surface-variant hover:bg-surface-container cursor-pointer">
+                    <span class="material-symbols-outlined text-[18px]">tune</span>
+                    <span>3. Exam Info</span>
+                </button>
+            </div>
+
+            <!-- TAB 1: SCIENTIFIC TOEIC BUILDER (ADD QUESTION & CREATE PASSAGE BY PART) -->
+            <div id="studioTab-builder" class="flex flex-col gap-md">
+                <!-- Quick Action Bar -->
+                <div class="bg-surface-container-lowest p-md rounded-2xl border border-outline-variant/40 shadow-sm flex flex-wrap items-center justify-between gap-sm">
+                    <div>
+                        <h3 class="font-title-md text-title-md font-bold text-on-surface">TOEIC Exam Content Studio</h3>
+                        <p class="font-body-xs text-body-xs text-on-surface-variant">Organized by standard TOEIC Listening (Parts 1–4) &amp; Reading (Parts 5–7)</p>
+                    </div>
+                    <div class="flex items-center gap-xs flex-wrap">
+                        <button type="button" onclick="document.getElementById('quickAddQuestionModal').classList.remove('hidden')"
+                                class="qc-btn-secondary text-xs py-2 px-3 cursor-pointer">
+                            <span class="material-symbols-outlined text-sm">add_circle</span>
+                            + Quick Add Question
+                        </button>
+                        <button type="button" onclick="switchStudioTab('passages'); document.getElementById('newPassageContent')?.focus();"
+                                class="qc-btn-primary text-xs py-2 px-3 cursor-pointer">
+                            <span class="material-symbols-outlined text-sm">post_add</span>
+                            + Create Passage
+                        </button>
+                    </div>
+                </div>
+
+                <!-- SECTION I: LISTENING COMPREHENSION (PARTS 1 - 4) -->
+                <div class="bg-surface-container-lowest p-md rounded-2xl border border-outline-variant/40 shadow-sm flex flex-col gap-sm">
+                    <div class="flex items-center justify-between border-b border-outline-variant/30 pb-xs">
+                        <div class="flex items-center gap-xs">
+                            <span class="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                                <span class="material-symbols-outlined text-[18px]">headphones</span>
+                            </span>
+                            <div>
+                                <h4 class="font-title-sm text-title-sm font-bold text-on-surface">SECTION I: LISTENING (Parts 1 – 4)</h4>
+                                <p class="text-xs text-on-surface-variant">Photographs, Question-Response, Conversations &amp; Short Talks</p>
+                            </div>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-primary/10 text-primary">
+                            @(structure.Part1Count + structure.Part2Count + structure.Part3Count + structure.Part4Count) / 100 Qs
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-sm">
+                        <!-- Part 1 Card -->
+                        <div class="p-3.5 rounded-xl border border-outline-variant/30 bg-surface-container-low/40 flex flex-col justify-between gap-sm">
+                            <div>
+                                <div class="flex items-center justify-between">
+                                    <span class="font-bold text-sm text-on-surface">Part 1: Photographs</span>
+                                    <span class="text-xs font-bold px-2 py-0.5 rounded bg-surface-container text-primary">@structure.Part1Count/@ExamStructureViewModel.TargetP1</span>
+                                </div>
+                                <p class="text-xs text-on-surface-variant mt-0.5">Q1–Q6 · 1 Photo + 4 Audio Statements</p>
+                            </div>
+                            <div class="flex items-center justify-between pt-1 border-t border-outline-variant/20">
+                                <button type="button" onclick="filterReviewByPart(1)" class="text-xs font-semibold text-on-surface-variant hover:text-primary cursor-pointer">
+                                    Review (@structure.Part1Count) →
+                                </button>
+                                <a href="/Admin/Exams/@Model.Exam.Id/Questions/Create/ListeningQuestion?part=1"
+                                   class="text-xs font-bold text-primary hover:underline flex items-center gap-0.5">
+                                    <span class="material-symbols-outlined text-[15px]">add</span> Add Part 1 Q
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Part 2 Card -->
+                        <div class="p-3.5 rounded-xl border border-outline-variant/30 bg-surface-container-low/40 flex flex-col justify-between gap-sm">
+                            <div>
+                                <div class="flex items-center justify-between">
+                                    <span class="font-bold text-sm text-on-surface">Part 2: Question-Response</span>
+                                    <span class="text-xs font-bold px-2 py-0.5 rounded bg-surface-container text-primary">@structure.Part2Count/@ExamStructureViewModel.TargetP2</span>
+                                </div>
+                                <p class="text-xs text-on-surface-variant mt-0.5">Q7–Q31 · Audio Prompt + 3 Options (A/B/C)</p>
+                            </div>
+                            <div class="flex items-center justify-between pt-1 border-t border-outline-variant/20">
+                                <button type="button" onclick="filterReviewByPart(2)" class="text-xs font-semibold text-on-surface-variant hover:text-primary cursor-pointer">
+                                    Review (@structure.Part2Count) →
+                                </button>
+                                <a href="/Admin/Exams/@Model.Exam.Id/Questions/Create/ListeningQuestion?part=2"
+                                   class="text-xs font-bold text-primary hover:underline flex items-center gap-0.5">
+                                    <span class="material-symbols-outlined text-[15px]">add</span> Add Part 2 Q
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Part 3 Card -->
+                        <div class="p-3.5 rounded-xl border border-outline-variant/30 bg-surface-container-low/40 flex flex-col justify-between gap-sm">
+                            <div>
+                                <div class="flex items-center justify-between">
+                                    <span class="font-bold text-sm text-on-surface">Part 3: Conversations</span>
+                                    <span class="text-xs font-bold px-2 py-0.5 rounded bg-surface-container text-primary">@structure.Part3Count/@ExamStructureViewModel.TargetP3</span>
+                                </div>
+                                <p class="text-xs text-on-surface-variant mt-0.5">Q32–Q70 · Audio Group of 3 Questions</p>
+                            </div>
+                            <div class="flex items-center justify-between pt-1 border-t border-outline-variant/20">
+                                <button type="button" onclick="filterReviewByPart(3)" class="text-xs font-semibold text-on-surface-variant hover:text-primary cursor-pointer">
+                                    Review (@structure.Part3Count) →
+                                </button>
+                                <a href="/Admin/Exams/@Model.Exam.Id/Questions/Create/Listening?part=3"
+                                   class="text-xs font-bold text-primary hover:underline flex items-center gap-0.5">
+                                    <span class="material-symbols-outlined text-[15px]">add</span> Add Part 3 Group
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Part 4 Card -->
+                        <div class="p-3.5 rounded-xl border border-outline-variant/30 bg-surface-container-low/40 flex flex-col justify-between gap-sm">
+                            <div>
+                                <div class="flex items-center justify-between">
+                                    <span class="font-bold text-sm text-on-surface">Part 4: Short Talks</span>
+                                    <span class="text-xs font-bold px-2 py-0.5 rounded bg-surface-container text-primary">@structure.Part4Count/@ExamStructureViewModel.TargetP4</span>
+                                </div>
+                                <p class="text-xs text-on-surface-variant mt-0.5">Q71–Q100 · Talk Group of 3 Questions</p>
+                            </div>
+                            <div class="flex items-center justify-between pt-1 border-t border-outline-variant/20">
+                                <button type="button" onclick="filterReviewByPart(4)" class="text-xs font-semibold text-on-surface-variant hover:text-primary cursor-pointer">
+                                    Review (@structure.Part4Count) →
+                                </button>
+                                <a href="/Admin/Exams/@Model.Exam.Id/Questions/Create/Listening?part=4"
+                                   class="text-xs font-bold text-primary hover:underline flex items-center gap-0.5">
+                                    <span class="material-symbols-outlined text-[15px]">add</span> Add Part 4 Group
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION II: READING COMPREHENSION & PASSAGES (PARTS 5 - 7) -->
+                <div class="bg-surface-container-lowest p-md rounded-2xl border border-outline-variant/40 shadow-sm flex flex-col gap-sm">
+                    <div class="flex items-center justify-between border-b border-outline-variant/30 pb-xs">
+                        <div class="flex items-center gap-xs">
+                            <span class="w-8 h-8 rounded-lg bg-tertiary/10 text-tertiary flex items-center justify-center">
+                                <span class="material-symbols-outlined text-[18px]">menu_book</span>
+                            </span>
+                            <div>
+                                <h4 class="font-title-sm text-title-sm font-bold text-on-surface">SECTION II: READING &amp; PASSAGES (Parts 5 – 7)</h4>
+                                <p class="text-xs text-on-surface-variant">Incomplete Sentences, Text Completion Passages &amp; Reading Sets</p>
+                            </div>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-tertiary-fixed text-on-tertiary-fixed-variant">
+                            @(structure.Part5Count + structure.Part6Count + structure.Part7Count) / 100 Qs
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-sm">
+                        <!-- Part 5 Card -->
+                        <div class="p-3.5 rounded-xl border border-outline-variant/30 bg-surface-container-low/40 flex items-center justify-between gap-sm flex-wrap">
+                            <div>
+                                <div class="flex items-center gap-sm">
+                                    <span class="font-bold text-sm text-on-surface">Part 5: Incomplete Sentences</span>
+                                    <span class="text-xs font-bold px-2 py-0.5 rounded bg-surface-container text-tertiary">@structure.Part5Count/@ExamStructureViewModel.TargetP5 Qs</span>
+                                </div>
+                                <p class="text-xs text-on-surface-variant mt-0.5">Q101–Q130 · Standalone Grammar &amp; Vocabulary Sentences</p>
+                            </div>
+                            <div class="flex items-center gap-sm">
+                                <button type="button" onclick="filterReviewByPart(5)" class="text-xs font-semibold text-on-surface-variant hover:text-primary cursor-pointer">
+                                    Review →
+                                </button>
+                                <a href="/Admin/Exams/@Model.Exam.Id/Questions/Create/Part5"
+                                   class="qc-btn-secondary text-xs py-1.5 px-3">
+                                    <span class="material-symbols-outlined text-sm">add</span> + Add Part 5 Question
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Part 6 Card (Passage + 4 Questions) -->
+                        <div class="p-3.5 rounded-xl border border-outline-variant/30 bg-surface-container-low/40 flex items-center justify-between gap-sm flex-wrap">
+                            <div>
+                                <div class="flex items-center gap-sm">
+                                    <span class="font-bold text-sm text-on-surface">Part 6: Text Completion (Passage + 4 Blanks)</span>
+                                    <span class="text-xs font-bold px-2 py-0.5 rounded bg-surface-container text-tertiary">@structure.Part6Count/@ExamStructureViewModel.TargetP6 Qs</span>
+                                </div>
+                                <p class="text-xs text-on-surface-variant mt-0.5">Q131–Q146 · Reading Passage with 4 embedded blank questions</p>
+                            </div>
+                            <div class="flex items-center gap-sm">
+                                <button type="button" onclick="filterReviewByPart(6)" class="text-xs font-semibold text-on-surface-variant hover:text-primary cursor-pointer">
+                                    Review →
+                                </button>
+                                <a href="/Admin/Exams/@Model.Exam.Id/Questions/Create/Part6"
+                                   class="qc-btn-secondary text-xs py-1.5 px-3">
+                                    <span class="material-symbols-outlined text-sm">article</span> + Create Part 6 Passage
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Part 7 Card (1-3 Passages + 2-5 Questions) -->
+                        <div class="p-3.5 rounded-xl border border-outline-variant/30 bg-surface-container-low/40 flex items-center justify-between gap-sm flex-wrap">
+                            <div>
+                                <div class="flex items-center gap-sm">
+                                    <span class="font-bold text-sm text-on-surface">Part 7: Reading Comprehension (Single / Double / Triple Passage)</span>
+                                    <span class="text-xs font-bold px-2 py-0.5 rounded bg-surface-container text-tertiary">@structure.Part7Count/@ExamStructureViewModel.TargetP7 Qs</span>
+                                </div>
+                                <p class="text-xs text-on-surface-variant mt-0.5">Q147–Q200 · 1 to 3 Reading Passages with 2–5 comprehension questions</p>
+                            </div>
+                            <div class="flex items-center gap-sm">
+                                <button type="button" onclick="filterReviewByPart(7)" class="text-xs font-semibold text-on-surface-variant hover:text-primary cursor-pointer">
+                                    Review →
+                                </button>
+                                <a href="/Admin/Exams/@Model.Exam.Id/Questions/Create/Part7"
+                                   class="qc-btn-secondary text-xs py-1.5 px-3">
+                                    <span class="material-symbols-outlined text-sm">menu_book</span> + Create Part 7 Set
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Accordion Tree for Quick Editing by Part -->
+                <partial name="_ExamQuestionTree" model="structure" />
+            </div>
+
+            <!-- TAB 2: READING PASSAGES MANAGER INSIDE EXAM (UC-18.1 - UC-18.5) -->
+            <div id="studioTab-passages" class="hidden flex-col gap-md">
+                <!-- Create Standalone Passage Form (UC-18.2) -->
+                <div class="bg-surface-container-lowest p-lg rounded-2xl border border-outline-variant/40 shadow-sm flex flex-col gap-md">
+                    <div class="flex items-center justify-between border-b border-outline-variant/30 pb-xs">
+                        <div>
+                            <h3 class="font-title-md text-title-md font-bold text-on-surface flex items-center gap-xs">
+                                <span class="material-symbols-outlined text-primary">post_add</span>
+                                <span>Create Reading Passage in Exam (UC-18.2)</span>
+                            </h3>
+                            <p class="text-xs text-on-surface-variant">Add a reading passage to @Model.Exam.Title</p>
+                        </div>
+                    </div>
+
+                    <form method="post" asp-page-handler="CreatePassage" asp-route-id="@Model.Exam.Id" class="flex flex-col gap-sm">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-sm">
+                            <div class="sm:col-span-2">
+                                <label class="qc-label">Explanation / Title Note</label>
+                                <input type="text" asp-for="CreatePassageForm.Explanation" class="qc-input" placeholder="e.g. Internal Memo: Office Renovation Schedule" />
+                            </div>
+                            <div>
+                                <label class="qc-label">Display Order</label>
+                                <input type="number" asp-for="CreatePassageForm.DisplayOrder" min="1" class="qc-input" />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="qc-label">Passage Content <span class="text-error">*</span></label>
+                            <textarea asp-for="CreatePassageForm.Content" id="newPassageContent" rows="5" class="qc-textarea" placeholder="Paste or type the reading passage text (emails, notices, articles, memos)..." required></textarea>
+                        </div>
+
+                        <div class="flex justify-end">
+                            <button type="submit" class="qc-btn-primary cursor-pointer">
+                                <span class="material-symbols-outlined text-sm">save</span>
+                                Save Passage to Exam
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- List of Passages in this Exam (UC-18.1, UC-18.3, UC-18.4, UC-18.5) -->
+                <div class="bg-surface-container-lowest p-lg rounded-2xl border border-outline-variant/40 shadow-sm flex flex-col gap-md">
+                    <div class="flex items-center justify-between border-b border-outline-variant/30 pb-xs">
+                        <h3 class="font-title-md text-title-md font-bold text-on-surface flex items-center gap-xs">
+                            <span class="material-symbols-outlined text-primary">library_books</span>
+                            <span>Passages in this Exam (@Model.ExamPassages.Count)</span>
+                        </h3>
+                    </div>
+
+                    @if (Model.ExamPassages.Count == 0)
+                    {
+                        <p class="text-body-sm text-on-surface-variant text-center py-6">No passages in this exam yet.</p>
+                    }
+                    else
+                    {
+                        <div class="flex flex-col gap-sm">
+                            @foreach (var p in Model.ExamPassages)
+                            {
+                                <div class="p-md rounded-xl border border-outline-variant/30 bg-surface-container-low/40 flex flex-col gap-xs">
+                                    <div class="flex items-center justify-between gap-sm flex-wrap">
+                                        <div class="flex items-center gap-xs">
+                                            <span class="px-2 py-0.5 rounded bg-primary/10 text-primary text-xs font-bold">Passage #@p.Id</span>
+                                            <span class="px-2 py-0.5 rounded bg-tertiary-fixed text-on-tertiary-fixed-variant text-xs font-bold">Part @p.Part</span>
+                                            <span class="text-xs font-semibold text-on-surface-variant">
+                                                • @p.QuestionCount attached question(s)
+                                            </span>
+                                        </div>
+                                        <div class="flex items-center gap-xs">
+                                            <a href="/Admin/Passages/Detail?id=@p.Id" class="qc-btn-secondary text-xs py-1 px-2.5">
+                                                <span class="material-symbols-outlined text-xs">edit</span> Edit / Review
+                                            </a>
+                                            <form method="post" asp-page-handler="DeletePassage" asp-route-id="@Model.Exam.Id" class="inline">
+                                                <input type="hidden" name="passageId" value="@p.Id" />
+                                                <input type="hidden" name="deleteWithQuestions" value="false" />
+                                                <button type="submit" class="text-error hover:bg-error-container/30 px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-0.5 cursor-pointer"
+                                                        title="Delete Passage (UC-18.5)">
+                                                    <span class="material-symbols-outlined text-sm">delete</span> Delete
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                    <p class="text-xs text-on-surface line-clamp-2 whitespace-pre-line mt-1">@p.Content</p>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- TAB 3: EXAM METADATA & PUBLISH STATUS (UC-16.4) -->
+            <div id="studioTab-metadata" class="hidden flex-col gap-md">
+                <partial name="_ExamMetadataForm" model="Model" />
+
+                <div class="bg-surface-container-lowest p-md rounded-2xl border border-outline-variant/40 shadow-sm flex items-center justify-between flex-wrap gap-sm">
+                    <div>
+                        <h4 class="font-title-sm text-title-sm font-bold text-on-surface">Publish / Status Control (UC-16.4)</h4>
+                        <p class="text-xs text-on-surface-variant">Current Status: <strong>@Model.Exam.Status</strong></p>
+                    </div>
+                    <form method="post" asp-page-handler="ChangeStatus" asp-route-id="@Model.Exam.Id">
+                        @if (Model.Exam.Status == "Published")
+                        {
+                            <input type="hidden" name="status" value="Draft" />
+                            <button type="submit" class="bg-secondary-container text-on-secondary-container font-label-md px-4 py-2 rounded-xl cursor-pointer">
+                                Unpublish (Move to Draft)
+                            </button>
+                        }
+                        else
+                        {
+                            <input type="hidden" name="status" value="Published" />
+                            <button type="submit" class="bg-tertiary text-on-tertiary font-label-md px-4 py-2 rounded-xl cursor-pointer">
+                                Publish Exam Now
+                            </button>
+                        }
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===================================================================== -->
+        <!-- RIGHT COLUMN (6 COLS): LIVE EXAM REVIEW, STRUCTURE & FILTER           -->
+        <!-- ===================================================================== -->
+        <div class="xl:col-span-6 xl:sticky xl:top-4 flex flex-col gap-md">
+            <div class="bg-surface-container-lowest p-lg rounded-2xl border border-outline-variant/40 shadow-sm flex flex-col gap-md max-h-[calc(100vh-4rem)] overflow-y-auto">
+                <!-- Review Panel Header -->
+                <div class="flex items-center justify-between border-b border-outline-variant/30 pb-sm">
+                    <div class="flex items-center gap-sm">
+                        <span class="w-9 h-9 rounded-xl bg-primary text-on-primary flex items-center justify-center">
+                            <span class="material-symbols-outlined text-[20px]">visibility</span>
+                        </span>
+                        <div>
+                            <h3 class="font-headline-sm text-headline-sm font-bold text-on-surface">Exam Live Review</h3>
+                            <p class="text-xs text-on-surface-variant">
+                                @Model.Exam.Title • @Model.Exam.Duration mins • @structure.TotalQuestions Questions • @Model.ExamPassages.Count Passages
+                            </p>
+                        </div>
+                    </div>
+                    <span class="px-3 py-1 rounded-full text-xs font-bold @(Model.Exam.Status == "Published" ? "bg-tertiary-fixed text-on-tertiary-fixed-variant" : "bg-secondary-container text-on-secondary-container")">
+                        @Model.Exam.Status
+                    </span>
+                </div>
+
+                <!-- Compact 7-Part Progress Bar -->
+                <div class="grid grid-cols-7 gap-1.5">
+                    @for (int p = 1; p <= 7; p++)
+                    {
+                        var count = p switch { 1 => structure.Part1Count, 2 => structure.Part2Count, 3 => structure.Part3Count, 4 => structure.Part4Count, 5 => structure.Part5Count, 6 => structure.Part6Count, _ => structure.Part7Count };
+                        var target = p switch { 1 => ExamStructureViewModel.TargetP1, 2 => ExamStructureViewModel.TargetP2, 3 => ExamStructureViewModel.TargetP3, 4 => ExamStructureViewModel.TargetP4, 5 => ExamStructureViewModel.TargetP5, 6 => ExamStructureViewModel.TargetP6, _ => ExamStructureViewModel.TargetP7 };
+                        <button type="button" onclick="filterReviewByPart(@p)"
+                                class="p-2 rounded-lg border border-outline-variant/30 bg-surface-container-low hover:border-primary text-center transition-all cursor-pointer">
+                            <div class="text-[11px] font-bold text-on-surface">P@(p)</div>
+                            <div class="text-[10px] text-primary font-semibold">@count/@target</div>
+                        </button>
+                    }
+                </div>
+
+                <!-- Search & Filter Questions inside Exam Review (UC-17.6 & UC-17.7) -->
+                <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 bg-surface-container-low p-2.5 rounded-xl border border-outline-variant/30">
+                    <div class="sm:col-span-6 relative">
+                        <input type="text" id="reviewSearchInput" oninput="applyReviewFilters()"
+                               placeholder="Search question text, explanation..."
+                               class="w-full rounded-lg border border-outline-variant bg-white py-1.5 pl-3 pr-3 text-xs focus:border-primary focus:outline-none" />
+                    </div>
+                    <div class="sm:col-span-3">
+                        <select id="reviewPartFilter" onchange="applyReviewFilters()"
+                                class="w-full rounded-lg border border-outline-variant bg-white py-1.5 px-2 text-xs focus:border-primary focus:outline-none">
+                            <option value="0">All Parts (1–7)</option>
+                            @for (int p = 1; p <= 7; p++)
+                            {
+                                <option value="@p">Part @p</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="sm:col-span-3">
+                        <select id="reviewDiffFilter" onchange="applyReviewFilters()"
+                                class="w-full rounded-lg border border-outline-variant bg-white py-1.5 px-2 text-xs focus:border-primary focus:outline-none">
+                            <option value="All">All Difficulties</option>
+                            <option value="Easy">Easy</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Hard">Hard</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Full Exam Audio Preview if available -->
+                @if (!string.IsNullOrEmpty(Model.Exam.AudioUrl))
+                {
+                    <div class="p-2.5 rounded-xl bg-primary/5 border border-primary/20 flex items-center gap-sm">
+                        <span class="material-symbols-outlined text-primary text-sm">volume_up</span>
+                        <span class="text-xs font-bold text-primary shrink-0">Exam Audio:</span>
+                        <audio controls class="w-full h-8" src="@Model.Exam.AudioUrl"></audio>
+                    </div>
+                }
+
+                <!-- Live Review Cards List -->
+                <div id="reviewQuestionsList" class="flex flex-col gap-sm">
+                    @if (!allQuestions.Any())
+                    {
+                        <div class="p-8 text-center text-on-surface-variant text-sm bg-surface-container-low rounded-xl">
+                            No questions in this exam yet. Use the TOEIC Builder on the left to add questions or passages.
+                        </div>
+                    }
+                    else
+                    {
+                        @foreach (var q in allQuestions)
+                        {
+                            string qEditUrl = q.Part switch
+                            {
+                                1 or 2 => $"/Admin/Exams/{Model.Exam.Id}/Questions/Create/ListeningQuestion?part={q.Part}&editId={q.Id}",
+                                3 or 4 when q.QuestionGroupId.HasValue => $"/Admin/Exams/{Model.Exam.Id}/Questions/Create/Listening?part={q.Part}&groupId={q.QuestionGroupId}",
+                                5 => $"/Admin/Exams/{Model.Exam.Id}/Questions/Create/Part5?editId={q.Id}",
+                                6 when q.PassageId.HasValue => $"/Admin/Exams/{Model.Exam.Id}/Questions/Create/Part6?passageId={q.PassageId}",
+                                7 when q.QuestionGroupId.HasValue => $"/Admin/Exams/{Model.Exam.Id}/Questions/Create/Part7?groupId={q.QuestionGroupId}",
+                                _ => $"/Admin/Questions/Detail?id={q.Id}"
+                            };
+
+                            <div class="review-q-card p-3.5 rounded-xl border border-outline-variant/30 bg-surface hover:border-primary/40 transition-all flex flex-col gap-xs"
+                                 data-part="@q.Part"
+                                 data-diff="@(q.Difficulty ?? "Medium")"
+                                 data-search="@($"{q.QuestionNumber} {q.QuestionText} {q.Explanation} {q.PassageContent} {q.QuestionGroupName}".ToLowerInvariant())">
+                                <div class="flex items-center justify-between gap-xs flex-wrap">
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <span class="px-2 py-0.5 rounded bg-primary text-on-primary text-xs font-bold">Q@(q.QuestionNumber)</span>
+                                        <span class="px-2 py-0.5 rounded bg-primary/10 text-primary text-xs font-semibold">Part @q.Part</span>
+                                        <span class="px-2 py-0.5 rounded bg-surface-container text-on-surface-variant text-xs font-medium">@(q.Difficulty ?? "Medium")</span>
+                                        @if (!string.IsNullOrEmpty(q.QuestionGroupName))
+                                        {
+                                            <span class="text-xs text-outline truncate max-w-[180px]">• @q.QuestionGroupName</span>
+                                        }
+                                    </div>
+                                    <div class="flex items-center gap-1">
+                                        <a href="@qEditUrl" class="text-xs font-semibold text-primary hover:underline px-2 py-0.5 rounded hover:bg-primary/10">
+                                            Edit
+                                        </a>
+                                        <button type="button" onclick="confirmDelete('question', @q.Id, 'Q@(q.QuestionNumber)')"
+                                                class="text-xs font-semibold text-error hover:underline px-2 py-0.5 rounded hover:bg-error-container/20 cursor-pointer">
+                                            Delete
+                                        </button>
+                                    </div>
+                                </div>
+
+                                @if (!string.IsNullOrWhiteSpace(q.PassageContent))
+                                {
+                                    <div class="p-2.5 rounded-lg bg-surface-container-low border-l-4 border-primary text-xs text-on-surface whitespace-pre-line max-h-32 overflow-y-auto">
+                                        @q.PassageContent
+                                    </div>
+                                }
+
+                                @if (!string.IsNullOrWhiteSpace(q.QuestionText))
+                                {
+                                    <div class="font-semibold text-sm text-on-surface">@q.QuestionText</div>
+                                }
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 mt-0.5">
+                                    @foreach (var opt in q.Options.OrderBy(o => o.OptionLetter))
+                                    {
+                                        var isCorrect = opt.OptionLetter == q.CorrectOption;
+                                        <div class="px-2.5 py-1 rounded-lg text-xs flex items-center justify-between @(isCorrect ? "bg-tertiary-fixed/40 border border-tertiary text-on-tertiary-fixed-variant font-bold" : "bg-surface-container-low text-on-surface-variant")">
+                                            <span class="truncate">(@opt.OptionLetter) @opt.OptionText</span>
+                                            @if (isCorrect)
+                                            {
+                                                <span class="material-symbols-outlined text-tertiary text-[14px] shrink-0">check_circle</span>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+
+                                @if (!string.IsNullOrWhiteSpace(q.Explanation))
+                                {
+                                    <div class="text-[11px] text-on-surface-variant bg-primary/5 px-2.5 py-1 rounded mt-0.5">
+                                        <strong class="text-primary">Explanation:</strong> @q.Explanation
+                                    </div>
+                                }
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- QUICK ADD QUESTION MODAL INSIDE EXAM (UC-17.2) -->
+<div id="quickAddQuestionModal" class="qc-modal hidden">
+    <div class="qc-modal__backdrop" onclick="document.getElementById('quickAddQuestionModal').classList.add('hidden')"></div>
+    <div class="qc-modal__panel qc-modal__panel--lg overflow-x-hidden">
+        <div class="flex justify-between items-center border-b border-outline-variant/30 pb-xs">
+            <div>
+                <h3 class="font-headline-sm text-headline-sm font-bold text-on-surface">Quick Add Question to @Model.Exam.Title (UC-17.2)</h3>
+                <p class="text-xs text-on-surface-variant">Create a question for any TOEIC Part (1–7) and optionally attach to a Reading Passage</p>
+            </div>
+            <button type="button" onclick="document.getElementById('quickAddQuestionModal').classList.add('hidden')" class="p-1.5 rounded-lg hover:bg-surface-container cursor-pointer">
+                <span class="material-symbols-outlined text-sm">close</span>
+            </button>
+        </div>
+
+        <form method="post" asp-page-handler="QuickAddQuestion" asp-route-id="@Model.Exam.Id" class="flex flex-col gap-md pt-xs">
+            <!-- Row 1: 4 aligned columns on the same baseline -->
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-sm items-end">
+                <div class="flex flex-col justify-end">
+                    <label class="qc-label text-xs font-semibold text-on-surface-variant mb-1 truncate" title="TOEIC Part">TOEIC Part <span class="text-error">*</span></label>
+                    <select asp-for="QuickQuestionForm.Part" class="qc-select">
+                        @for (int p = 1; p <= 7; p++)
+                        {
+                            <option value="@p">Part @p</option>
+                        }
+                    </select>
+                </div>
+                <div class="flex flex-col justify-end">
+                    <label class="qc-label text-xs font-semibold text-on-surface-variant mb-1 truncate" title="Question Number">Question No. <span class="text-error">*</span></label>
+                    <input type="number" asp-for="QuickQuestionForm.QuestionNumber" min="1" max="200" class="qc-input" required />
+                </div>
+                <div class="flex flex-col justify-end">
+                    <label class="qc-label text-xs font-semibold text-on-surface-variant mb-1 truncate" title="Difficulty">Difficulty <span class="text-error">*</span></label>
+                    <select asp-for="QuickQuestionForm.Difficulty" class="qc-select">
+                        <option value="Easy">Easy</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Hard">Hard</option>
+                    </select>
+                </div>
+                <div class="flex flex-col justify-end">
+                    <label class="qc-label text-xs font-semibold text-on-surface-variant mb-1 truncate" title="Link Passage (Part 6/7)">Passage (Part 6/7)</label>
+                    <select asp-for="QuickQuestionForm.PassageId" class="qc-select truncate">
+                        <option value="">-- None --</option>
+                        @foreach (var pas in Model.ExamPassages)
+                        {
+                            <option value="@pas.Id">Passage #@pas.Id (Part @pas.Part)</option>
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex flex-col">
+                <label class="qc-label text-xs font-semibold text-on-surface-variant mb-1">Question Text <span class="text-error">*</span></label>
+                <textarea asp-for="QuickQuestionForm.QuestionText" rows="2" class="qc-textarea" placeholder="Enter question stem..." required></textarea>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-sm">
+                <div class="flex flex-col">
+                    <label class="qc-label text-xs font-semibold text-on-surface-variant mb-1">Option A <span class="text-error">*</span></label>
+                    <input type="text" asp-for="QuickQuestionForm.OptionA" class="qc-input" required />
+                </div>
+                <div class="flex flex-col">
+                    <label class="qc-label text-xs font-semibold text-on-surface-variant mb-1">Option B <span class="text-error">*</span></label>
+                    <input type="text" asp-for="QuickQuestionForm.OptionB" class="qc-input" required />
+                </div>
+                <div class="flex flex-col">
+                    <label class="qc-label text-xs font-semibold text-on-surface-variant mb-1">Option C <span class="text-error">*</span></label>
+                    <input type="text" asp-for="QuickQuestionForm.OptionC" class="qc-input" required />
+                </div>
+                <div class="flex flex-col">
+                    <label class="qc-label text-xs font-semibold text-on-surface-variant mb-1">Option D</label>
+                    <input type="text" asp-for="QuickQuestionForm.OptionD" class="qc-input" />
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-sm items-end">
+                <div class="flex flex-col justify-end">
+                    <label class="qc-label text-xs font-semibold text-on-surface-variant mb-1">Correct Answer <span class="text-error">*</span></label>
+                    <select asp-for="QuickQuestionForm.CorrectOption" class="qc-select">
+                        <option value="A">Option A</option>
+                        <option value="B">Option B</option>
+                        <option value="C">Option C</option>
+                        <option value="D">Option D</option>
+                    </select>
+                </div>
+                <div class="sm:col-span-2 flex flex-col justify-end">
+                    <label class="qc-label text-xs font-semibold text-on-surface-variant mb-1">Explanation</label>
+                    <input type="text" asp-for="QuickQuestionForm.Explanation" class="qc-input" placeholder="Why this option is correct..." />
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-sm pt-sm border-t border-outline-variant/30 mt-xs">
+                <button type="button" onclick="document.getElementById('quickAddQuestionModal').classList.add('hidden')" class="qc-btn-ghost cursor-pointer">Cancel</button>
+                <button type="submit" class="qc-btn-primary cursor-pointer">
+                    <span class="material-symbols-outlined text-sm">save</span>
+                    Save Question
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 
 <partial name="_ExamEditModals" model="structure" />
+
+@section Scripts {
+<script>
+    function switchStudioTab(tab) {
+        ['builder', 'passages', 'metadata'].forEach(t => {
+            const panel = document.getElementById('studioTab-' + t);
+            const btn = document.getElementById('studioTabBtn-' + t);
+            if (!panel || !btn) return;
+
+            if (t === tab) {
+                panel.classList.remove('hidden');
+                panel.classList.add('flex');
+                btn.className = 'flex-1 py-2.5 px-3 rounded-xl font-label-md text-label-md font-bold transition-all flex items-center justify-center gap-xs bg-primary text-on-primary shadow-sm cursor-pointer';
+            } else {
+                panel.classList.add('hidden');
+                panel.classList.remove('flex');
+                btn.className = 'flex-1 py-2.5 px-3 rounded-xl font-label-md text-label-md font-semibold transition-all flex items-center justify-center gap-xs text-on-surface-variant hover:bg-surface-container cursor-pointer';
+            }
+        });
+    }
+
+    function filterReviewByPart(part) {
+        const select = document.getElementById('reviewPartFilter');
+        if (select) {
+            select.value = String(part);
+            applyReviewFilters();
+        }
+    }
+
+    function applyReviewFilters() {
+        const keyword = (document.getElementById('reviewSearchInput')?.value || '').trim().toLowerCase();
+        const part = parseInt(document.getElementById('reviewPartFilter')?.value || '0', 10);
+        const diff = document.getElementById('reviewDiffFilter')?.value || 'All';
+
+        document.querySelectorAll('.review-q-card').forEach(card => {
+            const cPart = parseInt(card.getAttribute('data-part') || '0', 10);
+            const cDiff = card.getAttribute('data-diff') || 'Medium';
+            const cSearch = card.getAttribute('data-search') || '';
+
+            const matchPart = part === 0 || cPart === part;
+            const matchDiff = diff === 'All' || cDiff.toLowerCase() === diff.toLowerCase();
+            const matchKeyword = !keyword || cSearch.includes(keyword);
+
+            if (matchPart && matchDiff && matchKeyword) {
+                card.classList.remove('hidden');
+            } else {
+                card.classList.add('hidden');
+            }
+        });
+    }
+</script>
+}

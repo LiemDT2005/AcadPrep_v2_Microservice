@@ -1,4 +1,4 @@
-/* Shared styles for admin question creation pages */
+﻿/* Shared styles for admin question creation pages */
 
 /* ── Breadcrumb + back link (below layout header) ── */
 .qc-back-link {
@@ -153,20 +153,29 @@
 
 /* ── Form controls ── */
 .qc-input,
+.qc-select,
 .qc-textarea {
   width: 100%;
+  box-sizing: border-box;
   background: #ffffff;
   color: #1b1b24;
   border: 1px solid #c7c4d8;
   border-radius: 0.5rem;
-  padding: 0.625rem 0.75rem;
-  font-size: 16px;
+  padding: 0.5rem 0.75rem;
+  font-size: 14px;
   line-height: 1.5;
+  height: 2.625rem;
   outline: none;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 
+.qc-textarea {
+  height: auto;
+  min-height: 4.5rem;
+}
+
 .qc-input:focus,
+.qc-select:focus,
 .qc-textarea:focus {
   border-color: #4840E4;
   box-shadow: 0 0 0 3px rgba(30, 0, 169, 0.12);
@@ -922,6 +931,7 @@
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
+  overflow-x: hidden;
   box-shadow: 0 8px 32px rgba(27, 27, 36, 0.15);
   padding: 1.5rem;
   display: flex;

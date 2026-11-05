@@ -143,7 +143,7 @@
                 <button type="button" onclick="toggleDropdown('exams-submenu', 'exams-arrow')" class="w-full flex items-center justify-between px-md py-sm text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 cursor-pointer focus:outline-none">
                     <div class="flex items-center gap-sm">
                         <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">quiz</span>
-                        <span class="font-label-md text-label-md">Exams (UC-16)</span>
+                        <span class="font-label-md text-label-md">Exams Studio (UC-16–18)</span>
                     </div>
                     <span id="exams-arrow" class="material-symbols-outlined text-sm transition-transform duration-200">expand_more</span>
                 </button>
@@ -153,35 +153,7 @@
                 </div>
             </div>
 
-            <!-- Question Bank Dropdown (UC-17.1 - UC-17.7) -->
-            <div>
-                <button type="button" onclick="toggleDropdown('questions-submenu', 'questions-arrow')" class="w-full flex items-center justify-between px-md py-sm text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 cursor-pointer focus:outline-none">
-                    <div class="flex items-center gap-sm">
-                        <span class="material-symbols-outlined">help_center</span>
-                        <span class="font-label-md text-label-md">Question Bank (UC-17)</span>
-                    </div>
-                    <span id="questions-arrow" class="material-symbols-outlined text-sm transition-transform duration-200">expand_more</span>
-                </button>
-                <div id="questions-submenu" class="pl-[44px] pr-md pb-sm flex flex-col gap-xs transition-all duration-300">
-                    <a class="block py-xs text-on-surface-variant hover:text-primary font-body-sm text-body-sm" href="/Admin/Questions">All Questions</a>
-                    <a class="block py-xs text-on-surface-variant hover:text-primary font-body-sm text-body-sm" href="/Admin/Questions?create=true">+ Add Question</a>
-                </div>
-            </div>
-
-            <!-- Reading Passages Dropdown (UC-18.1 - UC-18.5) -->
-            <div>
-                <button type="button" onclick="toggleDropdown('passages-submenu', 'passages-arrow')" class="w-full flex items-center justify-between px-md py-sm text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 cursor-pointer focus:outline-none">
-                    <div class="flex items-center gap-sm">
-                        <span class="material-symbols-outlined">menu_book</span>
-                        <span class="font-label-md text-label-md">Passages (UC-18)</span>
-                    </div>
-                    <span id="passages-arrow" class="material-symbols-outlined text-sm transition-transform duration-200">expand_more</span>
-                </button>
-                <div id="passages-submenu" class="pl-[44px] pr-md pb-sm flex flex-col gap-xs transition-all duration-300">
-                    <a class="block py-xs text-on-surface-variant hover:text-primary font-body-sm text-body-sm" href="/Admin/Passages">All Passages</a>
-                    <button type="button" onclick="if(typeof openCreatePassageModal === 'function') openCreatePassageModal(); else window.location.href='/Admin/Passages'" class="block py-xs text-on-surface-variant hover:text-primary font-body-sm text-body-sm text-left w-full cursor-pointer">+ Create Passage</button>
-                </div>
-            </div>
+            
 
             <div class="px-md mt-sm mb-xs font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">System</div>
             @if (isAdmin)
@@ -215,10 +187,7 @@
                 <div class="flex items-center gap-sm">
                     <a href="/Admin/Exams" class="font-label-md text-label-md text-primary font-semibold hover:underline">Exams</a>
                     <span class="text-outline-variant">•</span>
-                    <a href="/Admin/Questions" class="font-label-md text-label-md text-primary font-semibold hover:underline">Question Bank</a>
-                    <span class="text-outline-variant">•</span>
-                    <a href="/Admin/Passages" class="font-label-md text-label-md text-primary font-semibold hover:underline">Passages</a>
-                    <span class="text-outline-variant">•</span>
+                    
                     <a href="/Exams" class="font-label-md text-label-md text-on-surface-variant hover:text-primary font-semibold">Learner Exams</a>
                     <span class="text-outline-variant">•</span>
 
@@ -243,7 +212,7 @@
     </div>
 
     <!-- Global Premium Notification Toast -->
-    <div id="global-toast" class="fixed top-5 right-5 z-50 transform translate-x-[120%] opacity-0 flex items-center gap-md px-md py-sm rounded-xl border border-outline-variant/30 bg-surface-container-lowest shadow-xl transition-all duration-500 ease-out max-w-sm pointer-events-auto">
+    <div id="global-toast" class="fixed top-6 right-6 z-[9999] transform translate-x-[130%] opacity-0 flex items-center gap-md px-md py-sm rounded-xl border border-outline-variant/30 bg-surface-container-lowest shadow-2xl transition-all duration-300 ease-in-out max-w-sm pointer-events-none">
         <div id="global-toast-accent" class="absolute left-0 top-0 bottom-0 w-1.5 rounded-l-xl bg-primary"></div>
         <span id="global-toast-icon" class="material-symbols-outlined text-primary">info</span>
         <div class="flex flex-col pr-sm">
@@ -402,6 +371,22 @@
         }
     </script>
     @await RenderSectionAsync("Scripts", required: false)
+    @{
+        var globalToastSuccess = TempData.Peek("SuccessMessage") as string ?? ViewData["SuccessMessage"] as string;
+        var globalToastError = TempData.Peek("ErrorMessage") as string ?? ViewData["ErrorMessage"] as string;
+    }
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            @if (!string.IsNullOrEmpty(globalToastSuccess))
+            {
+                <text>if (typeof showToast === 'function') showToast(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(globalToastSuccess)), 'success', 1500);</text>
+            }
+            @if (!string.IsNullOrEmpty(globalToastError))
+            {
+                <text>if (typeof showToast === 'function') showToast(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(globalToastError)), 'error', 2000);</text>
+            }
+        });
+    </script>
     <partial name="_AccountSession" />
 </body>
 </html>

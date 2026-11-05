@@ -8,15 +8,6 @@
 @Html.AntiForgeryToken()
 
 <div class="flex flex-col gap-lg">
-    @if (TempData["SuccessMessage"] is string successMsg)
-    {
-        <div class="p-md rounded-xl bg-tertiary-fixed/40 border border-tertiary text-on-tertiary-fixed font-label-md flex items-center justify-between">
-            <div class="flex items-center gap-sm">
-                <span class="material-symbols-outlined text-tertiary">check_circle</span>
-                <span>@successMsg</span>
-            </div>
-        </div>
-    }
 
     <!-- Hero Header -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-md bg-surface-container-lowest p-lg rounded-2xl border border-outline-variant/40 shadow-sm">
