@@ -85,7 +85,7 @@
             <!-- Filter Part / ExamType (UC-16.7) -->
             <div class="w-full sm:w-44">
                 <select name="examType" onchange="this.form.submit()" class="w-full py-2 px-3 border border-outline-variant rounded-lg text-sm bg-surface-container-lowest focus:ring-2 focus:ring-primary cursor-pointer">
-                    <option value="All" selected="@(Model.ExamType == "All" || string.IsNullOrEmpty(Model.ExamType))">Tất cả Part / Loại đề</option>
+                    <option value="All" selected="@(Model.ExamType == "All" || string.IsNullOrEmpty(Model.ExamType))">All parts / Test types</option>
                     <option value="Full Test" selected="@(Model.ExamType == "Full Test")">Full Test (Part 1-7)</option>
                     <option value="Part 1" selected="@(Model.ExamType == "Part 1")">Part 1: Photographs</option>
                     <option value="Part 2" selected="@(Model.ExamType == "Part 2")">Part 2: Question-Response</option>
@@ -144,7 +144,7 @@
                                 <td class="px-md py-sm font-body-sm text-body-sm text-on-surface-variant">#@exam.Id</td>
                                 <td class="px-md py-sm font-body-sm text-body-sm text-on-surface font-medium">
                                     <div class="flex items-center gap-2 flex-wrap">
-                                        <a href="/Admin/Exams/Detail?id=@exam.Id" class="text-primary hover:underline font-semibold">
+                                        <a href="@(exam.IsDeleted || exam.Status == "Hidden" ? $"/Admin/Exams/Detail?id={exam.Id}" : $"/Admin/Exams/Edit?id={exam.Id}")" class="text-primary hover:underline font-semibold">
                                             @exam.Title
                                         </a>
                                         <span class="inline-block bg-primary/10 text-primary px-2 py-0.5 rounded text-[11px] font-bold">

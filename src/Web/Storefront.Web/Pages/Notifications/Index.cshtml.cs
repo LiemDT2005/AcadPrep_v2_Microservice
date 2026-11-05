@@ -18,11 +18,11 @@ public class IndexModel(ToeicApiClient api) : NotificationPageModel(api)
 
     public async Task<IActionResult> OnGetAsync(CancellationToken ct)
     {
-        if (!ModelState.IsValid) { Error = "Tham số phân trang hoặc bộ lọc không hợp lệ."; Response.StatusCode = 400; return Page(); }
+        if (!ModelState.IsValid) { Error = "Invalid pagination or filter parameters."; Response.StatusCode = 400; return Page(); }
         var result = await Api.GetNotificationsAsync(PageIndex, PageSize, UnreadOnly, ct);
         var failure = AuthenticationFailure(result.Status);
         if (failure is not null) return failure;
-        if (!result.Success) Error = "Không thể tải thông báo. Vui lòng thử lại.";
+        if (!result.Success) Error = "Unable to load notifications. Please try again.";
         else
         {
             Notifications = result.Data;
@@ -33,7 +33,7 @@ public class IndexModel(ToeicApiClient api) : NotificationPageModel(api)
                 result = await Api.GetNotificationsAsync(PageIndex, PageSize, UnreadOnly, ct);
                 failure = AuthenticationFailure(result.Status);
                 if (failure is not null) return failure;
-                if (!result.Success) { Error = "Không thể tải thông báo. Vui lòng thử lại."; Notifications = null; }
+                if (!result.Success) { Error = "Unable to load notifications. Please try again."; Notifications = null; }
                 else Notifications = result.Data;
             }
         }
@@ -50,7 +50,7 @@ public class IndexModel(ToeicApiClient api) : NotificationPageModel(api)
         if (failure is not null) return failure;
         var count = await Api.GetNotificationCountAsync(ct);
         if (!page.Success || page.Data is null || !count.Success || count.Data is null)
-            return new JsonResult(new { message = "Không thể tải thông báo. Vui lòng thử lại." }) { StatusCode = 502 };
+            return new JsonResult(new { message = "Unable to load notifications. Please try again." }) { StatusCode = 502 };
         return new JsonResult(new
         {
             unreadCount = count.Data.UnreadCount,
@@ -81,8 +81,8 @@ public class IndexModel(ToeicApiClient api) : NotificationPageModel(api)
         var result = delete ? await Api.DeleteNotificationAsync(id, ct) : await Api.ReadNotificationAsync(id, ct);
         var failure = AuthenticationFailure(result.Status);
         if (failure is not null) return failure;
-        var message = result.Success ? (delete ? "Đã xóa thông báo khỏi danh sách cá nhân." : "Đã đánh dấu đã đọc.")
-            : result.Status == 404 ? "Thông báo không còn khả dụng." : "Thao tác chưa thành công. Vui lòng thử lại.";
+        var message = result.Success ? (delete ? "Notification removed from your list." : "Marked as read.")
+            : result.Status == 404 ? "This notification is no longer available." : "The action could not be completed. Please try again.";
         if (IsAjax)
             return new JsonResult(new { message, refresh = result.Success || result.Status == 404 })
             { StatusCode = result.Success ? 200 : result.Status == 404 ? 404 : 502 };

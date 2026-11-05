@@ -137,20 +137,19 @@
             </a>
 
             <!-- Navigation Links -->
-            <nav class="storefront-header-nav" aria-label="Điều hướng chính">
-                <a class="h-full flex items-center px-sm text-[14px] @NavClass("/Index") transition-colors" asp-page="/Index" style="text-decoration:none;">Trang chủ</a>
-                <a class="h-full flex items-center px-sm text-[14px] @NavClass("/Courses/Index") transition-colors" asp-page="/Courses/Index" style="text-decoration:none;">Khóa học</a>
-                <a class="h-full flex items-center px-sm text-[14px] @NavClass("/Exams/Index") transition-colors" asp-page="/Exams/Index" style="text-decoration:none;">Luyện đề</a>
-                <a class="h-full flex items-center px-sm text-[14px] @NavClass("/Progress/Index") transition-colors" asp-page="/Progress/Index" style="text-decoration:none;">Tiến độ</a>
-                <a class="h-full flex items-center px-sm text-[14px] @NavClass("/Vocabulary/Notebook") transition-colors" asp-page="/Vocabulary/Notebook" style="text-decoration:none;">Sổ từ</a>
+            <nav class="storefront-header-nav" aria-label="Main navigation">
+                <a class="h-full flex items-center px-sm text-[14px] @NavClass("/Index") transition-colors" asp-page="/Index" style="text-decoration:none;">Home</a>
+                <a class="h-full flex items-center px-sm text-[14px] @NavClass("/Exams/Index") transition-colors" asp-page="/Exams/Index" style="text-decoration:none;">Practice tests</a>
+                <a class="h-full flex items-center px-sm text-[14px] @NavClass("/Progress/Index") transition-colors" asp-page="/Progress/Index" style="text-decoration:none;">Progress</a>
+                <a class="h-full flex items-center px-sm text-[14px] @NavClass("/Vocabulary/Notebook") transition-colors" asp-page="/Vocabulary/Notebook" style="text-decoration:none;">Vocabulary</a>
                 <a class="h-full flex items-center px-sm text-[14px] @NavClass("/Vocabulary/Review") transition-colors" asp-page="/Vocabulary/Review" style="text-decoration:none;">Flashcards</a>
-                <a class="h-full flex items-center px-sm text-[14px]" asp-page="/Performance/StudyHistory">Lịch sử học</a>
-                <a class="h-full flex items-center px-sm text-[14px]" asp-page="/Performance/PerformanceAnalysis">Phân tích</a>
-                <a class="h-full flex items-center px-sm text-[14px] @NavClass("/Performance/Leaderboard") transition-colors" asp-page="/Performance/Leaderboard" style="text-decoration:none;">BXH</a>
+                <a class="h-full flex items-center px-sm text-[14px]" asp-page="/Performance/StudyHistory">Study history</a>
+                <a class="h-full flex items-center px-sm text-[14px]" asp-page="/Performance/PerformanceAnalysis">Analysis</a>
+                <a class="h-full flex items-center px-sm text-[14px] @NavClass("/Performance/Leaderboard") transition-colors" asp-page="/Performance/Leaderboard" style="text-decoration:none;">Leaderboard</a>
                 @if (isAdmin || isModerator)
                 {
                 <a href="/Admin/Exams" class="inline-flex items-center px-2.5 py-1 text-xs font-bold uppercase rounded bg-purple-100 text-purple-700 hover:bg-purple-200 transition" style="text-decoration:none;">
-                    CMS Đề Thi
+                    Exam CMS
                 </a>
                 }
                 @if (isAdmin)
@@ -168,8 +167,8 @@
                     <details class="relative text-sm">
                         <summary class="cursor-pointer whitespace-nowrap font-semibold text-primary">Upgrade</summary>
                         <nav aria-label="Upgrade" class="absolute right-0 top-full z-50 mt-2 w-44 rounded-lg border border-outline-variant bg-surface-container-lowest p-2 shadow-lg">
-                            <a asp-page="/Billing/Plans" class="block rounded px-3 py-2 hover:bg-surface-container-low">Bảng giá</a>
-                            <a asp-page="/Billing/Orders/Index" class="block rounded px-3 py-2 hover:bg-surface-container-low">Đơn hàng của tôi</a>
+                            <a asp-page="/Billing/Plans" class="block rounded px-3 py-2 hover:bg-surface-container-low">Pricing</a>
+                            <a asp-page="/Billing/Orders/Index" class="block rounded px-3 py-2 hover:bg-surface-container-low">My orders</a>
                         </nav>
                     </details>
                 }
@@ -184,7 +183,7 @@
                 @await Component.InvokeAsync("NotificationBadge")
                 @if (hasUser)
                 {
-                    <a asp-page="/Account/Profile" class="flex items-center gap-2 hover:opacity-80 transition" style="text-decoration:none;" title="Tài khoản">
+                    <a asp-page="/Account/Profile" class="flex items-center gap-2 hover:opacity-80 transition" style="text-decoration:none;" title="Account">
                         <span class="flex flex-col items-center gap-0.5">
                             <img src="@userAvatar" alt="@userName" class="w-8 h-8 rounded-full object-cover border border-primary/20 shadow-sm" />
                             @if (showProBadge)
@@ -198,17 +197,17 @@
                         @Html.AntiForgeryToken()
                         <button type="submit"
                            class="inline-flex items-center justify-center px-md py-sm rounded-lg border border-outline-variant text-on-surface text-[14px] font-medium hover:bg-surface-container-low transition-colors duration-100 cursor-pointer bg-transparent"
-                           style="text-decoration:none;">Đăng xuất</button>
+                           style="text-decoration:none;">Log out</button>
                     </form>
                 }
                 else
                 {
                     <a asp-page="/Account/Login"
                        class="inline-flex items-center justify-center px-md py-sm rounded-lg border border-outline-variant text-on-surface text-[14px] font-medium hover:bg-surface-container-low transition-colors duration-100"
-                       style="text-decoration:none;">Đăng nhập</a>
+                       style="text-decoration:none;">Log in</a>
                     <a asp-page="/Account/Register"
                        class="inline-flex items-center justify-center px-md py-sm rounded-lg bg-primary text-white text-[14px] font-medium hover:opacity-90 active:scale-95 transition-all duration-100 shadow-sm border-0"
-                       style="text-decoration:none;">Đăng ký</a>
+                       style="text-decoration:none;">Sign up</a>
                 }
             </div>
         </div>
@@ -230,14 +229,13 @@
         <div class="max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop flex flex-col md:flex-row justify-between items-center gap-md">
             <div>
                 <p class="font-extrabold text-primary text-lg">AcadPrep</p>
-                <p class="text-body-sm text-on-surface-variant">Luyện thi TOEIC thông minh cùng AcadPrep.</p>
+                <p class="text-body-sm text-on-surface-variant">Prepare smarter for TOEIC with AcadPrep.</p>
             </div>
             <div class="flex flex-wrap gap-lg text-body-sm text-on-surface-variant">
-                <a asp-page="/Courses/Index" class="hover:text-primary transition-colors">Khóa học</a>
-                <a asp-page="/Exams/Index" class="hover:text-primary transition-colors">Luyện đề</a>
-                <a asp-page="/Progress/Index" class="hover:text-primary transition-colors">Tiến độ</a>
-                <a asp-page="/Performance/Leaderboard" class="hover:text-primary transition-colors">Bảng xếp hạng</a>
-                <a href="/Admin/Exams" class="hover:text-primary transition-colors">CMS Đề Thi</a>
+                <a asp-page="/Exams/Index" class="hover:text-primary transition-colors">Practice tests</a>
+                <a asp-page="/Progress/Index" class="hover:text-primary transition-colors">Progress</a>
+                <a asp-page="/Performance/Leaderboard" class="hover:text-primary transition-colors">Leaderboard</a>
+                <a href="/Admin/Exams" class="hover:text-primary transition-colors">Exam CMS</a>
                 @if (isAdmin)
                 {
                     <a asp-page="/Admin/Users/Index" class="hover:text-primary transition-colors">CMS Users</a>

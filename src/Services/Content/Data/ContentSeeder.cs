@@ -23,8 +23,6 @@ public static class ContentSeeder
 
         if (await db.ExamSeries.AnyAsync())
         {
-            // Backfill any null difficulties on existing rows
-            await db.Database.ExecuteSqlRawAsync("UPDATE Questions SET Difficulty = 'Medium' WHERE Difficulty IS NULL OR Difficulty = '';");
             return;
         }
 
@@ -33,7 +31,6 @@ public static class ContentSeeder
         // 1. Exam Series
         var seriesEts = new ExamSeries
         {
-            Id = 1,
             Name = "ETS TOEIC 2024",
             Year = 2024,
             Description = "Official TOEIC tests published by ETS for year 2024.",
@@ -42,7 +39,6 @@ public static class ContentSeeder
 
         var seriesNewEconomy = new ExamSeries
         {
-            Id = 2,
             Name = "New Economy TOEIC 2023",
             Year = 2023,
             Description = "High-accuracy full-length TOEIC preparation tests.",
@@ -55,7 +51,6 @@ public static class ContentSeeder
         // 2. Exams
         var exam1 = new Exam
         {
-            Id = 1,
             Title = "ETS TOEIC 2024 Test 1",
             ExamType = "Full Test",
             Description = "Standard 2-hour full test with listening audio and reading questions.",
@@ -63,14 +58,13 @@ public static class ContentSeeder
             AudioUrl = "/audio/sample-listening.wav",
             Status = ExamStatus.Published,
             IsDeleted = false,
-            ExamSeriesId = 1,
+            ExamSeriesId = seriesEts.Id,
             CreatedAt = DateTime.UtcNow.AddDays(-10),
             LastModifiedAt = DateTime.UtcNow.AddDays(-2)
         };
 
         var exam2 = new Exam
         {
-            Id = 2,
             Title = "ETS TOEIC 2024 Test 2",
             ExamType = "Full Test",
             Description = "Complete 200-question draft exam currently in content review.",
@@ -78,13 +72,12 @@ public static class ContentSeeder
             AudioUrl = "/audio/sample-listening.wav",
             Status = ExamStatus.Draft,
             IsDeleted = false,
-            ExamSeriesId = 1,
+            ExamSeriesId = seriesEts.Id,
             CreatedAt = DateTime.UtcNow.AddDays(-5)
         };
 
         var exam3 = new Exam
         {
-            Id = 3,
             Title = "New Economy TOEIC Test 1",
             ExamType = "Full Test",
             Description = "Archived exam with preserved learner attempts.",
@@ -92,26 +85,24 @@ public static class ContentSeeder
             Status = ExamStatus.Hidden,
             IsDeleted = true,
             DeletedAt = DateTime.UtcNow.AddDays(-1),
-            ExamSeriesId = 2,
+            ExamSeriesId = seriesNewEconomy.Id,
             CreatedAt = DateTime.UtcNow.AddDays(-30)
         };
 
         var exam4 = new Exam
         {
-            Id = 4,
             Title = "TOEIC Reading Mini Test 01",
             ExamType = "Reading",
             Description = "Concentrated 45-minute reading test covering Parts 5, 6, and 7.",
             Duration = 45,
             Status = ExamStatus.Published,
             IsDeleted = false,
-            ExamSeriesId = 1,
+            ExamSeriesId = seriesEts.Id,
             CreatedAt = DateTime.UtcNow.AddDays(-3)
         };
 
         var exam5 = new Exam
         {
-            Id = 5,
             Title = "TOEIC Listening Part 1-2 Practice",
             ExamType = "Listening",
             Description = "Intensive drills for photographs and question-response skills.",
@@ -119,7 +110,7 @@ public static class ContentSeeder
             AudioUrl = "/audio/sample-listening.wav",
             Status = ExamStatus.Published,
             IsDeleted = false,
-            ExamSeriesId = 2,
+            ExamSeriesId = seriesNewEconomy.Id,
             CreatedAt = DateTime.UtcNow.AddDays(-4)
         };
 
@@ -131,7 +122,7 @@ public static class ContentSeeder
         {
             new()
             {
-                ExamId = 1, QuestionNumber = 1, Part = 1,
+                ExamId = exam1.Id, QuestionNumber = 1, Part = 1,
                 QuestionText = "Look at the picture. Select the statement that best describes what you see in the photograph.",
                 AudioUrl = "/audio/sample-listening.wav", AudioStartSecond = 10, AudioEndSecond = 20,
                 CorrectOption = "C", Difficulty = "Easy", QuestionType = "Photograph", TopicTag = "Office",
@@ -146,7 +137,7 @@ public static class ContentSeeder
             },
             new()
             {
-                ExamId = 1, QuestionNumber = 2, Part = 1,
+                ExamId = exam1.Id, QuestionNumber = 2, Part = 1,
                 QuestionText = "Look at the picture. Select the statement that best describes the scene.",
                 AudioUrl = "/audio/sample-listening.wav", AudioStartSecond = 25, AudioEndSecond = 35,
                 CorrectOption = "A", Difficulty = "Easy", QuestionType = "Photograph", TopicTag = "Travel",
@@ -165,7 +156,7 @@ public static class ContentSeeder
         {
             new()
             {
-                ExamId = 1, QuestionNumber = 7, Part = 2,
+                ExamId = exam1.Id, QuestionNumber = 7, Part = 2,
                 QuestionText = "Where did you leave the contract files?",
                 AudioUrl = "/audio/sample-listening.wav", AudioStartSecond = 40, AudioEndSecond = 48,
                 CorrectOption = "B", Difficulty = "Easy", QuestionType = "Where Question", TopicTag = "Office",
@@ -179,7 +170,7 @@ public static class ContentSeeder
             },
             new()
             {
-                ExamId = 1, QuestionNumber = 8, Part = 2,
+                ExamId = exam1.Id, QuestionNumber = 8, Part = 2,
                 QuestionText = "When will the quarterly finance presentation begin?",
                 AudioUrl = "/audio/sample-listening.wav", AudioStartSecond = 50, AudioEndSecond = 58,
                 CorrectOption = "A", Difficulty = "Medium", QuestionType = "When Question", TopicTag = "Finance",
@@ -196,7 +187,7 @@ public static class ContentSeeder
         // Part 3 & 4 Listening Groups
         var p3Group = new QuestionGroup
         {
-            ExamId = 1,
+            ExamId = exam1.Id,
             Name = "Part 3 - Questions 32-34: Project Budget Review",
             AudioUrl = "/audio/sample-listening.wav",
             AudioStartSecond = 60,
@@ -205,7 +196,7 @@ public static class ContentSeeder
         };
         var p4Group = new QuestionGroup
         {
-            ExamId = 1,
+            ExamId = exam1.Id,
             Name = "Part 4 - Questions 71-73: Airport Gate Announcement",
             AudioUrl = "/audio/sample-listening.wav",
             AudioStartSecond = 100,
@@ -219,7 +210,7 @@ public static class ContentSeeder
         {
             new()
             {
-                ExamId = 1, QuestionNumber = 32, Part = 3, QuestionGroupId = p3Group.Id,
+                ExamId = exam1.Id, QuestionNumber = 32, Part = 3, QuestionGroupId = p3Group.Id,
                 QuestionText = "What are the speakers mainly discussing?",
                 AudioUrl = "/audio/sample-listening.wav", AudioStartSecond = 60, AudioEndSecond = 95,
                 CorrectOption = "B", Difficulty = "Medium", QuestionType = "Main Idea", TopicTag = "Business",
@@ -234,7 +225,7 @@ public static class ContentSeeder
             },
             new()
             {
-                ExamId = 1, QuestionNumber = 33, Part = 3, QuestionGroupId = p3Group.Id,
+                ExamId = exam1.Id, QuestionNumber = 33, Part = 3, QuestionGroupId = p3Group.Id,
                 QuestionText = "What does the woman suggest doing before Friday?",
                 AudioUrl = "/audio/sample-listening.wav", AudioStartSecond = 60, AudioEndSecond = 95,
                 CorrectOption = "C", Difficulty = "Medium", QuestionType = "Detail", TopicTag = "Business",
@@ -249,7 +240,7 @@ public static class ContentSeeder
             },
             new()
             {
-                ExamId = 1, QuestionNumber = 34, Part = 3, QuestionGroupId = p3Group.Id,
+                ExamId = exam1.Id, QuestionNumber = 34, Part = 3, QuestionGroupId = p3Group.Id,
                 QuestionText = "What will the man most likely do next?",
                 AudioUrl = "/audio/sample-listening.wav", AudioStartSecond = 60, AudioEndSecond = 95,
                 CorrectOption = "A", Difficulty = "Hard", QuestionType = "Inference", TopicTag = "Business",
@@ -264,7 +255,7 @@ public static class ContentSeeder
             },
             new()
             {
-                ExamId = 1, QuestionNumber = 71, Part = 4, QuestionGroupId = p4Group.Id,
+                ExamId = exam1.Id, QuestionNumber = 71, Part = 4, QuestionGroupId = p4Group.Id,
                 QuestionText = "Where is this announcement most likely being made?",
                 AudioUrl = "/audio/sample-listening.wav", AudioStartSecond = 100, AudioEndSecond = 135,
                 CorrectOption = "B", Difficulty = "Easy", QuestionType = "Location", TopicTag = "Travel",
@@ -279,7 +270,7 @@ public static class ContentSeeder
             },
             new()
             {
-                ExamId = 1, QuestionNumber = 72, Part = 4, QuestionGroupId = p4Group.Id,
+                ExamId = exam1.Id, QuestionNumber = 72, Part = 4, QuestionGroupId = p4Group.Id,
                 QuestionText = "What has changed about the flight?",
                 AudioUrl = "/audio/sample-listening.wav", AudioStartSecond = 100, AudioEndSecond = 135,
                 CorrectOption = "D", Difficulty = "Medium", QuestionType = "Detail", TopicTag = "Travel",
@@ -294,7 +285,7 @@ public static class ContentSeeder
             },
             new()
             {
-                ExamId = 1, QuestionNumber = 73, Part = 4, QuestionGroupId = p4Group.Id,
+                ExamId = exam1.Id, QuestionNumber = 73, Part = 4, QuestionGroupId = p4Group.Id,
                 QuestionText = "What are passengers asked to have ready?",
                 AudioUrl = "/audio/sample-listening.wav", AudioStartSecond = 100, AudioEndSecond = 135,
                 CorrectOption = "A", Difficulty = "Easy", QuestionType = "Detail", TopicTag = "Travel",
@@ -313,7 +304,7 @@ public static class ContentSeeder
         {
             new()
             {
-                ExamId = 1, QuestionNumber = 101, Part = 5,
+                ExamId = exam1.Id, QuestionNumber = 101, Part = 5,
                 QuestionText = "The quarterly marketing summary must be submitted to the committee ______ 5:00 PM on Friday.",
                 CorrectOption = "B", Difficulty = "Easy", QuestionType = "Preposition", TopicTag = "Marketing",
                 Explanation = "Use 'before' + point in time to indicate a deadline.",
@@ -327,7 +318,7 @@ public static class ContentSeeder
             },
             new()
             {
-                ExamId = 1, QuestionNumber = 102, Part = 5,
+                ExamId = exam1.Id, QuestionNumber = 102, Part = 5,
                 QuestionText = "All employees are ______ encouraged to enroll in the digital security certification workshop.",
                 CorrectOption = "C", Difficulty = "Medium", QuestionType = "Word Form", TopicTag = "HR",
                 Explanation = "'strongly encouraged' is a standard adverb + past participle collocation.",
@@ -341,7 +332,7 @@ public static class ContentSeeder
             },
             new()
             {
-                ExamId = 2, QuestionNumber = 103, Part = 5,
+                ExamId = exam2.Id, QuestionNumber = 103, Part = 5,
                 QuestionText = "______ the inclement weather, the annual charity marathon proceeded as scheduled.",
                 CorrectOption = "A", Difficulty = "Hard", QuestionType = "Conjunction", TopicTag = "Events",
                 Explanation = "'Despite' is followed by a noun phrase ('the inclement weather').",
@@ -358,7 +349,7 @@ public static class ContentSeeder
         // Part 6 Passage & 4 Questions
         var p6Passage = new Passage
         {
-            ExamId = 1,
+            ExamId = exam1.Id,
             DisplayOrder = 1,
             Content = "To: All Staff\nFrom: Human Resources\nSubject: Annual Health & Wellness Fair\n\nWe are pleased to announce that our Annual Health & Wellness Fair will take place on Wednesday, November 12, in Conference Hall B. Certified nutritionists and fitness instructors will be (131) ______ to provide personalized consultations. Employees who wish to register for free health screenings must complete the online form (132) ______ November 5. (133) ______. Please contact the HR desk if you have any dietary (134) ______ for the complimentary lunch.",
             Explanation = "Internal company email announcing an employee wellness event."
@@ -370,7 +361,7 @@ public static class ContentSeeder
         {
             new()
             {
-                ExamId = 1, QuestionNumber = 131, Part = 6, PassageId = p6Passage.Id,
+                ExamId = exam1.Id, QuestionNumber = 131, Part = 6, PassageId = p6Passage.Id,
                 QuestionText = "Blank (131)",
                 CorrectOption = "B", Difficulty = "Easy", QuestionType = "Vocabulary", TopicTag = "HR",
                 Explanation = "'available' fits the context of specialists being present to help.",
@@ -384,7 +375,7 @@ public static class ContentSeeder
             },
             new()
             {
-                ExamId = 1, QuestionNumber = 132, Part = 6, PassageId = p6Passage.Id,
+                ExamId = exam1.Id, QuestionNumber = 132, Part = 6, PassageId = p6Passage.Id,
                 QuestionText = "Blank (132)",
                 CorrectOption = "A", Difficulty = "Easy", QuestionType = "Preposition", TopicTag = "HR",
                 Explanation = "'by' indicates a registration deadline.",
@@ -398,7 +389,7 @@ public static class ContentSeeder
             },
             new()
             {
-                ExamId = 1, QuestionNumber = 133, Part = 6, PassageId = p6Passage.Id,
+                ExamId = exam1.Id, QuestionNumber = 133, Part = 6, PassageId = p6Passage.Id,
                 QuestionText = "Blank (133)",
                 CorrectOption = "C", Difficulty = "Hard", QuestionType = "Sentence Insertion", TopicTag = "HR",
                 Explanation = "Connects registration requirements with limited appointment slots.",
@@ -412,7 +403,7 @@ public static class ContentSeeder
             },
             new()
             {
-                ExamId = 1, QuestionNumber = 134, Part = 6, PassageId = p6Passage.Id,
+                ExamId = exam1.Id, QuestionNumber = 134, Part = 6, PassageId = p6Passage.Id,
                 QuestionText = "Blank (134)",
                 CorrectOption = "D", Difficulty = "Medium", QuestionType = "Vocabulary", TopicTag = "HR",
                 Explanation = "'dietary restrictions' is a standard phrase.",
@@ -429,7 +420,7 @@ public static class ContentSeeder
         // Part 7 QuestionGroup + Passage + Questions
         var p7Group = new QuestionGroup
         {
-            ExamId = 1,
+            ExamId = exam1.Id,
             Name = "Questions 147-148 refer to the following memorandum.",
             Explanation = "Single passage reading comprehension set."
         };
@@ -438,7 +429,7 @@ public static class ContentSeeder
 
         var p7Passage = new Passage
         {
-            ExamId = 1,
+            ExamId = exam1.Id,
             QuestionGroupId = p7Group.Id,
             DisplayOrder = 1,
             Content = "MEMORANDUM\nTo: All Department Heads\nFrom: Facilities Management\nDate: October 14\nSubject: Scheduled Network Infrastructure Upgrade\n\nPlease be informed that our central servers will undergo essential maintenance this coming Saturday from 10:00 PM until 4:00 AM Sunday. Internet access and cloud services will be temporarily suspended during this window.",
@@ -448,7 +439,7 @@ public static class ContentSeeder
         // Draft standalone passage in Exam 2 (0 questions attached, ready for testing UC-18.4 & UC-18.5)
         var draftPassage = new Passage
         {
-            ExamId = 2,
+            ExamId = exam2.Id,
             DisplayOrder = 1,
             Content = "NOTICE TO VISITORS\nWelcome to Apex Innovation Labs. All visitors are required to sign in at the main security desk and wear a temporary visitor badge at all times while on the premises.",
             Explanation = "Sample standalone reading passage in Draft Exam 2 (0 attached questions)."
@@ -461,7 +452,7 @@ public static class ContentSeeder
         {
             new()
             {
-                ExamId = 1, QuestionNumber = 147, Part = 7, PassageId = p7Passage.Id, QuestionGroupId = p7Group.Id,
+                ExamId = exam1.Id, QuestionNumber = 147, Part = 7, PassageId = p7Passage.Id, QuestionGroupId = p7Group.Id,
                 QuestionText = "What is the primary purpose of the memorandum?",
                 CorrectOption = "C", Difficulty = "Medium", QuestionType = "Main Purpose", TopicTag = "IT & Technology",
                 Explanation = "To notify staff about scheduled network maintenance.",
@@ -475,7 +466,7 @@ public static class ContentSeeder
             },
             new()
             {
-                ExamId = 1, QuestionNumber = 148, Part = 7, PassageId = p7Passage.Id, QuestionGroupId = p7Group.Id,
+                ExamId = exam1.Id, QuestionNumber = 148, Part = 7, PassageId = p7Passage.Id, QuestionGroupId = p7Group.Id,
                 QuestionText = "According to the memo, when will server operations resume normally?",
                 CorrectOption = "D", Difficulty = "Easy", QuestionType = "Detail", TopicTag = "IT & Technology",
                 Explanation = "Maintenance finishes at 4:00 AM Sunday.",

@@ -65,18 +65,20 @@ services:
     environment:
     - ASPNETCORE_ENVIRONMENT=Development
     - Urls=http://0.0.0.0:5006
-    - ConnectionStrings__Sqlite=Data Source=/data/content.db
+    - ConnectionStrings__Default=Server=sqlserver,1433;Database=AcadPrep_ContentDb;User Id=sa;Password=Password123!;TrustServerCertificate=True
     - Services__ExamApi=http://exam.api:5003
     - InternalApiKey=${ACADPREP_INTERNAL_API_KEY:-AcadPrep_Local_Exam_Content_ChangeBeforeDeploy}
     - Jwt__PublicKeyPath=/app/keys/public_key.pem
     volumes:
-    - content-data:/data
     - type: bind
       source: ./src/Services/Identity/Identity.API/keys/public_key.pem
       target: /app/keys/public_key.pem
       read_only: true
       bind:
         create_host_path: false
+    depends_on:
+      sqlserver:
+        condition: service_healthy
   learning.api:
     build:
       context: .
@@ -292,7 +294,6 @@ services:
         condition: service_started
 
 volumes:
-  content-data: null
   identity-data: null
   sqlserver-data:
     name: acadprep-sqlserver-data

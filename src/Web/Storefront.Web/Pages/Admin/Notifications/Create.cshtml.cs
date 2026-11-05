@@ -24,7 +24,7 @@ public class CreateModel(ToeicApiClient api) : NotificationPageModel(api)
         if (failure is not null) return failure;
         if (result.Success)
         {
-            Notice = "Đã gửi thông báo thành công.";
+            Notice = "Notification sent successfully.";
             return RedirectToPage();
         }
         // Format/audience rules are validated on this page first, so a 422 on targetUserId means the
@@ -45,9 +45,9 @@ public class CreateModel(ToeicApiClient api) : NotificationPageModel(api)
                     .FirstOrDefault(name => name.Equals(field.Key, StringComparison.OrdinalIgnoreCase));
                 if (property is not null) ModelState.AddModelError($"Input.{property}", string.Join(" ", field.Value));
             }
-            Error = "Dữ liệu chưa được chấp nhận. Vui lòng kiểm tra các trường.";
+            Error = "Please check the form fields and try again.";
         }
-        else Error = "Không thể gửi thông báo. Vui lòng thử lại sau.";
+        else Error = "Unable to send the notification. Please try again later.";
         return Page();
     }
 }

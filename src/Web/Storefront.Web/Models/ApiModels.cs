@@ -28,9 +28,6 @@ public record UserProfileDto(
     DateTime CreatedAt,
     DateTime? LastLoginAt,
     bool CanChangePassword = true);
-public record CourseListItem(Guid Id, string Title, string Level, int TargetScore, int LessonCount, string Description);
-public record LessonDto(Guid Id, string Title, string Skill, int Order, int DurationMinutes, string Content);
-public record CourseDetail(Guid Id, string Title, string Description, string Level, int TargetScore, List<LessonDto> Lessons);
 public record ExamListItem(Guid Id, string Title, string Part, string Description, int TimeLimitMinutes, int QuestionCount);
 public record QuestionDto(Guid Id, string Stem, string OptionA, string OptionB, string OptionC, string OptionD, int Order);
 public record ExamDetail(Guid Id, string Title, string Part, string Description, int TimeLimitMinutes, List<QuestionDto> Questions);

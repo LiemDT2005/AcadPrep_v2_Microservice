@@ -39,7 +39,7 @@ public abstract class NotificationPageModel(ToeicApiClient api) : PageModel
         }
         if (!identity.Success || !Guid.TryParse(identity.Data?.Id, out var id) || id == Guid.Empty)
         {
-            Error = "Không thể xác minh phiên đăng nhập. Vui lòng thử lại sau.";
+            Error = "Unable to verify your session. Please try again later.";
             Response.StatusCode = 503;
             context.Result = IsAjax ? new JsonResult(new { message = Error }) { StatusCode = 503 } : Page();
             return;

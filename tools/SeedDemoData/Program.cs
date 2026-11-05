@@ -1,9 +1,8 @@
-using Catalog.Infrastructure.Persistence;
 using Content.Data;
 using Exam.Data;
 using Identity.API.Data;
 using Identity.API.Models;
-using Learning.Infrastructure.Persistence;
+using Learning.API.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.Sqlite;
@@ -69,7 +68,6 @@ services.AddLogging(b => b.AddSimpleConsole().SetMinimumLevel(LogLevel.Warning))
 services.AddScoped(_ => new IdentityDbContext(Options<IdentityDbContext>("Identity")));
 services.AddIdentityCore<AppUser>().AddRoles<IdentityRole>().AddEntityFrameworkStores<IdentityDbContext>();
 services.AddScoped(_ => new ExamDbContext(Options<ExamDbContext>("Exam")));
-services.AddScoped(_ => new CatalogDbContext(Options<CatalogDbContext>("Catalog")));
 services.AddScoped(_ => new LearningDbContext(Options<LearningDbContext>("Learning")));
 services.AddScoped(_ => new ProgressDbContext(Options<ProgressDbContext>("Progress")));
 services.AddScoped(_ => new ContentDbContext(Options<ContentDbContext>("Content")));
@@ -82,7 +80,6 @@ if (identity.Database.IsSqlServer()) await identity.Database.MigrateAsync();
 else await identity.Database.EnsureCreatedAsync();
 await IdentityDbInitializer.SeedAsync(sp);
 var users = await DemoAccounts.SeedAsync(sp);
-await CatalogSeeder.SeedAsync(provider);
 await ExamSeeder.SeedAsync(provider);
 var learning = sp.GetRequiredService<LearningDbContext>();
 await learning.Database.EnsureCreatedAsync();
@@ -92,10 +89,10 @@ await ContentSeeder.SeedAsync(content, sp.GetRequiredService<ILoggerFactory>().C
 var progress = sp.GetRequiredService<ProgressDbContext>();
 await progress.Database.EnsureCreatedAsync();
 await DemoContent.SeedAsync(content, sp.GetRequiredService<ExamDbContext>());
-await DemoLearning.SeedAsync(sp.GetRequiredService<CatalogDbContext>(), learning,
+await DemoLearning.SeedAsync(learning,
     sp.GetRequiredService<ExamDbContext>(), progress, users);
 Console.WriteLine("Demo data ready (existing records preserved). Run again safely to add missing demo records.");
-Console.WriteLine($"Identity: {await identity.Users.CountAsync()} users; Catalog: {await sp.GetRequiredService<CatalogDbContext>().Courses.CountAsync()} courses");
+Console.WriteLine($"Identity: {await identity.Users.CountAsync()} users");
 Console.WriteLine($"Exam: {await sp.GetRequiredService<ExamDbContext>().Exams.CountAsync()} exams, {await sp.GetRequiredService<ExamDbContext>().ExamAttempts.CountAsync()} attempts");
 Console.WriteLine($"Content: {await content.Exams.CountAsync()} exams, {await content.Questions.CountAsync()} questions");
 Console.WriteLine($"Learning: {await learning.Vocabularies.CountAsync()} words, {await learning.SavedVocabularies.CountAsync()} saved words, {await learning.ExamAttemptRecords.CountAsync()} score records");

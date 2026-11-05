@@ -1,7 +1,7 @@
 @page
 @model Storefront.Web.Pages.Performance.LeaderboardModel
 @{
-    ViewData["Title"] = "Bảng Xếp Hạng";
+    ViewData["Title"] = "Leaderboard";
     var isScoreActive = string.Equals(Model.SortBy, "Score", StringComparison.OrdinalIgnoreCase);
     var isStreakActive = string.Equals(Model.SortBy, "Streak", StringComparison.OrdinalIgnoreCase);
 }
@@ -11,15 +11,15 @@
     <div class="max-w-4xl mx-auto flex flex-col gap-md">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-md">
             <div>
-                <h1 class="font-display-lg text-display-lg text-on-surface">Bảng Xếp Hạng AcadPrep</h1>
-                <p class="font-body-md text-body-md text-on-surface-variant">Thi đua học tập cùng các học viên khác để nâng cao trình độ TOEIC!</p>
+                <h1 class="font-display-lg text-display-lg text-on-surface">AcadPrep Leaderboard</h1>
+                <p class="font-body-md text-body-md text-on-surface-variant">Learn alongside other students and improve your TOEIC skills!</p>
             </div>
             <div class="flex items-center gap-xs bg-surface-container-lowest border border-outline-variant p-xs rounded-lg shadow-sm">
                 <a href="?SortBy=Score" class="px-md py-xs rounded-md font-label-sm text-label-sm transition-colors @(isScoreActive ? "bg-primary text-on-primary font-semibold" : "text-on-surface-variant hover:bg-surface-variant/20")">
-                    Điểm số
+                    Score
                 </a>
                 <a href="?SortBy=Streak" class="px-md py-xs rounded-md font-label-sm text-label-sm transition-colors @(isStreakActive ? "bg-primary text-on-primary font-semibold" : "text-on-surface-variant hover:bg-surface-variant/20")">
-                    Chuỗi ngày học
+                    Study streak
                 </a>
             </div>
         </div>
@@ -38,17 +38,17 @@
                     #@cu.Rank
                 </div>
                 <div>
-                    <h3 class="font-title-md text-title-md text-on-surface font-semibold">Vị trí hiện tại của bạn</h3>
-                    <p class="font-body-sm text-body-sm text-on-surface-variant">Bạn đang xếp thứ <strong>#@cu.Rank</strong> trên hệ thống.</p>
+                    <h3 class="font-title-md text-title-md text-on-surface font-semibold">Your current rank</h3>
+                    <p class="font-body-sm text-body-sm text-on-surface-variant">Your current rank is <strong>#@cu.Rank</strong>.</p>
                 </div>
             </div>
             <div class="flex gap-lg">
                 <div class="text-center sm:text-right">
-                    <span class="block font-label-sm text-label-sm text-on-surface-variant">Tổng điểm thi</span>
+                    <span class="block font-label-sm text-label-sm text-on-surface-variant">Total test score</span>
                     <span class="font-headline-sm text-headline-sm text-primary font-bold">@cu.TotalScore.ToString("N0")</span>
                 </div>
                 <div class="text-center sm:text-right border-l border-outline-variant/30 pl-lg">
-                    <span class="block font-label-sm text-label-sm text-on-surface-variant">Chuỗi ngày</span>
+                    <span class="block font-label-sm text-label-sm text-on-surface-variant">Streak</span>
                     <span class="font-headline-sm text-headline-sm text-secondary font-bold flex items-center justify-center sm:justify-end gap-xs">
                         <span class="material-symbols-outlined text-[20px] fill-1 text-secondary">local_fire_department</span> @(cu.StreakDays)d
                     </span>
@@ -62,11 +62,11 @@
         <table class="w-full text-left border-collapse">
             <thead class="bg-surface-container-high border-b border-outline-variant text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
                 <tr>
-                    <th class="p-md font-semibold w-20 text-center">Hạng</th>
-                    <th class="p-md font-semibold">Học viên</th>
-                    <th class="p-md font-semibold text-right">Tổng điểm thi</th>
-                    <th class="p-md font-semibold text-right hidden sm:table-cell">Đề đã làm</th>
-                    <th class="p-md font-semibold text-right hidden md:table-cell w-36">Chuỗi ngày học</th>
+                    <th class="p-md font-semibold w-20 text-center">Rank</th>
+                    <th class="p-md font-semibold">Learner</th>
+                    <th class="p-md font-semibold text-right">Total test score</th>
+                    <th class="p-md font-semibold text-right hidden sm:table-cell">Tests completed</th>
+                    <th class="p-md font-semibold text-right hidden md:table-cell w-36">Study streak</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-outline-variant/30 font-body-sm text-body-sm">
@@ -101,7 +101,7 @@
                                         <div class="font-medium text-on-surface">@user.Name</div>
                                         @if (isCurrent)
                                         {
-                                            <span class="inline-block px-xs py-[2px] rounded text-[10px] bg-primary text-on-primary font-bold">Bạn</span>
+                                            <span class="inline-block px-xs py-[2px] rounded text-[10px] bg-primary text-on-primary font-bold">You</span>
                                         }
                                     </div>
                                 </div>
@@ -118,7 +118,7 @@
                             <td class="p-md text-right hidden md:table-cell font-semibold text-secondary">
                                 <span class="inline-flex items-center gap-xs">
                                     <span class="material-symbols-outlined text-[16px] text-orange-500">local_fire_department</span>
-                                    @(user.StreakDays) ngày
+                                    @(user.StreakDays) days
                                 </span>
                             </td>
                         </tr>
@@ -128,7 +128,7 @@
                 {
                     <tr>
                         <td colspan="5" class="p-xl text-center text-on-surface-variant">
-                            Chưa có dữ liệu bảng xếp hạng. Hãy hoàn thành đề thi để ghi danh đầu tiên!
+                            No leaderboard data yet. Complete a test to join the leaderboard!
                         </td>
                     </tr>
                 }

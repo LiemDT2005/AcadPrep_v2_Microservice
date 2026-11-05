@@ -5,9 +5,6 @@ WORKDIR /src
 # Copy project files
 COPY src/BuildingBlocks/BuildingBlocks.Common/BuildingBlocks.Common.csproj src/BuildingBlocks/BuildingBlocks.Common/
 COPY src/BuildingBlocks/BuildingBlocks.EventBus/BuildingBlocks.EventBus.csproj src/BuildingBlocks/BuildingBlocks.EventBus/
-COPY src/Services/Learning/Learning.Domain/Learning.Domain.csproj src/Services/Learning/Learning.Domain/
-COPY src/Services/Learning/Learning.Application/Learning.Application.csproj src/Services/Learning/Learning.Application/
-COPY src/Services/Learning/Learning.Infrastructure/Learning.Infrastructure.csproj src/Services/Learning/Learning.Infrastructure/
 COPY src/Services/Learning/Learning.API/Learning.API.csproj src/Services/Learning/Learning.API/
 
 # Restore dependencies

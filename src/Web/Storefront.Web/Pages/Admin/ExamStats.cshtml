@@ -7,8 +7,8 @@
 <div class="max-w-[1400px] mx-auto flex flex-col gap-6">
     <div class="flex justify-between items-center">
         <div>
-            <h1 class="text-2xl font-bold text-slate-800">Thống Kê Đề Thi (Exam Statistics)</h1>
-            <p class="text-sm text-slate-500 mt-1">Lượt làm bài, điểm trung bình và tỷ lệ hoàn thành theo từng đề thi (learning-service · UC-20.3)</p>
+            <h1 class="text-2xl font-bold text-slate-800">Exam Statistics</h1>
+            <p class="text-sm text-slate-500 mt-1">View attempts, average scores, and completion rates for each test.</p>
         </div>
         <div class="flex gap-3">
             <a href="/Admin/Dashboard" class="inline-flex items-center gap-1.5 px-4 py-2 border border-slate-300 rounded-lg text-slate-700 bg-white hover:bg-slate-50 text-sm font-medium shadow-sm transition">
@@ -17,7 +17,7 @@
             </a>
             <a href="/Admin/Report" class="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 rounded-lg text-white hover:bg-indigo-700 text-sm font-medium shadow-sm transition">
                 <span class="material-symbols-outlined text-[18px]">analytics</span>
-                Báo cáo tiến độ
+                Progress report
             </a>
         </div>
     </div>
@@ -26,12 +26,12 @@
         <div class="p-5 border-b border-slate-200 bg-slate-50/50 flex justify-between items-center">
             <div class="flex items-center gap-2">
                 <span class="material-symbols-outlined text-indigo-600">quiz</span>
-                <h2 class="text-base font-semibold text-slate-800">Chi Tiết Hiệu Suất Đề Thi</h2>
+                <h2 class="text-base font-semibold text-slate-800">Test Performance Details</h2>
             </div>
             @if (Model.Stats != null && Model.Stats.TotalCount > 0)
             {
                 <span class="text-xs font-medium px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-full border border-indigo-200">
-                    Tổng cộng: @Model.Stats.TotalCount đề thi
+                    Total: @Model.Stats.TotalCount tests
                 </span>
             }
         </div>
@@ -40,12 +40,12 @@
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500 border-b border-slate-200 font-semibold">
-                        <th class="p-4">Tên Đề Thi</th>
-                        <th class="p-4 text-center">Tổng Lượt Làm</th>
-                        <th class="p-4 text-center">Điểm TB</th>
-                        <th class="p-4 text-center">Điểm Cao Nhất</th>
-                        <th class="p-4 text-center">Điểm Thấp Nhất</th>
-                        <th class="p-4 text-center">Tỷ Lệ Hoàn Thành</th>
+                        <th class="p-4">Test name</th>
+                        <th class="p-4 text-center">Total attempts</th>
+                        <th class="p-4 text-center">Average score</th>
+                        <th class="p-4 text-center">Highest score</th>
+                        <th class="p-4 text-center">Lowest score</th>
+                        <th class="p-4 text-center">Completion rate</th>
                     </tr>
                 </thead>
                 <tbody class="text-sm divide-y divide-slate-100">
@@ -90,7 +90,7 @@
                         <tr>
                             <td colspan="6" class="p-8 text-center text-slate-400">
                                 <span class="material-symbols-outlined text-4xl block mb-2 text-slate-300">hourglass_empty</span>
-                                Hiện chưa có dữ liệu thống kê bài thi nào.
+                                No test statistics available yet.
                             </td>
                         </tr>
                     }
@@ -102,19 +102,19 @@
         {
             <div class="p-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between text-sm">
                 <span class="text-slate-500">
-                    Trang <strong class="text-slate-800">@Model.Stats.PageNumber</strong> / @Model.Stats.TotalPages
+                    Page <strong class="text-slate-800">@Model.Stats.PageNumber</strong> / @Model.Stats.TotalPages
                 </span>
                 <div class="flex gap-2">
                     @if (Model.Stats.HasPreviousPage)
                     {
                         <a href="/Admin/ExamStats?pageNumber=@(Model.Stats.PageNumber - 1)" class="px-3 py-1.5 bg-white border border-slate-300 rounded text-slate-700 hover:bg-slate-100 font-medium transition text-xs flex items-center gap-1">
-                            <span class="material-symbols-outlined text-[14px]">chevron_left</span> Trước
+                            <span class="material-symbols-outlined text-[14px]">chevron_left</span> Previous
                         </a>
                     }
                     @if (Model.Stats.HasNextPage)
                     {
                         <a href="/Admin/ExamStats?pageNumber=@(Model.Stats.PageNumber + 1)" class="px-3 py-1.5 bg-white border border-slate-300 rounded text-slate-700 hover:bg-slate-100 font-medium transition text-xs flex items-center gap-1">
-                            Sau <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+                            Next <span class="material-symbols-outlined text-[14px]">chevron_right</span>
                         </a>
                     }
                 </div>

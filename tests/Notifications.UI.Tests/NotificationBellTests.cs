@@ -23,7 +23,7 @@ public class NotificationBellTests
         Assert.Contains("aria-controls=\"notification-menu-panel\"", html);
         Assert.Contains("aria-expanded=\"false\"", html);
         Assert.Contains("id=\"notification-menu-panel\" hidden", html);
-        Assert.Contains("Xem tất cả", WebUtility.HtmlDecode(html));
+        Assert.Contains("See all", WebUtility.HtmlDecode(html));
         Assert.Contains("href=\"/Notifications\"", html); // without JavaScript the bell still opens the full list
         Assert.Contains("/js/notification-menu.js", html);
 
@@ -94,7 +94,7 @@ public class NotificationBellTests
         var html = WebUtility.HtmlDecode(await client.GetStringAsync("/Notifications"));
         Assert.Contains("data-val-range=\"Số thông báo mỗi trang phải từ 1 đến 100.\"", html);
         Assert.DoesNotContain(" max=\"100\"", html); // native/jQuery defaults would show an English message
-        Assert.Contains("data-confirm=\"Xóa thông báo này khỏi danh sách của bạn?\"", html);
+        Assert.Contains("data-confirm=\"Remove this notification from your list?\"", html);
         Assert.DoesNotContain("return confirm(", html);
     }
 

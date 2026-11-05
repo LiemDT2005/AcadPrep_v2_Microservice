@@ -249,20 +249,6 @@ public partial class ToeicApiClient(HttpClient http, IHttpContextAccessor httpCo
         return (true, null);
     }
 
-    public async Task<List<CourseListItem>> GetCoursesAsync()
-
-
-    {
-        AttachToken();
-        return await http.GetFromJsonAsync<List<CourseListItem>>("/catalog/api/courses", JsonOpts) ?? [];
-    }
-
-    public async Task<CourseDetail?> GetCourseAsync(Guid id)
-    {
-        AttachToken();
-        return await http.GetFromJsonAsync<CourseDetail>($"/catalog/api/courses/{id}", JsonOpts);
-    }
-
     public async Task<GetExamListResponse?> GetExamListAsync(
         string? search,
         string? seriesName,

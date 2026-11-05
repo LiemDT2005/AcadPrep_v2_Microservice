@@ -7,7 +7,7 @@ namespace Storefront.Web.Pages.Performance;
 
 public class ScoreProgressModel(ToeicApiClient api) : PageModel
 {
-    public ScoreProgressResultDto ProgressData { get; set; } = new(false, "Chưa đủ dữ liệu để vẽ biểu đồ tiến độ.", []);
+    public ScoreProgressResultDto ProgressData { get; set; } = new(false, "Not enough data to display the progress chart.", []);
 
     public async Task<IActionResult> OnGetAsync([FromQuery] string? userId)
     {

@@ -1,13 +1,13 @@
 @page
 @model Storefront.Web.Pages.Vocabulary.ReviewModel
 @{
-    ViewData["Title"] = "Ôn Thẻ Từ Vựng (Flashcards)";
+    ViewData["Title"] = "Vocabulary Flashcard Review";
 }
 
 <div class="max-w-2xl mx-auto py-xl px-margin-mobile md:px-margin-desktop">
     <div class="mb-xl text-center mb-6">
-        <h2 class="font-headline-md text-headline-md text-on-surface mb-xs font-bold text-2xl">Ôn Thẻ Flashcards (Thuật Toán SRS)</h2>
-        <p class="font-body-md text-body-md text-on-surface-variant text-gray-600">Đánh giá độ nhớ bằng thuật toán Lặp lại Ngắt quãng (Spaced Repetition System).</p>
+        <h2 class="font-headline-md text-headline-md text-on-surface mb-xs font-bold text-2xl">Flashcard Review (Spaced Repetition)</h2>
+        <p class="font-body-md text-body-md text-on-surface-variant text-gray-600">Check your recall using the Spaced Repetition System (SRS).</p>
     </div>
 
     @if (TempData["SuccessMessage"] != null)
@@ -27,16 +27,16 @@
     {
         <div class="bg-tertiary-container/30 border border-tertiary-container rounded-2xl p-xl text-center py-12 bg-emerald-50 border-emerald-200">
             <span class="material-symbols-outlined text-[48px] text-emerald-600 mb-md">celebration</span>
-            <h3 class="font-headline-sm text-headline-sm text-on-surface mb-sm font-bold text-lg text-emerald-900">Bạn đã hoàn thành các thẻ đến hạn hôm nay!</h3>
+            <h3 class="font-headline-sm text-headline-sm text-on-surface mb-sm font-bold text-lg text-emerald-900">You have completed all flashcards due today!</h3>
             <p class="font-body-md text-body-md text-on-surface-variant mb-lg text-emerald-700 mb-6">
-                Tất cả các từ vựng đã được ôn tập đúng lộ trình SRS. Hãy quay lại vào ngày mai hoặc tra thêm từ mới vào sổ tay.
+                All scheduled vocabulary reviews are complete. Come back tomorrow or look up new words to add to your notebook.
             </p>
             <div class="flex justify-center gap-3">
                 <a href="/Vocabulary/Notebook" class="inline-flex items-center gap-sm bg-primary text-white px-lg py-sm rounded-lg font-label-md hover:bg-primary/90 transition shadow-sm p-2 text-sm">
-                    <span class="material-symbols-outlined text-[18px]">book</span> Mở Sổ tay từ vựng
+                    <span class="material-symbols-outlined text-[18px]">book</span> Open vocabulary notebook
                 </a>
                 <a href="/Vocabulary/DictionarySearch" class="inline-flex items-center gap-sm border border-gray-300 bg-white text-gray-700 px-lg py-sm rounded-lg font-label-md hover:bg-gray-50 transition p-2 text-sm">
-                    <span class="material-symbols-outlined text-[18px]">search</span> Tra từ điển mới
+                    <span class="material-symbols-outlined text-[18px]">search</span> Look up new words
                 </a>
             </div>
         </div>
@@ -47,10 +47,10 @@
         <div class="mb-md flex justify-between items-center mb-4">
             <span class="font-label-sm text-label-sm text-on-surface-variant inline-flex items-center gap-xs text-sm font-semibold text-gray-600">
                 <span class="material-symbols-outlined text-[18px] text-primary">style</span>
-                Còn @Model.DueFlashcards.Items.Count thẻ cần ôn tập hôm nay
+                @Model.DueFlashcards.Items.Count cards left to review today
             </span>
             <span class="text-xs text-gray-500">
-                Lần ôn trước: Khoảng cách @(firstCard.Interval) ngày
+                Previous review interval: @(firstCard.Interval) days
             </span>
         </div>
 
@@ -61,7 +61,7 @@
                 <span class="material-symbols-outlined text-[44px] text-primary/40 mb-2">translate</span>
                 <h1 class="font-display-md text-display-md text-primary font-black text-4xl text-indigo-900 tracking-wide">@firstCard.Word</h1>
                 <p class="font-body-sm text-body-sm text-on-surface-variant mt-sm text-gray-400 text-sm mt-4">
-                    <span class="material-symbols-outlined text-[16px] align-middle">touch_app</span> Chạm vào thẻ để lật xem định nghĩa
+                    <span class="material-symbols-outlined text-[16px] align-middle">touch_app</span> Tap the card to see the definition
                 </p>
             </div>
 
@@ -82,7 +82,7 @@
                 }
                 <div class="mt-4">
                     <a href="/Vocabulary/VocabularyDetail/@firstCard.VocabularyId" class="text-xs text-primary underline" onclick="event.stopPropagation()">
-                        Xem đoạn văn ngữ cảnh trong đề thi &rarr;
+                        View test passage context &rarr;
                     </a>
                 </div>
             </div>
@@ -95,8 +95,8 @@
                 <input type="hidden" name="isRemembered" value="false" />
                 <button type="submit" class="flex flex-col items-center gap-xs px-xl py-md rounded-2xl border-2 border-red-200 bg-red-50 hover:bg-red-100 transition-all p-4 px-8 group shadow-sm">
                     <span class="material-symbols-outlined text-[32px] text-red-600 group-hover:scale-110 transition-transform">close</span>
-                    <span class="font-bold text-red-700">Chưa Nhớ</span>
-                    <span class="text-[11px] text-red-500">Ôn lại ngày mai (Interval = 1)</span>
+                    <span class="font-bold text-red-700">Forgot</span>
+                    <span class="text-[11px] text-red-500">Review tomorrow (1-day interval)</span>
                 </button>
             </form>
             <form method="post" asp-page-handler="Rate">
@@ -104,8 +104,8 @@
                 <input type="hidden" name="isRemembered" value="true" />
                 <button type="submit" class="flex flex-col items-center gap-xs px-xl py-md rounded-2xl border-2 border-green-200 bg-green-50 hover:bg-green-100 transition-all p-4 px-8 group shadow-sm">
                     <span class="material-symbols-outlined text-[32px] text-green-600 group-hover:scale-110 transition-transform">check_circle</span>
-                    <span class="font-bold text-green-700">Đã Nhớ</span>
-                    <span class="text-[11px] text-green-600">Nhân đôi chu kỳ (Interval x 2)</span>
+                    <span class="font-bold text-green-700">Remembered</span>
+                    <span class="text-[11px] text-green-600">Double the review interval</span>
                 </button>
             </form>
         </div>
@@ -114,16 +114,16 @@
         <div class="mt-xl bg-surface-container rounded-2xl p-md mt-8 p-4 bg-gray-50 border border-gray-200">
             <div class="flex items-center gap-sm mb-sm text-sm font-semibold text-gray-700 mb-2">
                 <span class="material-symbols-outlined text-[18px] text-primary mr-1">info</span>
-                <span>Nguyên lý Thuật toán Lặp lại Ngắt quãng (SRS)</span>
+                <span>How Spaced Repetition (SRS) Works</span>
             </div>
             <div class="grid grid-cols-2 gap-md text-xs gap-4">
                 <div class="bg-red-50/70 border border-red-100 rounded-xl p-3">
-                    <span class="font-bold text-red-800">Quên từ vựng:</span>
-                    <p class="text-gray-600 mt-1">Hệ thống reset Interval về 1 ngày. Thẻ sẽ xuất hiện lại trong danh sách ôn tập vào ngày mai.</p>
+                    <span class="font-bold text-red-800">If you forget a word:</span>
+                    <p class="text-gray-600 mt-1">The interval resets to one day. The card will appear in your review list tomorrow.</p>
                 </div>
                 <div class="bg-green-50/70 border border-green-100 rounded-xl p-3">
-                    <span class="font-bold text-green-800">Nhớ từ vựng:</span>
-                    <p class="text-gray-600 mt-1">Hệ thống nhân đôi Interval (1 &rarr; 2 &rarr; 4 &rarr; 8... ngày). Trí nhớ dài hạn được củng cố bền vững.</p>
+                    <span class="font-bold text-green-800">If you remember a word:</span>
+                    <p class="text-gray-600 mt-1">The interval doubles (1 &rarr; 2 &rarr; 4 &rarr; 8... days) to strengthen long-term memory.</p>
                 </div>
             </div>
         </div>

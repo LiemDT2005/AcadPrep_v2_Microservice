@@ -6,11 +6,11 @@
     <header class="@AdminUi.Header">
         <div>
             <p class="@AdminUi.Eyebrow">Notifications</p>
-            <h2 class="@AdminUi.Title">Gửi thông báo hệ thống</h2>
-            <p class="@AdminUi.Lead">Gửi cho tất cả, theo vai trò hoặc cho một tài khoản. Người nhận thấy ngay trong chuông thông báo.</p>
+            <h2 class="@AdminUi.Title">Send system notification</h2>
+            <p class="@AdminUi.Lead">Send to everyone, a role, or a single account. Recipients see the message in their notification menu.</p>
         </div>
         <a asp-page="/Notifications/Index" class="@AdminUi.SecondaryButton self-start whitespace-nowrap lg:self-auto">
-            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">notifications</span>Thông báo của tôi
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">notifications</span>My notifications
         </a>
     </header>
 
@@ -32,38 +32,38 @@
             <div><label asp-for="Input.Content" class="@AdminUi.Label"></label>
                 <textarea asp-for="Input.Content" rows="7" class="@AdminUi.Input" data-preview="content"></textarea>
                 <span asp-validation-for="Input.Content" class="@AdminUi.FieldError"></span>
-                <p class="@AdminUi.Help">Nội dung được hiển thị dạng văn bản.</p></div>
+                <p class="@AdminUi.Help">Content is displayed as plain text.</p></div>
             <div class="grid gap-md sm:grid-cols-2">
                 <div><label asp-for="Input.Audience" class="@AdminUi.Label"></label>
                     <select asp-for="Input.Audience" class="@AdminUi.Input" data-audience>
-                        <option value="All">Tất cả</option><option value="User">Một người dùng</option><option value="Learner">Learner</option><option value="Moderator">Moderator</option>
+                        <option value="All">All</option><option value="User">Single user</option><option value="Learner">Learner</option><option value="Moderator">Moderator</option>
                     </select><span asp-validation-for="Input.Audience" class="@AdminUi.FieldError"></span></div>
                 <div data-target-field><label asp-for="Input.TargetUserId" class="@AdminUi.Label"></label>
                     <input asp-for="Input.TargetUserId" data-user-picker="@Url.Page("/Admin/Notifications/Create", "Users")" aria-describedby="target-help" class="@AdminUi.Input" />
                     <span asp-validation-for="Input.TargetUserId" class="@AdminUi.FieldError"></span></div>
             </div>
-            <p id="target-help" class="@AdminUi.Help -mt-sm">Chỉ dùng khi chọn "Một người dùng": gõ email hoặc tên rồi chọn tài khoản (hoặc dán ID). Các đối tượng khác để trống.</p>
+            <p id="target-help" class="@AdminUi.Help -mt-sm">For a single user, search by email or name and select the account, or paste its ID. Leave blank for other audiences.</p>
             <div class="flex justify-end border-t border-outline-variant pt-md">
-                <button type="submit" class="@AdminUi.PrimaryButton"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">send</span>Gửi thông báo</button>
+                <button type="submit" class="@AdminUi.PrimaryButton"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">send</span>Send notification</button>
             </div>
         </form>
 
         <aside class="@AdminUi.Card overflow-hidden" aria-labelledby="preview-title">
-            <h3 id="preview-title" class="@AdminUi.CardTitle border-b border-outline-variant px-lg py-md">Xem trước trong chuông</h3>
+            <h3 id="preview-title" class="@AdminUi.CardTitle border-b border-outline-variant px-lg py-md">Notification preview</h3>
             <div class="p-lg">
                 <div class="rounded-xl border border-outline-variant">
                     <div class="flex items-start gap-sm bg-primary/5 px-md py-sm">
                         <span class="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary" aria-hidden="true"></span>
                         <div class="min-w-0">
-                            <p class="font-semibold text-on-surface" data-preview-title>Tiêu đề thông báo</p>
-                            <p class="whitespace-pre-line text-[13px] text-on-surface-variant" data-preview-content>Nội dung sẽ hiển thị ở đây.</p>
-                            <p class="mt-0.5 text-[12px] text-primary">Vừa xong · Chưa đọc</p>
+                            <p class="font-semibold text-on-surface" data-preview-title>Notification title</p>
+                            <p class="whitespace-pre-line text-[13px] text-on-surface-variant" data-preview-content>Your message will appear here.</p>
+                            <p class="mt-0.5 text-[12px] text-primary">Just now · Unread</p>
                         </div>
                     </div>
                 </div>
                 <dl class="mt-md grid grid-cols-[auto_1fr] gap-x-md gap-y-xs text-[13px]">
-                    <dt class="text-on-surface-variant">Đối tượng</dt><dd class="font-semibold" data-preview-audience>Tất cả</dd>
-                    <dt class="text-on-surface-variant">Loại</dt><dd>System</dd>
+                    <dt class="text-on-surface-variant">Audience</dt><dd class="font-semibold" data-preview-audience>All</dd>
+                    <dt class="text-on-surface-variant">Type</dt><dd>System</dd>
                 </dl>
             </div>
         </aside>

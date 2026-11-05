@@ -1,4 +1,4 @@
-﻿@page "/Admin/Exams/{examId:int}/Questions/Create/Part6"
+@page "/Admin/Exams/{examId:int}/Questions/Create/Part6"
 @model Storefront.Web.Pages.Admin.Exams.Questions.Part6Model
 @{
     Layout = "_ModeratorLayout";
@@ -42,7 +42,7 @@
         <input type="hidden" asp-for="Form.PassageId" />
         
         <!-- Left: Wizard Step Form -->
-        <div class="lg:col-span-7 qc-form-card min-h-[400px]">
+        <div class="lg:col-span-12 qc-form-card min-h-[400px]">
             
             <!-- STEP 1: Passage Setup -->
             <div id="step1" class="flex flex-col gap-md">
@@ -183,7 +183,7 @@
         </div>
 
         <!-- Right: Live Preview Panel -->
-        <div class="lg:col-span-5 qc-preview-panel">
+        <div class="hidden qc-preview-panel">
             <div class="qc-preview-panel__label">
                 <span class="material-symbols-outlined">visibility</span>
                 Learner Reading Live Preview

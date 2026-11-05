@@ -1,4 +1,4 @@
-﻿@page "/Admin/Exams/{examId:int}/Questions/Create/Part5"
+@page "/Admin/Exams/{examId:int}/Questions/Create/Part5"
 @model Storefront.Web.Pages.Admin.Exams.Questions.Part5Model
 @{
     Layout = "_ModeratorLayout";
@@ -26,7 +26,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-lg items-start">
 
         <!-- Left: Form -->
-        <form method="post" class="lg:col-span-7 qc-form-card" novalidate>
+        <form method="post" class="lg:col-span-12 qc-form-card" novalidate>
             <input type="hidden" asp-for="Form.EditId" />
 
             <!-- Section: Metadata -->
@@ -137,7 +137,7 @@
         </form>
 
         <!-- Right: Live Preview -->
-        <div class="lg:col-span-5 qc-preview-panel">
+        <div class="hidden qc-preview-panel">
             <div class="qc-preview-panel__label">
                 <span class="material-symbols-outlined">visibility</span>
                 Learner Live Preview

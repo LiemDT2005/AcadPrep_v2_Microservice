@@ -32,7 +32,7 @@ public partial class ToeicApiClient
                 return Task.FromResult(new NotificationApiResult<NotificationCreated>(400,
                     Errors: new Dictionary<string, string[]>
                     {
-                        ["targetUserId"] = ["ID người nhận phải là GUID khác rỗng."]
+                        ["targetUserId"] = ["Recipient ID must be a non-empty GUID."]
                     }));
             targetUserId = parsedId;
         }
@@ -69,7 +69,7 @@ public partial class ToeicApiClient
                     if (json.RootElement.TryGetProperty("errors", out var fields) && fields.ValueKind == JsonValueKind.Object)
                         foreach (var field in fields.EnumerateObject())
                             if (new[] { "title", "content", "audience", "targetUserId" }.Contains(field.Name, StringComparer.OrdinalIgnoreCase))
-                                errors[field.Name] = ["Giá trị không hợp lệ. Vui lòng kiểm tra lại."];
+                                errors[field.Name] = ["Invalid value. Please check and try again."];
                 }
                 return new(status, Errors: errors);
             }

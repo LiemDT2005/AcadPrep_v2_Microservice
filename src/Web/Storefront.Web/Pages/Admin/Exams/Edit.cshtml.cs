@@ -1,18 +1,28 @@
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Storefront.Web.Models;
+using Storefront.Web.Pages.Admin.Exams.Questions;
 using Storefront.Web.Services;
 
 namespace Storefront.Web.Pages.Admin.Exams;
 
-public class EditModel(ToeicApiClient api) : PageModel
+public class EditModel(ToeicApiClient api, IWebHostEnvironment env) : PageModel
 {
     public AdminExamDetail Exam { get; set; } = null!;
     public List<AdminExamSeries> ExamSeries { get; set; } = [];
+    public List<AdminPassageListItem> ExamPassages { get; set; } = [];
     public List<string> UpdateErrors { get; set; } = [];
 
     [BindProperty]
     public UpdateExamFormModel UpdateForm { get; set; } = new();
+
+    [BindProperty]
+    public QuickCreatePassageFormModel CreatePassageForm { get; set; } = new();
+
+    [BindProperty]
+    public QuickAddQuestionFormModel QuickQuestionForm { get; set; } = new();
 
     [TempData]
     public string? ErrorMessage { get; set; }
@@ -34,6 +44,7 @@ public class EditModel(ToeicApiClient api) : PageModel
 
         BindUpdateForm();
         await LoadExamSeriesAsync();
+        await LoadExamPassagesAsync(id);
         return Page();
     }
 
@@ -51,6 +62,7 @@ public class EditModel(ToeicApiClient api) : PageModel
         }
 
         await LoadExamSeriesAsync();
+        await LoadExamPassagesAsync(id);
         UpdateForm.Id = id;
 
         if (string.IsNullOrWhiteSpace(UpdateForm.Title))
@@ -73,13 +85,23 @@ public class EditModel(ToeicApiClient api) : PageModel
             return Page();
         }
 
+        var audioUrl = UpdateForm.AudioUrl?.Trim();
+        if (UpdateForm.AudioFile != null && UpdateForm.AudioFile.Length > 0)
+        {
+            var uploadedUrl = await QuestionMediaUploadHelper.SaveFileAsync(env, UpdateForm.AudioFile, "audio");
+            if (!string.IsNullOrWhiteSpace(uploadedUrl))
+            {
+                audioUrl = uploadedUrl;
+            }
+        }
+
         var req = new AdminUpdateExamRequest(
             UpdateForm.Title.Trim(),
             UpdateForm.ExamType ?? Exam.ExamType ?? "Full Test",
             UpdateForm.Description?.Trim(),
             UpdateForm.Duration,
             UpdateForm.ExamSeriesId,
-            UpdateForm.AudioUrl?.Trim(),
+            audioUrl,
             Exam.Status
         );
 
@@ -92,6 +114,108 @@ public class EditModel(ToeicApiClient api) : PageModel
 
         UpdateErrors.Add(error ?? "Failed to update exam.");
         return Page();
+    }
+
+    public async Task<IActionResult> OnPostChangeStatusAsync(int id, string status)
+    {
+        var (success, error) = await api.ChangeExamStatusAsync(id, status);
+        if (success)
+        {
+            SuccessMessage = $"Exam status changed to {status} successfully.";
+        }
+        else
+        {
+            ErrorMessage = error ?? "Failed to change exam status.";
+        }
+        return RedirectToPage("./Edit", new { id });
+    }
+
+    public async Task<IActionResult> OnPostCreatePassageAsync(int id)
+    {
+        if (string.IsNullOrWhiteSpace(CreatePassageForm.Content) && string.IsNullOrWhiteSpace(CreatePassageForm.ImageUrl))
+        {
+            ErrorMessage = "Passage content or image URL is required.";
+            return RedirectToPage("./Edit", new { id });
+        }
+
+        var req = new AdminUpsertPassageRequest(
+            id,
+            CreatePassageForm.Content?.Trim(),
+            CreatePassageForm.ImageUrl?.Trim(),
+            CreatePassageForm.Explanation?.Trim(),
+            Math.Max(1, CreatePassageForm.DisplayOrder),
+            null
+        );
+
+        var (passageId, error) = await api.CreateAdminPassageAsync(req);
+        if (passageId.HasValue)
+        {
+            SuccessMessage = $"Created Reading Passage #{passageId.Value} in this exam successfully.";
+        }
+        else
+        {
+            ErrorMessage = error ?? "Failed to create reading passage.";
+        }
+
+        return RedirectToPage("./Edit", new { id });
+    }
+
+    public async Task<IActionResult> OnPostDeletePassageAsync(int id, int passageId, bool deleteWithQuestions = false)
+    {
+        var (res, error) = await api.DeleteAdminPassageAsync(passageId, deleteWithQuestions);
+        if (res != null)
+        {
+            SuccessMessage = res.Message;
+        }
+        else
+        {
+            ErrorMessage = error ?? "Cannot delete passage while questions are attached (UC-18.5 Non-Orphan Constraint).";
+        }
+
+        return RedirectToPage("./Edit", new { id });
+    }
+
+    public async Task<IActionResult> OnPostQuickAddQuestionAsync(int id)
+    {
+        string? audioUrl = null;
+        if (QuickQuestionForm.AudioFile != null && QuickQuestionForm.AudioFile.Length > 0)
+        {
+            audioUrl = await QuestionMediaUploadHelper.SaveFileAsync(env, QuickQuestionForm.AudioFile, "audio");
+        }
+
+        var req = new AdminUpsertQuestionRequest(
+            id,
+            Math.Clamp(QuickQuestionForm.Part, 1, 7),
+            Math.Max(1, QuickQuestionForm.QuestionNumber),
+            QuickQuestionForm.QuestionText?.Trim(),
+            QuickQuestionForm.CorrectOption ?? "A",
+            QuickQuestionForm.Explanation?.Trim(),
+            audioUrl,
+            null,
+            null,
+            null,
+            QuickQuestionForm.QuestionType?.Trim(),
+            QuickQuestionForm.TopicTag?.Trim(),
+            QuickQuestionForm.Difficulty ?? "Medium",
+            QuickQuestionForm.PassageId > 0 ? QuickQuestionForm.PassageId : null,
+            null,
+            QuickQuestionForm.OptionA?.Trim() ?? "Option A",
+            QuickQuestionForm.OptionB?.Trim() ?? "Option B",
+            QuickQuestionForm.OptionC?.Trim() ?? "Option C",
+            QuickQuestionForm.Part != 2 ? (QuickQuestionForm.OptionD?.Trim() ?? "Option D") : null
+        );
+
+        var (qId, error) = await api.CreateAdminQuestionAsync(req);
+        if (qId.HasValue)
+        {
+            SuccessMessage = $"Added Question #{QuickQuestionForm.QuestionNumber} (Part {QuickQuestionForm.Part}) to this exam.";
+        }
+        else
+        {
+            ErrorMessage = error ?? "Failed to create question.";
+        }
+
+        return RedirectToPage("./Edit", new { id });
     }
 
     public async Task<IActionResult> OnPostDeleteAsync(int id, string contentType, int targetId)
@@ -141,6 +265,12 @@ public class EditModel(ToeicApiClient api) : PageModel
     {
         ExamSeries = await api.GetExamSeriesAsync();
     }
+
+    private async Task LoadExamPassagesAsync(int examId)
+    {
+        var paged = await api.GetAdminPassagesPagedAsync(examId: examId, page: 1, pageSize: 100);
+        ExamPassages = paged?.Items?.ToList() ?? [];
+    }
 }
 
 public class UpdateExamFormModel
@@ -152,4 +282,31 @@ public class UpdateExamFormModel
     public int Duration { get; set; } = 120;
     public int ExamSeriesId { get; set; }
     public string? AudioUrl { get; set; }
+    public IFormFile? AudioFile { get; set; }
+}
+
+public class QuickCreatePassageFormModel
+{
+    public int DisplayOrder { get; set; } = 1;
+    public string? Content { get; set; }
+    public string? ImageUrl { get; set; }
+    public string? Explanation { get; set; }
+}
+
+public class QuickAddQuestionFormModel
+{
+    public int Part { get; set; } = 5;
+    public int QuestionNumber { get; set; } = 101;
+    public string Difficulty { get; set; } = "Medium";
+    public string? QuestionType { get; set; } = "Grammar";
+    public string? TopicTag { get; set; }
+    public int? PassageId { get; set; }
+    public string? QuestionText { get; set; }
+    public string? OptionA { get; set; }
+    public string? OptionB { get; set; }
+    public string? OptionC { get; set; }
+    public string? OptionD { get; set; }
+    public string CorrectOption { get; set; } = "A";
+    public string? Explanation { get; set; }
+    public IFormFile? AudioFile { get; set; }
 }

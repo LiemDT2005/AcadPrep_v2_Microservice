@@ -1,29 +1,29 @@
 @model int?
-@* Facebook-style bell: the button opens a dropdown with the newest notifications; only "Xem tất cả" navigates.
+@* Facebook-style bell: the button opens a dropdown with the newest notifications; only "See all" navigates.
    Without JavaScript the button is a plain link to the full list. *@
 <div class="relative" data-notification-menu data-endpoint="@Url.Page("/Notifications/Index")">
     @Html.AntiForgeryToken()
     <a data-notification-badge data-notification-toggle asp-page="/Notifications/Index" role="button"
        aria-haspopup="true" aria-expanded="false" aria-controls="notification-menu-panel"
-       class="relative inline-flex items-center text-primary p-sm" aria-label="Thông báo"
-       title="@(Model.HasValue ? $"{Model.Value} thông báo chưa đọc" : "Chưa thể tải số thông báo chưa đọc")">
+       class="relative inline-flex items-center text-primary p-sm" aria-label="Notifications"
+       title="@(Model.HasValue ? $"{Model.Value} unread notifications" : "Unable to load unread notification count")">
         <span class="material-symbols-outlined" aria-hidden="true">notifications</span>
         @if (Model > 0) { <span class="rounded-full bg-error text-white text-xs px-1.5 min-w-5 text-center">@(Model > 99 ? "99+" : Model.ToString())</span> }
         else if (!Model.HasValue) { <span class="text-on-surface-variant text-xs" aria-hidden="true">?</span> }
     </a>
-    <div id="notification-menu-panel" hidden role="dialog" aria-label="Thông báo"
+    <div id="notification-menu-panel" hidden role="dialog" aria-label="Notifications"
          class="absolute right-0 mt-2 z-[60] bg-surface-container-lowest text-on-surface rounded-2xl shadow-2xl border border-outline-variant overflow-hidden"
          style="width: min(360px, calc(100vw - 24px));">
         <div class="flex items-center justify-between px-md py-sm border-b border-outline-variant">
-            <span class="font-semibold">Thông báo</span>
+            <span class="font-semibold">Notifications</span>
             <span data-notification-menu-unread class="text-body-sm text-on-surface-variant"></span>
         </div>
         <button type="button" data-notification-read-all class="block px-md py-sm text-sm font-semibold text-primary disabled:opacity-50">
-            Đánh dấu đã đọc tất cả
+            Mark all as read
         </button>
-        <p data-notification-menu-status role="status" class="px-md py-sm text-body-sm text-on-surface-variant">Đang tải…</p>
+        <p data-notification-menu-status role="status" class="px-md py-sm text-body-sm text-on-surface-variant">Loading…</p>
         <ul data-notification-menu-list class="max-h-[360px] overflow-y-auto divide-y divide-outline-variant"></ul>
-        <a asp-page="/Notifications/Index" class="block text-center font-semibold text-primary px-md py-sm border-t border-outline-variant hover:bg-surface-container-low">Xem tất cả</a>
+        <a asp-page="/Notifications/Index" class="block text-center font-semibold text-primary px-md py-sm border-t border-outline-variant hover:bg-surface-container-low">See all</a>
     </div>
 </div>
 <script src="~/js/notification-menu.js" asp-append-version="true"></script>

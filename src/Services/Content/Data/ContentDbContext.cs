@@ -51,7 +51,7 @@ public class ContentDbContext(DbContextOptions<ContentDbContext> options) : DbCo
             b.HasOne(p => p.QuestionGroup)
                 .WithMany(g => g.Passages)
                 .HasForeignKey(p => p.QuestionGroupId)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.ClientSetNull);
         });
 
         modelBuilder.Entity<QuestionGroup>(b =>
@@ -77,12 +77,12 @@ public class ContentDbContext(DbContextOptions<ContentDbContext> options) : DbCo
             b.HasOne(q => q.Passage)
                 .WithMany(p => p.Questions)
                 .HasForeignKey(q => q.PassageId)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.ClientSetNull);
 
             b.HasOne(q => q.QuestionGroup)
                 .WithMany(g => g.Questions)
                 .HasForeignKey(q => q.QuestionGroupId)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.ClientSetNull);
         });
 
         modelBuilder.Entity<QuestionOption>(b =>

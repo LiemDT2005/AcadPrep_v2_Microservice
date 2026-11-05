@@ -30,7 +30,6 @@ public class IdentityJwtCompatibilityTests
     [InlineData("Exam")]
     [InlineData("Content")]
     [InlineData("Learning/Learning.API")]
-    [InlineData("Catalog/Catalog.API")]
     [InlineData("Progress/Progress.API")]
     public void ServiceAcceptsActualIdentityTokenAndPreservesAdminRole(string service)
     {

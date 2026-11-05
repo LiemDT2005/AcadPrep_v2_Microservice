@@ -1,11 +1,9 @@
 using System.Text.Json;
-using Catalog.Domain.Entities;
-using Catalog.Infrastructure.Persistence;
 using Exam.Entities;
 using Exam.Data;
 using Identity.API.Models;
-using Learning.Domain.Entities;
-using Learning.Infrastructure.Persistence;
+using Learning.API.Entities;
+using Learning.API.Data;
 using Microsoft.EntityFrameworkCore;
 using Progress.Domain.Entities;
 using Progress.Infrastructure.Persistence;
@@ -14,31 +12,9 @@ namespace SeedDemoData;
 
 internal static class DemoLearning
 {
-    internal static async Task SeedAsync(CatalogDbContext catalog, LearningDbContext learning,
+    internal static async Task SeedAsync(LearningDbContext learning,
         ExamDbContext exam, ProgressDbContext progress, List<AppUser> users)
     {
-        var courses = new[]
-        {
-            ("TOEIC Workplace Vocabulary", "Beginner", 500, "Vocabulary", "Office meetings, recruitment, invoices and business travel."),
-            ("TOEIC Listening Booster 750+", "Intermediate", 750, "Listening", "Identify the speaker, purpose, location and next action in workplace conversations."),
-            ("TOEIC Reading Mastery 850+", "Advanced", 850, "Reading", "Read emails, notices and multiple passages; find evidence for each answer.")
-        };
-        foreach (var (title, level, target, skill, description) in courses)
-        {
-            if (await catalog.Courses.AnyAsync(c => c.Title == title)) continue;
-            var id = Guid.NewGuid();
-            catalog.Courses.Add(new Course
-            {
-                Id = id, Title = title, Level = level, TargetScore = target, Description = description,
-                Lessons = Enumerable.Range(1, 4).Select(i => new Lesson
-                {
-                    CourseId = id, Title = $"{skill}: Workshop {i}", Skill = skill, Order = i, DurationMinutes = 20 + 5 * i,
-                    Content = $"{description}\nExample: Please submit the revised proposal by Friday.\nPractice {i}: identify the deadline, responsible person and requested action. Explain your answer using evidence from the sentence."
-                }).ToList()
-            });
-        }
-        await catalog.SaveChangesAsync();
-
         var words = new (string Word, string Meaning, string Example)[]
         {
             ("Invoice", "Hóa đơn / a request for payment", "Please send the invoice to the accounting department."),
@@ -98,8 +74,8 @@ internal static class DemoLearning
                     a.AttemptAnswers.Add(new AttemptAnswer { QuestionId = q.Id, IsCorrect = correct,
                         SelectedOption = correct ? q.CorrectOption : (Exam.Entities.Enums.OptionLetter)(((int)q.CorrectOption + 1) % (q.Part == 2 ? 3 : 4)) });
                 }
-                a.ListeningScore = Learning.Application.Common.ToeicScoreConverter.CalculateListeningScore(listeningCorrect);
-                a.ReadingScore = Learning.Application.Common.ToeicScoreConverter.CalculateReadingScore(readingCorrect);
+                a.ListeningScore = Learning.API.Common.ToeicScoreConverter.CalculateListeningScore(listeningCorrect);
+                a.ReadingScore = Learning.API.Common.ToeicScoreConverter.CalculateReadingScore(readingCorrect);
                 a.TotalScore = a.ListeningScore + a.ReadingScore;
                 exam.ExamAttempts.Add(a);
                 attempts.Add(a);

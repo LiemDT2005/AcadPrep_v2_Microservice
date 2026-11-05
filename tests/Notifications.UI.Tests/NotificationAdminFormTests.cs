@@ -28,7 +28,7 @@ public class NotificationAdminFormTests
         Assert.Equal(4, json.RootElement.EnumerateObject().Count());
         Assert.False(json.RootElement.TryGetProperty("createdBy", out _));
         var html = WebUtility.HtmlDecode(await client.GetStringAsync(response.Headers.Location));
-        Assert.Contains("Đã gửi thông báo thành công", html);
+        Assert.Contains("Notification sent successfully", html);
         Assert.Single(factory.Backend.Calls, call => call.Path == "/notification/api/admin/notifications");
     }
 

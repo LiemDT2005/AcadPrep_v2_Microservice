@@ -19,18 +19,18 @@ public record NotificationApiResult<T>(int Status, T? Data = default,
 public class NotificationInput
 {
     private string? title;
-    [Display(Name = "Tiêu đề"), Required(ErrorMessage = "Vui lòng nhập tiêu đề."),
-     StringLength(200, MinimumLength = 1, ErrorMessage = "Tiêu đề có tối đa 200 ký tự.")]
+    [Display(Name = "Title"), Required(ErrorMessage = "Please enter a title."),
+     StringLength(200, MinimumLength = 1, ErrorMessage = "Title must be no more than 200 characters.")]
     public string? Title { get => title; set => title = value?.Trim(); }
 
-    [Display(Name = "Nội dung"), Required(ErrorMessage = "Vui lòng nhập nội dung."),
-     StringLength(2000, MinimumLength = 1, ErrorMessage = "Nội dung có tối đa 2000 ký tự.")]
+    [Display(Name = "Content"), Required(ErrorMessage = "Please enter content."),
+     StringLength(2000, MinimumLength = 1, ErrorMessage = "Content must be no more than 2000 characters.")]
     public string? Content { get; set; }
 
-    [Display(Name = "Đối tượng"), Required, RegularExpression("^(User|All|Learner|Moderator)$",
-        ErrorMessage = "Đối tượng nhận không hợp lệ.")]
+    [Display(Name = "Audience"), Required, RegularExpression("^(User|All|Learner|Moderator)$",
+        ErrorMessage = "Invalid notification audience.")]
     public string Audience { get; set; } = "All";
 
-    [Display(Name = "Người nhận"), NotificationAudience]
+    [Display(Name = "Recipient ID"), NotificationAudience]
     public string? TargetUserId { get; set; }
 }
