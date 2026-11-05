@@ -48,7 +48,7 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-md">
             <div class="space-y-xs">
                 <label class="flex items-center gap-xs font-label-md text-label-md text-on-surface-variant" asp-for="UpdateForm.ExamType">
-                    Part / Loại đề
+                    Part / Test type
                     <span class="text-error font-bold">*</span>
                 </label>
                 <div class="relative">
@@ -72,25 +72,25 @@
 
             <div class="space-y-xs">
                 <label class="flex items-center gap-xs font-label-md text-label-md text-on-surface-variant" asp-for="UpdateForm.Duration">
-                    Thời gian (phút)
+                    Duration (minutes)
                     <span class="text-error font-bold">*</span>
                 </label>
                 <div class="relative">
                     <input asp-for="UpdateForm.Duration" type="number" min="1" max="240" class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg pl-md pr-14 py-sm font-body-md text-body-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all" />
                     <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                        <span class="text-xs text-outline">phút</span>
+                        <span class="text-xs text-outline">minutes</span>
                     </div>
                 </div>
             </div>
 
             <div class="space-y-xs">
                 <label class="flex items-center gap-xs font-label-md text-label-md text-on-surface-variant" asp-for="UpdateForm.ExamSeriesId">
-                    Bộ đề thi (Series)
+                    Test series
                     <span class="text-error font-bold">*</span>
                 </label>
                 <div class="relative">
                     <select asp-for="UpdateForm.ExamSeriesId" required class="w-full appearance-none bg-surface-container-lowest border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all cursor-pointer">
-                        <option value="">-- Chọn bộ đề --</option>
+                        <option value="">-- Select a series --</option>
                         @foreach (var series in Model.ExamSeries)
                         {
                             <option value="@series.Id">@series.Name (@series.Year)</option>

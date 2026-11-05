@@ -25,7 +25,7 @@
         $(title).rules("add", { normalizer: function (value) { return value.trim(); } });
         $(form.elements["Input.Content"]).rules("add", {
             notificationtext: true,
-            messages: { notificationtext: "Vui lòng nhập nội dung." }
+            messages: { notificationtext: "Please enter content." }
         });
         function update() {
             target.setAttribute("aria-required", audience.value === "User" ? "true" : "false");

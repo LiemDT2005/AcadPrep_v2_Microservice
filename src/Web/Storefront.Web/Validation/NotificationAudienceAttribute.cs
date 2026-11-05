@@ -7,7 +7,7 @@ namespace Storefront.Web.Validation;
 [AttributeUsage(AttributeTargets.Property)]
 public sealed class NotificationAudienceAttribute : ValidationAttribute, IClientModelValidator
 {
-    public const string Message = "Chọn User: nhập GUID hợp lệ, khác rỗng. Đối tượng khác: để trống ID người nhận.";
+    public const string Message = "For a single user, enter a valid, non-empty GUID. For other audiences, leave the recipient ID blank.";
 
     protected override ValidationResult? IsValid(object? value, ValidationContext context)
     {

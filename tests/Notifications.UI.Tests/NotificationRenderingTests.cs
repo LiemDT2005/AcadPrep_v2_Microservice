@@ -50,8 +50,8 @@ public class NotificationRenderingTests
         using var client = Client(factory);
         await Login(client);
         var html = WebUtility.HtmlDecode(await client.GetStringAsync("/Notifications"));
-        Assert.Contains(empty ? "Chưa có thông báo" : "Không thể tải thông báo", html);
-        if (!empty) Assert.DoesNotContain("Chưa có thông báo trong trang này", html);
+        Assert.Contains(empty ? "No notifications" : "Unable to load notifications", html);
+        if (!empty) Assert.DoesNotContain("No notifications on this page", html);
     }
 
     [Theory]
@@ -118,8 +118,8 @@ public class NotificationRenderingTests
         await Login(client);
         factory.Backend.CountStatus = 503;
         var html = WebUtility.HtmlDecode(await client.GetStringAsync("/Notifications"));
-        Assert.Contains("Chưa thể tải số thông báo chưa đọc", html);
-        Assert.DoesNotContain("0 thông báo chưa đọc", html);
+        Assert.Contains("Unable to load unread notification count", html);
+        Assert.DoesNotContain("0 unread notifications", html);
     }
 
     internal static HttpClient Client(NotificationUiFactory factory) => factory.CreateClient(new WebApplicationFactoryClientOptions

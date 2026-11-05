@@ -7,7 +7,7 @@ namespace Storefront.Web.Pages.Performance;
 
 public class PerformanceAnalysisModel(ToeicApiClient api) : PageModel
 {
-    public PerformanceAnalysisDto AnalysisData { get; set; } = new(false, "Chưa có dữ liệu phân tích.", 0, 0, 0, new Dictionary<int, int>());
+    public PerformanceAnalysisDto AnalysisData { get; set; } = new(false, "No analysis data available.", 0, 0, 0, new Dictionary<int, int>());
 
     public async Task<IActionResult> OnGetAsync([FromQuery] string? userId)
     {

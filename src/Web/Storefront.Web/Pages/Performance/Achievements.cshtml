@@ -1,14 +1,14 @@
 @page
 @model Storefront.Web.Pages.Performance.AchievementsModel
 @{
-    ViewData["Title"] = "Huy Hiệu & Chuỗi Ngày Học";
+    ViewData["Title"] = "Achievements & Study Streaks";
 }
 
 <div class="max-w-6xl mx-auto py-xl px-margin-mobile md:px-margin-desktop">
     <!-- Header -->
     <div class="mb-xl mb-6">
-        <h2 class="font-headline-md text-headline-md text-on-surface mb-xs font-bold text-2xl">Huy Hiệu & Chuỗi Ngày Học</h2>
-        <p class="font-body-md text-body-md text-on-surface-variant text-gray-600">Khám phá các danh hiệu và duy trì ngọn lửa học tập mỗi ngày trên AcadPrep!</p>
+        <h2 class="font-headline-md text-headline-md text-on-surface mb-xs font-bold text-2xl">Achievements & Study Streaks</h2>
+        <p class="font-body-md text-body-md text-on-surface-variant text-gray-600">Discover achievements and keep learning every day on AcadPrep!</p>
     </div>
 
     <!-- Study Streak Banner (UC-13.2) -->
@@ -20,26 +20,26 @@
                     🔥
                 </div>
                 <div>
-                    <span class="text-xs font-bold uppercase tracking-wider text-orange-100">Gamification · Múi giờ UTC+7</span>
+                    <span class="text-xs font-bold uppercase tracking-wider text-orange-100">Gamification · UTC+7 time zone</span>
                     <h3 class="text-2xl font-extrabold flex items-center gap-2">
-                        Chuỗi Ngày Học: @Model.Streak.CurrentStreak Ngày
+                        Study streak: @Model.Streak.CurrentStreak days
                         @if (Model.Streak.IsActiveToday)
                         {
-                            <span class="text-xs bg-green-500 text-white px-2 py-0.5 rounded-full font-bold">Đã học hôm nay</span>
+                            <span class="text-xs bg-green-500 text-white px-2 py-0.5 rounded-full font-bold">Studied today</span>
                         }
                         else
                         {
-                            <span class="text-xs bg-white/30 text-white px-2 py-0.5 rounded-full font-bold">Chưa học hôm nay</span>
+                            <span class="text-xs bg-white/30 text-white px-2 py-0.5 rounded-full font-bold">Not studied today</span>
                         }
                     </h3>
                     <p class="text-sm text-orange-100 mt-1">
-                        Kỷ lục chuỗi dài nhất: <strong>@Model.Streak.MaxStreak ngày liên tục</strong>. Hãy làm đề hoặc ôn Flashcards trước 23:59:59 (giờ VN) để giữ chuỗi!
+                        Longest streak: <strong>@Model.Streak.MaxStreak consecutive days</strong>. Take a test or review flashcards before 23:59:59 (UTC+7) to keep your streak!
                     </p>
                 </div>
             </div>
             <div class="flex gap-3">
                 <a href="/Vocabulary/Review" class="bg-white text-orange-600 font-bold px-4 py-2 rounded-xl text-sm shadow hover:bg-orange-50 transition">
-                    Ôn Flashcards ngay
+                    Review flashcards now
                 </a>
             </div>
         </div>
@@ -48,7 +48,7 @@
     <!-- Achievements Grid (UC-13.1) -->
     <div class="mb-4 flex justify-between items-center">
         <h3 class="font-semibold text-lg text-gray-800">
-            Danh Hiệu (@Model.Achievements.Count(a => a.IsUnlocked)/@Model.Achievements.Count đã mở khóa)
+            Achievements (@Model.Achievements.Count(a => a.IsUnlocked)/@Model.Achievements.Count unlocked)
         </h3>
     </div>
 
@@ -80,12 +80,12 @@
                         @if (isUnlocked)
                         {
                             <span class="material-symbols-outlined text-[14px] mr-1">check_circle</span>
-                            @:Mở khóa: @achievement.UnlockedAt?.ToString("dd/MM/yyyy")
+                            @:Unlocked: @achievement.UnlockedAt?.ToString("dd/MM/yyyy")
                         }
                         else
                         {
                             <span class="material-symbols-outlined text-[14px] mr-1">lock</span>
-                            @:Chưa đạt (Yêu cầu: @achievement.ConditionType = @achievement.ConditionValue)
+                            @:Locked (Requirement: @achievement.ConditionType = @achievement.ConditionValue)
                         }
                     </span>
                 </div>

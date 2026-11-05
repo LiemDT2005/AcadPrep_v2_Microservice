@@ -1,22 +1,22 @@
 @page
 @model Storefront.Web.Pages.Vocabulary.NotebookModel
 @{
-    ViewData["Title"] = "Sổ Tay Từ Vựng";
+    ViewData["Title"] = "Vocabulary Notebook";
 }
 
 <div class="max-w-5xl mx-auto py-xl px-margin-mobile md:px-margin-desktop">
     <!-- Header -->
     <div class="mb-xl flex flex-col md:flex-row md:items-end md:justify-between gap-md mb-6">
         <div>
-            <h2 class="font-headline-md text-headline-md text-on-surface mb-xs font-bold text-2xl">Sổ Tay Từ Vựng Cá Nhân</h2>
-            <p class="font-body-md text-body-md text-on-surface-variant text-gray-600">Quản lý và ôn tập các từ vựng TOEIC bạn đã lưu trong quá trình luyện thi.</p>
+            <h2 class="font-headline-md text-headline-md text-on-surface mb-xs font-bold text-2xl">Personal Vocabulary Notebook</h2>
+            <p class="font-body-md text-body-md text-on-surface-variant text-gray-600">Manage and review the TOEIC vocabulary you have saved while studying.</p>
         </div>
         <div class="flex gap-sm">
             <a href="/Vocabulary/Review" class="inline-flex items-center gap-xs px-md py-xs rounded-xl bg-primary text-white font-semibold text-sm p-3 shadow hover:bg-primary/90 transition">
-                <span class="material-symbols-outlined text-[18px]">style</span> Ôn Flashcards
+                <span class="material-symbols-outlined text-[18px]">style</span> Review flashcards
             </a>
             <a href="/Vocabulary/DictionarySearch" class="inline-flex items-center gap-xs px-md py-xs rounded-xl border border-gray-300 bg-white text-gray-700 font-semibold text-sm p-3 shadow-sm hover:bg-gray-50 transition">
-                <span class="material-symbols-outlined text-[18px]">search</span> Tra từ điển
+                <span class="material-symbols-outlined text-[18px]">search</span> Dictionary lookup
             </a>
         </div>
     </div>
@@ -38,15 +38,15 @@
     <div class="bg-surface-container-lowest p-md rounded-2xl shadow-sm border border-outline-variant mb-6 bg-white p-4">
         <form method="get" class="flex gap-3">
             <div class="flex-1 relative">
-                <input type="text" name="SearchTerm" value="@Model.SearchTerm" placeholder="Tìm kiếm theo từ vựng hoặc nghĩa tiếng Việt..." class="w-full px-4 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:border-primary" />
+                <input type="text" name="SearchTerm" value="@Model.SearchTerm" placeholder="Search by word or definition..." class="w-full px-4 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:border-primary" />
             </div>
             <button type="submit" class="bg-primary text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-primary/90 transition shadow-sm">
-                Tìm kiếm
+                Search
             </button>
             @if (!string.IsNullOrWhiteSpace(Model.SearchTerm))
             {
                 <a href="/Vocabulary/Notebook" class="border border-gray-300 px-4 py-2 rounded-xl text-sm text-gray-600 hover:bg-gray-50 flex items-center">
-                    Đặt lại
+                    Reset
                 </a>
             }
         </form>
@@ -57,10 +57,10 @@
     {
         <div class="bg-surface-container-lowest border border-gray-200 rounded-2xl p-12 text-center bg-white">
             <span class="material-symbols-outlined text-[48px] text-gray-400 mb-2">menu_book</span>
-            <h3 class="font-bold text-lg text-gray-800 mb-1">Chưa có từ vựng nào trong sổ tay</h3>
-            <p class="text-sm text-gray-500 mb-6">Hãy tra cứu từ mới hoặc thêm từ khi làm bài thi để xây dựng vốn từ TOEIC của bạn!</p>
+            <h3 class="font-bold text-lg text-gray-800 mb-1">No vocabulary in your notebook yet</h3>
+            <p class="text-sm text-gray-500 mb-6">Look up new words or save words while taking tests to build your TOEIC vocabulary!</p>
             <a href="/Vocabulary/DictionarySearch" class="bg-primary text-white px-5 py-2.5 rounded-xl font-semibold text-sm shadow inline-flex items-center gap-2">
-                <span class="material-symbols-outlined text-[18px]">search</span> Tra cứu từ vựng ngay
+                <span class="material-symbols-outlined text-[18px]">search</span> Look up words now
             </a>
         </div>
     }
@@ -84,13 +84,13 @@
                                 @if (isDue)
                                 {
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800">
-                                        ⚡ Cần ôn tập
+                                        ⚡ Review due
                                     </span>
                                 }
                                 else
                                 {
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-gray-100 text-gray-600">
-                                        Ôn: @item.NextReviewDate.ToString("dd/MM")
+                                        Review: @item.NextReviewDate.ToString("dd/MM")
                                     </span>
                                 }
                             </div>
@@ -107,15 +107,15 @@
                     </div>
 
                     <div class="pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
-                        <span>SRS Interval: <strong>@(item.Interval) ngày</strong></span>
+                        <span>SRS Interval: <strong>@(item.Interval) days</strong></span>
                         <div class="flex gap-2">
                             <a href="/Vocabulary/VocabularyDetail/@item.VocabularyId" class="text-primary hover:underline font-medium inline-flex items-center gap-1">
-                                <span class="material-symbols-outlined text-[14px]">article</span> Ngữ cảnh
+                                <span class="material-symbols-outlined text-[14px]">article</span> Context
                             </a>
-                            <form method="post" asp-page-handler="Delete" onsubmit="return confirm('Bạn có chắc chắn muốn xóa từ này khỏi sổ tay?');" class="inline">
+                            <form method="post" asp-page-handler="Delete" onsubmit="return confirm('Remove this word from your notebook?');" class="inline">
                                 <input type="hidden" name="vocabularyId" value="@item.VocabularyId" />
                                 <button type="submit" class="text-red-600 hover:underline font-medium inline-flex items-center gap-1">
-                                    <span class="material-symbols-outlined text-[14px]">delete</span> Xóa
+                                    <span class="material-symbols-outlined text-[14px]">delete</span> Delete
                                 </button>
                             </form>
                         </div>
@@ -131,16 +131,16 @@
                 @if (Model.SavedVocabularies.HasPreviousPage)
                 {
                     <a href="?PageNumber=@(Model.PageNumber - 1)&SearchTerm=@Model.SearchTerm" class="px-4 py-2 border rounded-xl text-sm bg-white hover:bg-gray-50">
-                        &larr; Trang trước
+                        &larr; Previous page
                     </a>
                 }
                 <span class="text-sm text-gray-600 font-medium">
-                    Trang @Model.SavedVocabularies.PageNumber / @Model.SavedVocabularies.TotalPages
+                    Page @Model.SavedVocabularies.PageNumber / @Model.SavedVocabularies.TotalPages
                 </span>
                 @if (Model.SavedVocabularies.HasNextPage)
                 {
                     <a href="?PageNumber=@(Model.PageNumber + 1)&SearchTerm=@Model.SearchTerm" class="px-4 py-2 border rounded-xl text-sm bg-white hover:bg-gray-50">
-                        Trang sau &rarr;
+                        Next page &rarr;
                     </a>
                 }
             </div>

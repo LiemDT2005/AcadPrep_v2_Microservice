@@ -31,11 +31,11 @@ public class NotebookModel(ToeicApiClient api) : PageModel
         var (success, error) = await api.RemoveSavedVocabularyAsync(vocabularyId);
         if (!success)
         {
-            TempData["ErrorMessage"] = error ?? "Không thể xóa từ khỏi sổ tay.";
+            TempData["ErrorMessage"] = error ?? "Unable to remove the word from your notebook.";
         }
         else
         {
-            TempData["SuccessMessage"] = "Đã xóa từ vựng khỏi sổ tay thành công.";
+            TempData["SuccessMessage"] = "Word removed from your notebook successfully.";
         }
 
         return RedirectToPage(new { PageNumber, SearchTerm });

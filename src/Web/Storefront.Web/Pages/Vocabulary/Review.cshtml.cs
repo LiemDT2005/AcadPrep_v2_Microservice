@@ -26,13 +26,13 @@ public class ReviewModel(ToeicApiClient api) : PageModel
         var (success, error) = await api.RateVocabularyAsync(vocabularyId, isRemembered);
         if (!success)
         {
-            TempData["ErrorMessage"] = error ?? "Không thể đánh giá từ vựng.";
+            TempData["ErrorMessage"] = error ?? "Unable to submit your vocabulary review.";
         }
         else
         {
             TempData["SuccessMessage"] = isRemembered 
-                ? "Tuyệt vời! Thuật toán SRS đã kéo dài thời gian ôn tiếp theo (x2 interval)." 
-                : "Đã ghi nhận! Từ này sẽ được đưa vào danh sách ôn lại vào ngày mai.";
+                ? "Great! Your next review interval has doubled."
+                : "Review saved! This word will appear in your review list tomorrow.";
         }
 
         return RedirectToPage();

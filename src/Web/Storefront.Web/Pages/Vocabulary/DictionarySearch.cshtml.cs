@@ -39,11 +39,11 @@ public class DictionarySearchModel(ToeicApiClient api) : PageModel
         var (success, error) = await api.SaveVocabularyAsync(vocabularyId);
         if (!success)
         {
-            TempData["ErrorMessage"] = error ?? "Không thể lưu từ vào sổ tay.";
+            TempData["ErrorMessage"] = error ?? "Unable to save the word to your notebook.";
         }
         else
         {
-            TempData["SuccessMessage"] = "Đã lưu từ vựng vào sổ tay cá nhân thành công!";
+            TempData["SuccessMessage"] = "Word saved to your notebook successfully!";
         }
 
         return RedirectToPage(new { Keyword });

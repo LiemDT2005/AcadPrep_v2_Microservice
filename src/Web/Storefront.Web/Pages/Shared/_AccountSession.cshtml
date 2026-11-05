@@ -21,7 +21,7 @@
                         .build();
 
                     connection.on("ForceLogout", function (reason) {
-                        alert(`⚠️ TÀI KHOẢN ĐÃ BỊ KHÓA!\n\nLý do: ${reason || 'Vi phạm chính sách hệ thống'}\n\nBạn sẽ được đăng xuất ngay lập tức.`);
+                        alert(`⚠️ YOUR ACCOUNT HAS BEEN BANNED!\n\nReason: ${reason || 'Violation of system policies'}\n\nYou will be logged out immediately.`);
                         window.location.href = '/Account/Logout';
                     });
 
