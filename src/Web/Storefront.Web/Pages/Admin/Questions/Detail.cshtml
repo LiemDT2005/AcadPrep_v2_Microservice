@@ -1,4 +1,4 @@
-@page
+﻿@page
 @model Storefront.Web.Pages.Admin.Questions.DetailModel
 @{
     Layout = "_ModeratorLayout";
@@ -73,12 +73,12 @@
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-lg items-start">
-        <!-- LEFT 8 COLS: UPDATE QUESTION / AUDIO / ANSWERS FORM (UC-17.4) -->
+        <!-- LEFT 8 COLS: UPDATE QUESTION / AUDIO / ANSWERS FORM -->
         <div class="lg:col-span-8">
             <div class="qc-section-card flex flex-col gap-md">
                 <div class="qc-section-title">
                     <span class="material-symbols-outlined">edit_square</span>
-                    <h3>Edit Question, Audio &amp; Answer Choices (UC-17.4)</h3>
+                    <h3>Edit Question, Audio &amp; Answer Choices</h3>
                 </div>
 
                 <form method="post" asp-page-handler="Update" asp-route-id="@q.Id" enctype="multipart/form-data" class="flex flex-col gap-md">
@@ -190,7 +190,7 @@
             </div>
         </div>
 
-        <!-- RIGHT 4 COLS: EMBEDDED EXAMS INFO (UC-17.3) -->
+        <!-- RIGHT 4 COLS: EMBEDDED EXAMS INFO -->
         <div class="lg:col-span-4 flex flex-col gap-lg">
             <div class="qc-section-card flex flex-col gap-md">
                 <div class="qc-section-title">

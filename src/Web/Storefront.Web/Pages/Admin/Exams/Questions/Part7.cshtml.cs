@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Hosting;
+﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -12,6 +12,9 @@ public class Part7Model(ToeicApiClient api, IWebHostEnvironment env) : PageModel
     public int ExamId { get; set; }
     public string ExamTitle { get; set; } = string.Empty;
     public bool IsEditMode { get; set; }
+    public int PartQuestionCount { get; set; }
+    public int PartQuestionLimit => ExamStructureViewModel.TargetP7;
+    public bool IsPartFull => PartQuestionCount + 2 > PartQuestionLimit;
 
     [BindProperty]
     public Part7FormModel Form { get; set; } = new();
@@ -93,6 +96,13 @@ public class Part7Model(ToeicApiClient api, IWebHostEnvironment env) : PageModel
             return Page();
         }
 
+        PartQuestionCount = exam.Questions.Count(q => q.Part == 7);
+        if (IsPartFull)
+        {
+            TempData["ErrorMessage"] = $"Part 7 already has the maximum of {PartQuestionLimit} questions.";
+            return RedirectToPage("/Admin/Exams/Edit", new { id = examId });
+        }
+
         var existingP7Sets = exam.QuestionGroups.Count(g => g.Questions.Any(q => q.Part == 7));
         Form.Name = $"Set {existingP7Sets + 1:D2} - Reading Comprehension";
 
@@ -117,6 +127,13 @@ public class Part7Model(ToeicApiClient api, IWebHostEnvironment env) : PageModel
             return RedirectToPage("/Admin/Exams/Index");
         }
         ExamTitle = exam.Title;
+
+        PartQuestionCount = exam.Questions.Count(q => q.Part == 7);
+        if (!IsEditMode && PartQuestionCount + Form.Questions.Count > PartQuestionLimit)
+        {
+            ErrorMessage = $"Adding {Form.Questions.Count} question(s) exceeds Part 7 limit ({PartQuestionCount}/{PartQuestionLimit} questions).";
+            return Page();
+        }
 
         var validPassages = new List<AdminSavePart7PassageItem>();
         for (int i = 0; i < Form.Passages.Count; i++)

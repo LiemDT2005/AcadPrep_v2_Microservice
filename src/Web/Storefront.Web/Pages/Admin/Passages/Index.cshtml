@@ -1,4 +1,4 @@
-@page
+﻿@page
 @model Storefront.Web.Pages.Admin.Passages.IndexModel
 @{
     Layout = "_ModeratorLayout";
@@ -14,7 +14,7 @@
         <div>
             <div class="flex items-center gap-xs text-primary font-label-sm uppercase tracking-wider mb-1">
                 <span class="material-symbols-outlined text-sm">menu_book</span>
-                <span>UC-18.1 — UC-18.5 • Reading Passages CMS</span>
+                <span>Reading Passages CMS</span>
             </div>
             <h2 class="font-headline-md text-headline-md font-bold text-on-surface">Reading Passage Management</h2>
             <p class="text-body-sm text-on-surface-variant mt-1">Manage Part 6 (Text Completion) and Part 7 (Reading Comprehension) passages with non-orphan question protection.</p>
@@ -100,7 +100,7 @@
         </div>
     </form>
 
-    <!-- Passages Table (UC-18.1) -->
+    <!-- Passages Table -->
     <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/40 shadow-sm overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
@@ -169,10 +169,10 @@
                                 </td>
                                 <td class="py-3.5 px-4 text-right">
                                     <div class="inline-flex items-center gap-1">
-                                        <a href="/Admin/Passages/Detail?id=@item.Id" class="p-2 rounded-lg text-on-surface-variant hover:text-primary hover:bg-primary-fixed/40 transition-colors" title="View & Edit Passage (UC-18.3 / UC-18.4)">
+                                        <a href="/Admin/Passages/Detail?id=@item.Id" class="p-2 rounded-lg text-on-surface-variant hover:text-primary hover:bg-primary-fixed/40 transition-colors" title="View & Edit Passage">
                                             <span class="material-symbols-outlined text-[19px]">visibility</span>
                                         </a>
-                                        <button type="button" onclick="confirmDeletePassage(@item.Id, @item.QuestionCount, @(item.IsExamActive ? "true" : "false"))" class="p-2 rounded-lg text-on-surface-variant hover:text-error hover:bg-error-container/40 transition-colors cursor-pointer" title="Delete Passage (UC-18.5)">
+                                        <button type="button" onclick="confirmDeletePassage(@item.Id, @item.QuestionCount, @(item.IsExamActive ? "true" : "false"))" class="p-2 rounded-lg text-on-surface-variant hover:text-error hover:bg-error-container/40 transition-colors cursor-pointer" title="Delete Passage">
                                             <span class="material-symbols-outlined text-[19px]">delete</span>
                                         </button>
                                     </div>
@@ -186,12 +186,12 @@
     </div>
 </div>
 
-<!-- Create Passage Modal (UC-18.2) -->
+<!-- Create Passage Modal -->
 <div id="create-passage-modal" class="@(Model.ShowCreateModal ? "flex" : "hidden") fixed inset-0 z-50 bg-on-surface/40 backdrop-blur-sm items-center justify-center p-4">
     <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/40 shadow-2xl max-w-2xl w-full p-lg flex flex-col gap-md max-h-[90vh] overflow-y-auto">
         <div class="flex items-center justify-between border-b border-outline-variant/40 pb-sm">
             <div>
-                <h3 class="font-headline-sm text-headline-sm font-bold text-on-surface">Create Reading Passage (UC-18.2)</h3>
+                <h3 class="font-headline-sm text-headline-sm font-bold text-on-surface">Create Reading Passage</h3>
                 <p class="text-xs text-on-surface-variant">Add a new reading passage for Part 6 or Part 7.</p>
             </div>
             <button type="button" onclick="closeCreatePassageModal()" class="p-1 text-on-surface-variant hover:text-on-surface cursor-pointer">
@@ -272,9 +272,9 @@
             const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
 
             if (questionCount > 0) {
-                // UC-18.5: Warn about attached Part 6-7 questions and prevent orphan questions
+                // Warn about attached Part 6-7 questions and prevent orphan questions
                 showConfirm({
-                    title: 'Non-Orphan Constraint (UC-18.5)',
+                    title: 'Non-Orphan Constraint',
                     message: `Passage #${id} currently has ${questionCount} attached Part 6–7 question(s). To prevent orphan questions in the database, deleting this passage will also remove its ${questionCount} attached question(s). Proceed?`,
                     confirmText: `Delete Passage & ${questionCount} Question(s)`,
                     cancelText: 'Cancel',

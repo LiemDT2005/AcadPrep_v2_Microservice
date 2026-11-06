@@ -1,4 +1,4 @@
-@page
+﻿@page
 @model Storefront.Web.Pages.Admin.Exams.EditModel
 @{
     Layout = "_ModeratorLayout";
@@ -34,7 +34,7 @@
         <!-- ===================================================================== -->
         <!-- LEFT COLUMN (6 COLS): EDIT EXAM, ADD QUESTION & CREATE PASSAGE        -->
         <!-- ===================================================================== -->
-        <div class="xl:col-span-6 flex flex-col gap-md">
+        <div id="examStudioLeftCol" class="xl:col-span-12 flex flex-col gap-md transition-all duration-300">
 
             <!-- Studio Mode Switcher Tabs -->
             <div class="bg-surface-container-lowest p-1.5 rounded-2xl border border-outline-variant/40 shadow-sm flex flex-wrap gap-1">
@@ -74,25 +74,13 @@
                             <span class="material-symbols-outlined text-sm">post_add</span>
                             + Create Passage
                         </button>
+
                     </div>
                 </div>
 
                 <!-- SECTION I: LISTENING COMPREHENSION (PARTS 1 - 4) -->
                 <div class="bg-surface-container-lowest p-md rounded-2xl border border-outline-variant/40 shadow-sm flex flex-col gap-sm">
-                    <div class="flex items-center justify-between border-b border-outline-variant/30 pb-xs">
-                        <div class="flex items-center gap-xs">
-                            <span class="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-                                <span class="material-symbols-outlined text-[18px]">headphones</span>
-                            </span>
-                            <div>
-                                <h4 class="font-title-sm text-title-sm font-bold text-on-surface">SECTION I: LISTENING (Parts 1 – 4)</h4>
-                                <p class="text-xs text-on-surface-variant">Photographs, Question-Response, Conversations &amp; Short Talks</p>
-                            </div>
-                        </div>
-                        <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-primary/10 text-primary">
-                            @(structure.Part1Count + structure.Part2Count + structure.Part3Count + structure.Part4Count) / 100 Qs
-                        </span>
-                    </div>
+
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-sm">
                         <!-- Part 1 Card -->
@@ -108,10 +96,19 @@
                                 <button type="button" onclick="filterReviewByPart(1)" class="text-xs font-semibold text-on-surface-variant hover:text-primary cursor-pointer">
                                     Review (@structure.Part1Count) →
                                 </button>
-                                <a href="/Admin/Exams/@Model.Exam.Id/Questions/Create/ListeningQuestion?part=1"
-                                   class="text-xs font-bold text-primary hover:underline flex items-center gap-0.5">
-                                    <span class="material-symbols-outlined text-[15px]">add</span> Add Part 1 Q
-                                </a>
+                                @if (structure.CanAddP1)
+                                {
+                                    <a href="/Admin/Exams/@Model.Exam.Id/Questions/Create/ListeningQuestion?part=1"
+                                       class="text-xs font-bold text-primary hover:underline flex items-center gap-0.5">
+                                        <span class="material-symbols-outlined text-[15px]">add</span> Add Part 1 Q
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="text-xs font-semibold text-outline flex items-center gap-0.5" title="Part 1 is full (@ExamStructureViewModel.TargetP1/@ExamStructureViewModel.TargetP1 Qs)">
+                                        <span class="material-symbols-outlined text-[15px] text-tertiary">check_circle</span> Full
+                                    </span>
+                                }
                             </div>
                         </div>
 
@@ -128,10 +125,19 @@
                                 <button type="button" onclick="filterReviewByPart(2)" class="text-xs font-semibold text-on-surface-variant hover:text-primary cursor-pointer">
                                     Review (@structure.Part2Count) →
                                 </button>
-                                <a href="/Admin/Exams/@Model.Exam.Id/Questions/Create/ListeningQuestion?part=2"
-                                   class="text-xs font-bold text-primary hover:underline flex items-center gap-0.5">
-                                    <span class="material-symbols-outlined text-[15px]">add</span> Add Part 2 Q
-                                </a>
+                                @if (structure.CanAddP2)
+                                {
+                                    <a href="/Admin/Exams/@Model.Exam.Id/Questions/Create/ListeningQuestion?part=2"
+                                       class="text-xs font-bold text-primary hover:underline flex items-center gap-0.5">
+                                        <span class="material-symbols-outlined text-[15px]">add</span> Add Part 2 Q
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="text-xs font-semibold text-outline flex items-center gap-0.5" title="Part 2 is full (@ExamStructureViewModel.TargetP2/@ExamStructureViewModel.TargetP2 Qs)">
+                                        <span class="material-symbols-outlined text-[15px] text-tertiary">check_circle</span> Full
+                                    </span>
+                                }
                             </div>
                         </div>
 
@@ -148,10 +154,19 @@
                                 <button type="button" onclick="filterReviewByPart(3)" class="text-xs font-semibold text-on-surface-variant hover:text-primary cursor-pointer">
                                     Review (@structure.Part3Count) →
                                 </button>
-                                <a href="/Admin/Exams/@Model.Exam.Id/Questions/Create/Listening?part=3"
-                                   class="text-xs font-bold text-primary hover:underline flex items-center gap-0.5">
-                                    <span class="material-symbols-outlined text-[15px]">add</span> Add Part 3 Group
-                                </a>
+                                @if (structure.CanAddP3)
+                                {
+                                    <a href="/Admin/Exams/@Model.Exam.Id/Questions/Create/Listening?part=3"
+                                       class="text-xs font-bold text-primary hover:underline flex items-center gap-0.5">
+                                        <span class="material-symbols-outlined text-[15px]">add</span> Add Part 3 Group
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="text-xs font-semibold text-outline flex items-center gap-0.5" title="Part 3 is full (@ExamStructureViewModel.TargetP3/@ExamStructureViewModel.TargetP3 Qs)">
+                                        <span class="material-symbols-outlined text-[15px] text-tertiary">check_circle</span> Full
+                                    </span>
+                                }
                             </div>
                         </div>
 
@@ -168,10 +183,19 @@
                                 <button type="button" onclick="filterReviewByPart(4)" class="text-xs font-semibold text-on-surface-variant hover:text-primary cursor-pointer">
                                     Review (@structure.Part4Count) →
                                 </button>
-                                <a href="/Admin/Exams/@Model.Exam.Id/Questions/Create/Listening?part=4"
-                                   class="text-xs font-bold text-primary hover:underline flex items-center gap-0.5">
-                                    <span class="material-symbols-outlined text-[15px]">add</span> Add Part 4 Group
-                                </a>
+                                @if (structure.CanAddP4)
+                                {
+                                    <a href="/Admin/Exams/@Model.Exam.Id/Questions/Create/Listening?part=4"
+                                       class="text-xs font-bold text-primary hover:underline flex items-center gap-0.5">
+                                        <span class="material-symbols-outlined text-[15px]">add</span> Add Part 4 Group
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="text-xs font-semibold text-outline flex items-center gap-0.5" title="Part 4 is full (@ExamStructureViewModel.TargetP4/@ExamStructureViewModel.TargetP4 Qs)">
+                                        <span class="material-symbols-outlined text-[15px] text-tertiary">check_circle</span> Full
+                                    </span>
+                                }
                             </div>
                         </div>
                     </div>
@@ -179,80 +203,95 @@
 
                 <!-- SECTION II: READING COMPREHENSION & PASSAGES (PARTS 5 - 7) -->
                 <div class="bg-surface-container-lowest p-md rounded-2xl border border-outline-variant/40 shadow-sm flex flex-col gap-sm">
-                    <div class="flex items-center justify-between border-b border-outline-variant/30 pb-xs">
-                        <div class="flex items-center gap-xs">
-                            <span class="w-8 h-8 rounded-lg bg-tertiary/10 text-tertiary flex items-center justify-center">
-                                <span class="material-symbols-outlined text-[18px]">menu_book</span>
-                            </span>
-                            <div>
-                                <h4 class="font-title-sm text-title-sm font-bold text-on-surface">SECTION II: READING &amp; PASSAGES (Parts 5 – 7)</h4>
-                                <p class="text-xs text-on-surface-variant">Incomplete Sentences, Text Completion Passages &amp; Reading Sets</p>
-                            </div>
-                        </div>
-                        <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-tertiary-fixed text-on-tertiary-fixed-variant">
-                            @(structure.Part5Count + structure.Part6Count + structure.Part7Count) / 100 Qs
-                        </span>
-                    </div>
 
-                    <div class="grid grid-cols-1 gap-sm">
+
+                    <!-- Part 5 & 6 in 2-column Grid (Arranged just like Part 1-4) -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-sm">
                         <!-- Part 5 Card -->
-                        <div class="p-3.5 rounded-xl border border-outline-variant/30 bg-surface-container-low/40 flex items-center justify-between gap-sm flex-wrap">
+                        <div class="p-3.5 rounded-xl border border-outline-variant/30 bg-surface-container-low/40 flex flex-col justify-between gap-sm">
                             <div>
-                                <div class="flex items-center gap-sm">
+                                <div class="flex items-center justify-between">
                                     <span class="font-bold text-sm text-on-surface">Part 5: Incomplete Sentences</span>
-                                    <span class="text-xs font-bold px-2 py-0.5 rounded bg-surface-container text-tertiary">@structure.Part5Count/@ExamStructureViewModel.TargetP5 Qs</span>
+                                    <span class="text-xs font-bold px-2 py-0.5 rounded bg-surface-container text-primary">@structure.Part5Count/@ExamStructureViewModel.TargetP5</span>
                                 </div>
                                 <p class="text-xs text-on-surface-variant mt-0.5">Q101–Q130 · Standalone Grammar &amp; Vocabulary Sentences</p>
                             </div>
-                            <div class="flex items-center gap-sm">
+                            <div class="flex items-center justify-between pt-1 border-t border-outline-variant/20">
                                 <button type="button" onclick="filterReviewByPart(5)" class="text-xs font-semibold text-on-surface-variant hover:text-primary cursor-pointer">
-                                    Review →
+                                    Review (@structure.Part5Count) →
                                 </button>
-                                <a href="/Admin/Exams/@Model.Exam.Id/Questions/Create/Part5"
-                                   class="qc-btn-secondary text-xs py-1.5 px-3">
-                                    <span class="material-symbols-outlined text-sm">add</span> + Add Part 5 Question
-                                </a>
+                                @if (structure.CanAddP5)
+                                {
+                                    <a href="/Admin/Exams/@Model.Exam.Id/Questions/Create/Part5"
+                                       class="text-xs font-bold text-primary hover:underline flex items-center gap-0.5">
+                                        <span class="material-symbols-outlined text-[15px]">add</span> Add Part 5 Question
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="text-xs font-semibold text-outline flex items-center gap-0.5" title="Part 5 is full (@ExamStructureViewModel.TargetP5/@ExamStructureViewModel.TargetP5 Qs)">
+                                        <span class="material-symbols-outlined text-[15px] text-tertiary">check_circle</span> Full
+                                    </span>
+                                }
                             </div>
                         </div>
 
-                        <!-- Part 6 Card (Passage + 4 Questions) -->
-                        <div class="p-3.5 rounded-xl border border-outline-variant/30 bg-surface-container-low/40 flex items-center justify-between gap-sm flex-wrap">
+                        <!-- Part 6 Card -->
+                        <div class="p-3.5 rounded-xl border border-outline-variant/30 bg-surface-container-low/40 flex flex-col justify-between gap-sm">
                             <div>
-                                <div class="flex items-center gap-sm">
-                                    <span class="font-bold text-sm text-on-surface">Part 6: Text Completion (Passage + 4 Blanks)</span>
-                                    <span class="text-xs font-bold px-2 py-0.5 rounded bg-surface-container text-tertiary">@structure.Part6Count/@ExamStructureViewModel.TargetP6 Qs</span>
+                                <div class="flex items-center justify-between">
+                                    <span class="font-bold text-sm text-on-surface">Part 6: Text Completion</span>
+                                    <span class="text-xs font-bold px-2 py-0.5 rounded bg-surface-container text-primary">@structure.Part6Count/@ExamStructureViewModel.TargetP6</span>
                                 </div>
                                 <p class="text-xs text-on-surface-variant mt-0.5">Q131–Q146 · Reading Passage with 4 embedded blank questions</p>
                             </div>
-                            <div class="flex items-center gap-sm">
+                            <div class="flex items-center justify-between pt-1 border-t border-outline-variant/20">
                                 <button type="button" onclick="filterReviewByPart(6)" class="text-xs font-semibold text-on-surface-variant hover:text-primary cursor-pointer">
-                                    Review →
+                                    Review (@structure.Part6Count) →
                                 </button>
-                                <a href="/Admin/Exams/@Model.Exam.Id/Questions/Create/Part6"
-                                   class="qc-btn-secondary text-xs py-1.5 px-3">
-                                    <span class="material-symbols-outlined text-sm">article</span> + Create Part 6 Passage
-                                </a>
+                                @if (structure.CanAddP6)
+                                {
+                                    <a href="/Admin/Exams/@Model.Exam.Id/Questions/Create/Part6"
+                                       class="text-xs font-bold text-primary hover:underline flex items-center gap-0.5">
+                                        <span class="material-symbols-outlined text-[15px]">article</span> Create Part 6 Passage
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="text-xs font-semibold text-outline flex items-center gap-0.5" title="Part 6 is full (@ExamStructureViewModel.TargetP6/@ExamStructureViewModel.TargetP6 Qs)">
+                                        <span class="material-symbols-outlined text-[15px] text-tertiary">check_circle</span> Full
+                                    </span>
+                                }
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Part 7 Card (1-3 Passages + 2-5 Questions) -->
-                        <div class="p-3.5 rounded-xl border border-outline-variant/30 bg-surface-container-low/40 flex items-center justify-between gap-sm flex-wrap">
-                            <div>
-                                <div class="flex items-center gap-sm">
-                                    <span class="font-bold text-sm text-on-surface">Part 7: Reading Comprehension (Single / Double / Triple Passage)</span>
-                                    <span class="text-xs font-bold px-2 py-0.5 rounded bg-surface-container text-tertiary">@structure.Part7Count/@ExamStructureViewModel.TargetP7 Qs</span>
-                                </div>
-                                <p class="text-xs text-on-surface-variant mt-0.5">Q147–Q200 · 1 to 3 Reading Passages with 2–5 comprehension questions</p>
-                            </div>
+                    <!-- Part 7 Card (Full Width - Kept as is) -->
+                    <div class="p-3.5 rounded-xl border border-outline-variant/30 bg-surface-container-low/40 flex items-center justify-between gap-sm flex-wrap">
+                        <div>
                             <div class="flex items-center gap-sm">
-                                <button type="button" onclick="filterReviewByPart(7)" class="text-xs font-semibold text-on-surface-variant hover:text-primary cursor-pointer">
-                                    Review →
-                                </button>
+                                <span class="font-bold text-sm text-on-surface">Part 7: Reading Comprehension (Single / Double / Triple Passage)</span>
+                                <span class="text-xs font-bold px-2 py-0.5 rounded bg-surface-container text-tertiary">@structure.Part7Count/@ExamStructureViewModel.TargetP7 Qs</span>
+                            </div>
+                            <p class="text-xs text-on-surface-variant mt-0.5">Q147–Q200 · 1 to 3 Reading Passages with 2–5 comprehension questions</p>
+                        </div>
+                        <div class="flex items-center gap-sm">
+                            <button type="button" onclick="filterReviewByPart(7)" class="text-xs font-semibold text-on-surface-variant hover:text-primary cursor-pointer">
+                                Review (@structure.Part7Count) →
+                            </button>
+                            @if (structure.CanAddP7)
+                            {
                                 <a href="/Admin/Exams/@Model.Exam.Id/Questions/Create/Part7"
                                    class="qc-btn-secondary text-xs py-1.5 px-3">
                                     <span class="material-symbols-outlined text-sm">menu_book</span> + Create Part 7 Set
                                 </a>
-                            </div>
+                            }
+                            else
+                            {
+                                <span class="text-xs font-semibold text-outline flex items-center gap-0.5" title="Part 7 is full (@ExamStructureViewModel.TargetP7/@ExamStructureViewModel.TargetP7 Qs)">
+                                    <span class="material-symbols-outlined text-[15px] text-tertiary">check_circle</span> Full
+                                </span>
+                            }
                         </div>
                     </div>
                 </div>
@@ -261,15 +300,15 @@
                 <partial name="_ExamQuestionTree" model="structure" />
             </div>
 
-            <!-- TAB 2: READING PASSAGES MANAGER INSIDE EXAM (UC-18.1 - UC-18.5) -->
+            <!-- TAB 2: READING PASSAGES MANAGER INSIDE EXAM -->
             <div id="studioTab-passages" class="hidden flex-col gap-md">
-                <!-- Create Standalone Passage Form (UC-18.2) -->
+                <!-- Create Standalone Passage Form -->
                 <div class="bg-surface-container-lowest p-lg rounded-2xl border border-outline-variant/40 shadow-sm flex flex-col gap-md">
                     <div class="flex items-center justify-between border-b border-outline-variant/30 pb-xs">
                         <div>
                             <h3 class="font-title-md text-title-md font-bold text-on-surface flex items-center gap-xs">
                                 <span class="material-symbols-outlined text-primary">post_add</span>
-                                <span>Create Reading Passage in Exam (UC-18.2)</span>
+                                <span>Create Reading Passage in Exam</span>
                             </h3>
                             <p class="text-xs text-on-surface-variant">Add a reading passage to @Model.Exam.Title</p>
                         </div>
@@ -301,7 +340,7 @@
                     </form>
                 </div>
 
-                <!-- List of Passages in this Exam (UC-18.1, UC-18.3, UC-18.4, UC-18.5) -->
+                <!-- List of Passages in this Exam -->
                 <div class="bg-surface-container-lowest p-lg rounded-2xl border border-outline-variant/40 shadow-sm flex flex-col gap-md">
                     <div class="flex items-center justify-between border-b border-outline-variant/30 pb-xs">
                         <h3 class="font-title-md text-title-md font-bold text-on-surface flex items-center gap-xs">
@@ -336,7 +375,7 @@
                                                 <input type="hidden" name="passageId" value="@p.Id" />
                                                 <input type="hidden" name="deleteWithQuestions" value="false" />
                                                 <button type="submit" class="text-error hover:bg-error-container/30 px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-0.5 cursor-pointer"
-                                                        title="Delete Passage (UC-18.5)">
+                                                        title="Delete Passage">
                                                     <span class="material-symbols-outlined text-sm">delete</span> Delete
                                                 </button>
                                             </form>
@@ -350,13 +389,13 @@
                 </div>
             </div>
 
-            <!-- TAB 3: EXAM METADATA & PUBLISH STATUS (UC-16.4) -->
+            <!-- TAB 3: EXAM METADATA & PUBLISH STATUS -->
             <div id="studioTab-metadata" class="hidden flex-col gap-md">
                 <partial name="_ExamMetadataForm" model="Model" />
 
                 <div class="bg-surface-container-lowest p-md rounded-2xl border border-outline-variant/40 shadow-sm flex items-center justify-between flex-wrap gap-sm">
                     <div>
-                        <h4 class="font-title-sm text-title-sm font-bold text-on-surface">Publish / Status Control (UC-16.4)</h4>
+                        <h4 class="font-title-sm text-title-sm font-bold text-on-surface">Publish / Status Control</h4>
                         <p class="text-xs text-on-surface-variant">Current Status: <strong>@Model.Exam.Status</strong></p>
                     </div>
                     <form method="post" asp-page-handler="ChangeStatus" asp-route-id="@Model.Exam.Id">
@@ -382,7 +421,7 @@
         <!-- ===================================================================== -->
         <!-- RIGHT COLUMN (6 COLS): LIVE EXAM REVIEW, STRUCTURE & FILTER           -->
         <!-- ===================================================================== -->
-        <div class="xl:col-span-6 xl:sticky xl:top-4 flex flex-col gap-md">
+        <div id="examReviewRightCol" class="hidden xl:sticky xl:top-4 flex flex-col gap-md transition-all duration-300">
             <div class="bg-surface-container-lowest p-lg rounded-2xl border border-outline-variant/40 shadow-sm flex flex-col gap-md max-h-[calc(100vh-4rem)] overflow-y-auto">
                 <!-- Review Panel Header -->
                 <div class="flex items-center justify-between border-b border-outline-variant/30 pb-sm">
@@ -397,9 +436,16 @@
                             </p>
                         </div>
                     </div>
-                    <span class="px-3 py-1 rounded-full text-xs font-bold @(Model.Exam.Status == "Published" ? "bg-tertiary-fixed text-on-tertiary-fixed-variant" : "bg-secondary-container text-on-secondary-container")">
-                        @Model.Exam.Status
-                    </span>
+                    <div class="flex items-center gap-xs">
+                        <span class="px-3 py-1 rounded-full text-xs font-bold @(Model.Exam.Status == "Published" ? "bg-tertiary-fixed text-on-tertiary-fixed-variant" : "bg-secondary-container text-on-secondary-container")">
+                            @Model.Exam.Status
+                        </span>
+                        <button type="button" onclick="toggleExamReviewPanel(true)"
+                                class="p-1 rounded-lg hover:bg-surface-container text-on-surface-variant hover:text-primary transition-colors cursor-pointer"
+                                title="Thu gọn panel">
+                            <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Compact 7-Part Progress Bar -->
@@ -416,7 +462,7 @@
                     }
                 </div>
 
-                <!-- Search & Filter Questions inside Exam Review (UC-17.6 & UC-17.7) -->
+                <!-- Search & Filter Questions inside Exam Review -->
                 <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 bg-surface-container-low p-2.5 rounded-xl border border-outline-variant/30">
                     <div class="sm:col-span-6 relative">
                         <input type="text" id="reviewSearchInput" oninput="applyReviewFilters()"
@@ -542,13 +588,13 @@
     </div>
 </div>
 
-<!-- QUICK ADD QUESTION MODAL INSIDE EXAM (UC-17.2) -->
+<!-- QUICK ADD QUESTION MODAL INSIDE EXAM -->
 <div id="quickAddQuestionModal" class="qc-modal hidden">
     <div class="qc-modal__backdrop" onclick="document.getElementById('quickAddQuestionModal').classList.add('hidden')"></div>
     <div class="qc-modal__panel qc-modal__panel--lg overflow-x-hidden">
         <div class="flex justify-between items-center border-b border-outline-variant/30 pb-xs">
             <div>
-                <h3 class="font-headline-sm text-headline-sm font-bold text-on-surface">Quick Add Question to @Model.Exam.Title (UC-17.2)</h3>
+                <h3 class="font-headline-sm text-headline-sm font-bold text-on-surface">Quick Add Question to @Model.Exam.Title</h3>
                 <p class="text-xs text-on-surface-variant">Create a question for any TOEIC Part (1–7) and optionally attach to a Reading Passage</p>
             </div>
             <button type="button" onclick="document.getElementById('quickAddQuestionModal').classList.add('hidden')" class="p-1.5 rounded-lg hover:bg-surface-container cursor-pointer">
@@ -643,6 +689,14 @@
     </div>
 </div>
 
+    <!-- Fixed Vertical Purple Tab on Right Screen Edge -->
+    <button type="button" id="verticalReviewToggleBtn" onclick="toggleExamReviewPanel()"
+            class="fixed right-0 top-1/2 -translate-y-1/2 z-40 bg-primary hover:bg-primary/90 text-white shadow-2xl rounded-l-2xl py-4 px-2 flex flex-col items-center gap-2 cursor-pointer transition-all duration-300 border-y border-l border-white/30 select-none group active:scale-95 hover:pl-3"
+            title="Thu / Mở Exam Live Review">
+        <span id="verticalReviewIcon" class="material-symbols-outlined text-[20px] transition-transform group-hover:-translate-x-0.5">chevron_left</span>
+        <span class="font-bold text-[11px] uppercase tracking-widest text-white" style="writing-mode: vertical-rl; letter-spacing: 0.15em;">Review</span>
+    </button>
+
 <partial name="_ExamEditModals" model="structure" />
 
 @section Scripts {
@@ -666,11 +720,21 @@
     }
 
     function filterReviewByPart(part) {
+        // Tự động mở panel review nếu đang thu gọn
+        const rightCol = document.getElementById('examReviewRightCol');
+        if (rightCol && rightCol.classList.contains('hidden')) {
+            toggleExamReviewPanel(false);
+        }
+
         const select = document.getElementById('reviewPartFilter');
         if (select) {
             select.value = String(part);
             applyReviewFilters();
         }
+
+        setTimeout(() => {
+            rightCol?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 50);
     }
 
     function applyReviewFilters() {
@@ -694,5 +758,46 @@
             }
         });
     }
+    function toggleExamReviewPanel(forceCollapse) {
+        const leftCol = document.getElementById('examStudioLeftCol');
+        const rightCol = document.getElementById('examReviewRightCol');
+        const toggleIcon = document.getElementById('reviewToggleIcon');
+        const toggleText = document.getElementById('reviewToggleText');
+
+        if (!leftCol || !rightCol) return;
+
+        let shouldCollapse;
+        if (typeof forceCollapse === 'boolean') {
+            shouldCollapse = forceCollapse;
+        } else {
+            shouldCollapse = !rightCol.classList.contains('hidden');
+        }
+
+        const verticalIcon = document.getElementById('verticalReviewIcon');
+        if (shouldCollapse) {
+            // Thu gọn: Cột trái chiếm toàn bộ (col-span-12), cột phải ẩn
+            leftCol.classList.remove('xl:col-span-6');
+            leftCol.classList.add('xl:col-span-12');
+            rightCol.classList.add('hidden');
+            rightCol.classList.remove('xl:col-span-6');
+            if (verticalIcon) verticalIcon.textContent = 'chevron_left';
+            localStorage.setItem('acadprep_exam_review_collapsed', 'true');
+        } else {
+            // Mở: Cột trái và phải chia đều (col-span-6)
+            leftCol.classList.remove('xl:col-span-12');
+            leftCol.classList.add('xl:col-span-6');
+            rightCol.classList.remove('hidden');
+            rightCol.classList.add('xl:col-span-6');
+            if (verticalIcon) verticalIcon.textContent = 'chevron_right';
+            localStorage.setItem('acadprep_exam_review_collapsed', 'false');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const saved = localStorage.getItem('acadprep_exam_review_collapsed');
+        // Mặc định thu gọn (true)
+        const isCollapsed = saved === null ? true : (saved === 'true');
+        toggleExamReviewPanel(isCollapsed);
+    });
 </script>
 }

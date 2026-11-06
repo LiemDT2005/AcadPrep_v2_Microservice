@@ -1,4 +1,4 @@
-using Content.Entities;
+﻿using Content.Entities;
 using Content.Entities.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -21,7 +21,24 @@ public static class ContentSeeder
             // Column already exists
         }
 
-        if (await db.ExamSeries.AnyAsync())
+        // Ensure all ETS TOEIC series 2018 - 2026 are seeded
+        foreach (var yr in new[] { 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026 })
+        {
+            if (!await db.ExamSeries.AnyAsync(s => s.Year == yr && s.Name.Contains("ETS")))
+            {
+                db.ExamSeries.Add(new ExamSeries
+                {
+                    Name = $"ETS TOEIC {yr}",
+                    Year = yr,
+                    Description = $"Official TOEIC tests published by ETS for year {yr}.",
+                    CreatedAt = DateTime.UtcNow,
+                    IsDeleted = false
+                });
+            }
+        }
+        await db.SaveChangesAsync();
+
+        if (await db.Exams.AnyAsync())
         {
             return;
         }

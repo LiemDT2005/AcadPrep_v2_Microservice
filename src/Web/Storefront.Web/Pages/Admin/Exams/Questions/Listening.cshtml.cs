@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Hosting;
+﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -14,6 +14,9 @@ public class ListeningModel(ToeicApiClient api, IWebHostEnvironment env) : PageM
     public bool HasExamFullAudio { get; set; }
     public string? ExamAudioUrl { get; set; }
     public bool IsEditMode { get; set; }
+    public int PartQuestionCount { get; set; }
+    public int PartQuestionLimit => Form.Part == 3 ? ExamStructureViewModel.TargetP3 : ExamStructureViewModel.TargetP4;
+    public bool IsPartFull => PartQuestionCount + 3 > PartQuestionLimit;
 
     [BindProperty]
     public ListeningFormModel Form { get; set; } = new();
@@ -106,6 +109,13 @@ public class ListeningModel(ToeicApiClient api, IWebHostEnvironment env) : PageM
             return Page();
         }
 
+        PartQuestionCount = exam.Questions.Count(q => q.Part == Form.Part);
+        if (IsPartFull)
+        {
+            TempData["ErrorMessage"] = $"Part {Form.Part} already has the maximum of {PartQuestionLimit} questions.";
+            return RedirectToPage("/Admin/Exams/Edit", new { id = examId });
+        }
+
         Form.Name = Form.Part switch
         {
             3 => "Part 3 - Conversations Set",
@@ -146,6 +156,13 @@ public class ListeningModel(ToeicApiClient api, IWebHostEnvironment env) : PageM
         ExamTitle = exam.Title;
         HasExamFullAudio = !string.IsNullOrWhiteSpace(exam.AudioUrl);
         ExamAudioUrl = exam.AudioUrl;
+
+        PartQuestionCount = exam.Questions.Count(q => q.Part == Form.Part);
+        if (!IsEditMode && IsPartFull)
+        {
+            ErrorMessage = $"Part {Form.Part} already has the maximum of {PartQuestionLimit} questions.";
+            return Page();
+        }
 
         if (Form.Questions.Count != 3)
         {

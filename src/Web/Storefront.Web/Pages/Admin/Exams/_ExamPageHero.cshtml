@@ -1,4 +1,4 @@
-@model Storefront.Web.Pages.Admin.Exams.ExamPageHeroViewModel
+﻿@model Storefront.Web.Pages.Admin.Exams.ExamPageHeroViewModel
 @{
     var exam = Model.Exam;
 }
@@ -91,11 +91,7 @@
                 else
                 {
                     <a href="/Admin/Exams/Detail?id=@exam.Id" class="qc-btn-ghost">View Details</a>
-                    <button type="button" onclick="openPartPicker()" class="qc-btn-primary">
-                        <span class="material-symbols-outlined text-[18px]">add_circle</span>
-                        Add Content
-                    </button>
-                }
+                    }
             </div>
         </div>
     </div>
