@@ -1,4 +1,4 @@
-@page
+﻿@page
 @model Storefront.Web.Pages.Admin.Exams.IndexModel
 @{
     Layout = "_ModeratorLayout";
@@ -59,10 +59,10 @@
         </div>
     </section>
 
-    <!-- 2. QUICK ACTIONS & SEARCH / FILTER (UC-16.6, UC-16.7) -->
+    <!-- 2. QUICK ACTIONS & SEARCH / FILTER -->
     <section class="bg-surface-container-lowest rounded-xl p-md border border-outline-variant/30 shadow-sm flex flex-col md:flex-row justify-between items-stretch md:items-center gap-md">
         <form method="get" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-sm flex-1">
-            <!-- Search Keyword (UC-16.6) -->
+            <!-- Search Keyword -->
             <div class="relative flex-1">
                 <input type="text"
                        name="keyword"
@@ -72,7 +72,7 @@
                 <span class="material-symbols-outlined absolute left-3 top-2.5 text-on-surface-variant text-sm">search</span>
             </div>
 
-            <!-- Filter Status (UC-16.7) -->
+            <!-- Filter Status -->
             <div class="w-full sm:w-40">
                 <select name="status" onchange="this.form.submit()" class="w-full py-2 px-3 border border-outline-variant rounded-lg text-sm bg-surface-container-lowest focus:ring-2 focus:ring-primary cursor-pointer">
                     <option value="All" selected="@(Model.Status == "All" || string.IsNullOrEmpty(Model.Status))">All Statuses</option>
@@ -82,7 +82,7 @@
                 </select>
             </div>
 
-            <!-- Filter Part / ExamType (UC-16.7) -->
+            <!-- Filter Part / ExamType -->
             <div class="w-full sm:w-44">
                 <select name="examType" onchange="this.form.submit()" class="w-full py-2 px-3 border border-outline-variant rounded-lg text-sm bg-surface-container-lowest focus:ring-2 focus:ring-primary cursor-pointer">
                     <option value="All" selected="@(Model.ExamType == "All" || string.IsNullOrEmpty(Model.ExamType))">All parts / Test types</option>
@@ -116,7 +116,7 @@
         </div>
     </section>
 
-    <!-- 3. EXAMS TABLE (UC-16.1) -->
+    <!-- 3. EXAMS TABLE -->
     <section class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden border border-outline-variant/30">
         <div class="px-md py-sm border-b border-outline-variant/50 flex justify-between items-center bg-surface-container/30">
             <h2 class="font-headline-md text-headline-md text-on-surface font-semibold text-base">

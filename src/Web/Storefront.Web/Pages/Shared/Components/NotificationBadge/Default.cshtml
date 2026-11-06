@@ -9,7 +9,7 @@
        title="@(Model.HasValue ? $"{Model.Value} unread notifications" : "Unable to load unread notification count")">
         <span class="material-symbols-outlined" aria-hidden="true">notifications</span>
         @if (Model > 0) { <span class="rounded-full bg-error text-white text-xs px-1.5 min-w-5 text-center">@(Model > 99 ? "99+" : Model.ToString())</span> }
-        else if (!Model.HasValue) { <span class="text-on-surface-variant text-xs" aria-hidden="true">?</span> }
+        
     </a>
     <div id="notification-menu-panel" hidden role="dialog" aria-label="Notifications"
          class="absolute right-0 mt-2 z-[60] bg-surface-container-lowest text-on-surface rounded-2xl shadow-2xl border border-outline-variant overflow-hidden"

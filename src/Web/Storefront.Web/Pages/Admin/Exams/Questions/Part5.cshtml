@@ -1,4 +1,4 @@
-@page "/Admin/Exams/{examId:int}/Questions/Create/Part5"
+﻿@page "/Admin/Exams/{examId:int}/Questions/Create/Part5"
 @model Storefront.Web.Pages.Admin.Exams.Questions.Part5Model
 @{
     Layout = "_ModeratorLayout";
@@ -116,7 +116,7 @@
                         <span class="material-symbols-outlined">lightbulb</span>
                         <div>
                             <div class="qc-section__title">Explanation <span class="text-error">*</span></div>
-                            <div class="qc-section__hint">Optional solution shown after students submit (UC-10.1)</div>
+                            <div class="qc-section__hint">Optional solution shown after students submit</div>
                         </div>
                     </div>
                     <textarea asp-for="Form.Explanation" rows="3" placeholder="Explain why the correct option is right..." class="qc-textarea resize-none" required></textarea>

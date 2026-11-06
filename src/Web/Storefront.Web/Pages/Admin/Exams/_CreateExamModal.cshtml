@@ -1,7 +1,7 @@
 @model Storefront.Web.Pages.Admin.Exams.IndexModel
 
 <div id="create-exam-modal" class="@(Model.ShowCreateModal ? "" : "hidden") fixed inset-0 z-50 flex items-center justify-center p-md bg-on-surface/60 backdrop-blur-sm @(Model.ShowCreateModal ? "opacity-100" : "opacity-0 pointer-events-none") transition-opacity duration-300">
-    <div id="create-exam-modal-content" class="bg-surface-container-lowest w-full max-w-xl rounded-xl shadow-2xl overflow-hidden transform @(Model.ShowCreateModal ? "scale-100 opacity-100" : "scale-95 opacity-0") transition-all duration-300">
+    <div id="create-exam-modal-content" class="bg-surface-container-lowest w-full max-w-2xl md:max-w-3xl rounded-xl shadow-2xl overflow-hidden transform @(Model.ShowCreateModal ? "scale-100 opacity-100" : "scale-95 opacity-0") transition-all duration-300">
         <div class="flex justify-between items-center px-lg py-md border-b border-outline-variant">
             <h2 class="font-headline-sm text-headline-sm text-on-surface font-bold">Create New Exam</h2>
             <button type="button" onclick="closeCreateExamModal()" class="p-xs hover:bg-surface-variant rounded-full transition-colors text-on-surface-variant cursor-pointer active:scale-95">
@@ -40,14 +40,14 @@
                 <textarea asp-for="CreateExamForm.Description" class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md focus:outline-none focus:ring-2 focus:ring-primary-container focus:border-primary transition-all placeholder:text-outline resize-none" placeholder="Brief description of this exam..." rows="3"></textarea>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-md">
-                <div class="space-y-xs">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-md">
+                <div class="space-y-xs md:col-span-5">
                     <label class="flex items-center gap-xs font-label-md text-label-md text-on-surface-variant" asp-for="CreateExamForm.ExamType">
                         Part / Test type
                         <span class="text-error font-bold">*</span>
                     </label>
                     <div class="relative">
-                        <select asp-for="CreateExamForm.ExamType" required class="w-full appearance-none bg-surface-container-lowest border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all cursor-pointer">
+                        <select asp-for="CreateExamForm.ExamType" required class="w-full appearance-none bg-surface-container-lowest border border-outline-variant rounded-lg pl-md pr-10 py-sm font-body-md text-body-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all cursor-pointer">
                             <option value="Full Test">Full Test (Part 1-7)</option>
                             <option value="Part 1">Part 1: Photographs</option>
                             <option value="Part 2">Part 2: Question-Response</option>
@@ -65,7 +65,7 @@
                     </div>
                 </div>
 
-                <div class="space-y-xs">
+                <div class="space-y-xs md:col-span-3">
                     <label class="flex items-center gap-xs font-label-md text-label-md text-on-surface-variant" asp-for="CreateExamForm.Duration">
                         Duration (minutes)
                         <span class="text-error font-bold">*</span>
@@ -78,17 +78,33 @@
                     </div>
                 </div>
 
-                <div class="space-y-xs">
+                <div class="space-y-xs md:col-span-4">
                     <label class="flex items-center gap-xs font-label-md text-label-md text-on-surface-variant" asp-for="CreateExamForm.ExamSeriesId">
                         Test series
                         <span class="text-error font-bold">*</span>
                     </label>
                     <div class="relative">
-                        <select asp-for="CreateExamForm.ExamSeriesId" required class="w-full appearance-none bg-surface-container-lowest border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all cursor-pointer">
-                            <option value="">-- Select a series --</option>
-                            @foreach (var series in Model.ExamSeries)
+                        <select asp-for="CreateExamForm.ExamSeriesId" required class="w-full appearance-none bg-surface-container-lowest border border-outline-variant rounded-lg pl-md pr-10 py-sm font-body-md text-body-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all cursor-pointer">
+                            <option value="">-- Select Test Series --</option>
+                            @{
+                                var years = new int[] { 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026 };
+                            }
+                            @foreach (var yr in years)
                             {
-                                <option value="@series.Id">@series.Name (@series.Year)</option>
+                                var matched = Model.ExamSeries.FirstOrDefault(s => s.Year == yr && s.Name.Contains("ETS"));
+                                var seriesId = matched?.Id ?? (yr switch {
+                                    2018 => 1010,
+                                    2019 => 1011,
+                                    2020 => 1012,
+                                    2021 => 1013,
+                                    2022 => 1014,
+                                    2023 => 1015,
+                                    2024 => 1,
+                                    2025 => 1016,
+                                    2026 => 1017,
+                                    _ => 1
+                                });
+                                <option value="@seriesId">EST TOEIC @yr</option>
                             }
                         </select>
                         <div class="absolute inset-y-0 right-0 flex items-center pr-sm pointer-events-none">

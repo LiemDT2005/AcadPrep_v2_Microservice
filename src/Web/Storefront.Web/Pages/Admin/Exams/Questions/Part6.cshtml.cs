@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Hosting;
+﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -12,6 +12,9 @@ public class Part6Model(ToeicApiClient api, IWebHostEnvironment env) : PageModel
     public int ExamId { get; set; }
     public string ExamTitle { get; set; } = string.Empty;
     public bool IsEditMode { get; set; }
+    public int PartQuestionCount { get; set; }
+    public int PartQuestionLimit => ExamStructureViewModel.TargetP6;
+    public bool IsPartFull => PartQuestionCount + 4 > PartQuestionLimit;
 
     [BindProperty]
     public Part6FormModel Form { get; set; } = new();
@@ -84,6 +87,13 @@ public class Part6Model(ToeicApiClient api, IWebHostEnvironment env) : PageModel
             return Page();
         }
 
+        PartQuestionCount = exam.Questions.Count(q => q.Part == 6);
+        if (IsPartFull)
+        {
+            TempData["ErrorMessage"] = $"Part 6 already has the maximum of {PartQuestionLimit} questions (4 passages).";
+            return RedirectToPage("/Admin/Exams/Edit", new { id = examId });
+        }
+
         var maxQNum = exam.Questions.Where(q => q.Part == 6).Select(q => (int?)q.QuestionNumber).Max();
         var startNum = maxQNum.HasValue ? maxQNum.Value + 1 : 131;
 
@@ -109,6 +119,13 @@ public class Part6Model(ToeicApiClient api, IWebHostEnvironment env) : PageModel
             return RedirectToPage("/Admin/Exams/Index");
         }
         ExamTitle = exam.Title;
+
+        PartQuestionCount = exam.Questions.Count(q => q.Part == 6);
+        if (!IsEditMode && IsPartFull)
+        {
+            ErrorMessage = $"Part 6 already has the maximum of {PartQuestionLimit} questions (4 passages).";
+            return Page();
+        }
 
         if (Form.Questions.Count != 4)
         {

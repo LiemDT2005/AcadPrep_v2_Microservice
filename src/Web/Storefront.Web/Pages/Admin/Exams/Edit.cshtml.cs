@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Hosting;
+﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -177,6 +177,30 @@ public class EditModel(ToeicApiClient api, IWebHostEnvironment env) : PageModel
 
     public async Task<IActionResult> OnPostQuickAddQuestionAsync(int id)
     {
+        var exam = await api.GetAdminExamAsync(id);
+        if (exam != null && !exam.IsDeleted)
+        {
+            var part = Math.Clamp(QuickQuestionForm.Part, 1, 7);
+            var partCount = exam.Questions.Count(q => q.Part == part);
+            var limit = part switch
+            {
+                1 => ExamStructureViewModel.TargetP1,
+                2 => ExamStructureViewModel.TargetP2,
+                3 => ExamStructureViewModel.TargetP3,
+                4 => ExamStructureViewModel.TargetP4,
+                5 => ExamStructureViewModel.TargetP5,
+                6 => ExamStructureViewModel.TargetP6,
+                7 => ExamStructureViewModel.TargetP7,
+                _ => 200
+            };
+
+            if (partCount >= limit)
+            {
+                ErrorMessage = $"Part {part} already has the maximum of {limit} questions.";
+                return RedirectToPage("./Edit", new { id });
+            }
+        }
+
         string? audioUrl = null;
         if (QuickQuestionForm.AudioFile != null && QuickQuestionForm.AudioFile.Length > 0)
         {

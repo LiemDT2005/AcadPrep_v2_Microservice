@@ -138,12 +138,12 @@
             
             <div class="px-md mt-sm mb-xs font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Content Management</div>
             
-            <!-- Exams Group (UC-16.1 - UC-16.7) -->
+            <!-- Exams Group -->
             <div class="group">
                 <button type="button" onclick="toggleDropdown('exams-submenu', 'exams-arrow')" class="w-full flex items-center justify-between px-md py-sm text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 cursor-pointer focus:outline-none">
                     <div class="flex items-center gap-sm">
                         <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">quiz</span>
-                        <span class="font-label-md text-label-md">Exams Studio (UC-16–18)</span>
+                        <span class="font-label-md text-label-md">Exams Studio</span>
                     </div>
                     <span id="exams-arrow" class="material-symbols-outlined text-sm transition-transform duration-200">expand_more</span>
                 </button>
@@ -165,7 +165,7 @@
             }
             <a class="flex items-center gap-sm px-md py-sm text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 cursor-pointer" href="/Exams">
                 <span class="material-symbols-outlined">visibility</span>
-                <span class="font-label-md text-label-md">Learner Portal (UC-3)</span>
+                <span class="font-label-md text-label-md">Learner Portal</span>
             </a>
             <a class="flex items-center gap-sm px-md py-sm text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 cursor-pointer" href="/">
                 <span class="material-symbols-outlined">arrow_back</span>
@@ -185,23 +185,34 @@
             </div>
             <div class="flex items-center gap-md">
                 <div class="flex items-center gap-sm">
-                    <a href="/Admin/Exams" class="font-label-md text-label-md text-primary font-semibold hover:underline">Exams</a>
-                    <span class="text-outline-variant">•</span>
-                    
-                    <a href="/Exams" class="font-label-md text-label-md text-on-surface-variant hover:text-primary font-semibold">Learner Exams</a>
-                    <span class="text-outline-variant">•</span>
-
                     @if (isAdmin)
                     {
                         <a href="/Admin/Dashboard" class="font-label-md text-label-md text-on-surface-variant hover:text-primary font-semibold">Reports</a>
                         <span class="text-outline-variant">•</span>
                     }
                     @await Component.InvokeAsync("NotificationBadge")
-                    <a href="/Account/Profile" class="font-label-md text-label-md text-on-surface-variant hover:text-primary font-semibold">Profile</a>
-                    <form method="post" asp-page="/Account/Logout"><button type="submit" class="text-sm text-error">Log out</button></form>
-                    <a href="/" class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer p-1" title="Back to site">
-                        <span class="material-symbols-outlined text-[20px]">home</span>
-                    </a>
+
+                    <!-- Profile Icon & Dropdown (Account & Log out) -->
+                    <div class="relative" id="user-menu-dropdown-container">
+                        <button type="button" id="user-menu-btn" onclick="toggleUserMenu(event)"
+                                class="flex items-center justify-center p-1 rounded-full hover:bg-surface-container transition-colors cursor-pointer text-primary"
+                                title="User Account" aria-expanded="false" aria-haspopup="true">
+                            <span class="material-symbols-outlined text-[28px]">account_circle</span>
+                        </button>
+                        <div id="user-menu-dropdown" class="hidden absolute right-0 mt-2 w-44 bg-surface-container-lowest border border-outline-variant/40 rounded-xl shadow-xl py-1 z-50 overflow-hidden">
+                            <a href="/Account/Profile" class="flex items-center gap-xs px-md py-sm text-body-md text-on-surface hover:bg-surface-container transition-colors font-medium">
+                                <span class="material-symbols-outlined text-[20px] text-on-surface-variant">person</span>
+                                <span>Account</span>
+                            </a>
+                            <div class="border-t border-outline-variant/30 my-1"></div>
+                            <form method="post" asp-page="/Account/Logout" class="m-0 p-0">
+                                <button type="submit" class="w-full flex items-center gap-xs px-md py-sm text-body-md text-error hover:bg-error-container/20 transition-colors text-left font-medium cursor-pointer">
+                                    <span class="material-symbols-outlined text-[20px]">logout</span>
+                                    <span>Log out</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
                 </div>
             </div>
         </header>
@@ -389,5 +400,19 @@
         });
     </script>
     <partial name="_AccountSession" />
+    <script>
+        function toggleUserMenu(e) {
+            if (e) e.stopPropagation();
+            const menu = document.getElementById('user-menu-dropdown');
+            if (menu) menu.classList.toggle('hidden');
+        }
+        document.addEventListener('click', function (e) {
+            const container = document.getElementById('user-menu-dropdown-container');
+            const menu = document.getElementById('user-menu-dropdown');
+            if (menu && container && !container.contains(e.target)) {
+                menu.classList.add('hidden');
+            }
+        });
+    </script>
 </body>
 </html>

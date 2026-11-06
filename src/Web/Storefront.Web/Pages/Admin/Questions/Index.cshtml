@@ -1,4 +1,4 @@
-@page
+﻿@page
 @model Storefront.Web.Pages.Admin.Questions.IndexModel
 @using System.Text.Json
 @{
@@ -77,7 +77,7 @@
         </div>
     </div>
 
-    <!-- SEARCH & FILTER BAR (UC-17.6 & UC-17.7) -->
+    <!-- SEARCH & FILTER BAR -->
     <form method="get" class="bg-surface-container-lowest p-md rounded-xl border border-outline-variant/20 shadow-sm flex flex-col lg:flex-row items-stretch lg:items-center gap-md">
         <div class="relative flex-1">
             <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-outline text-[20px]">search</span>
@@ -149,7 +149,7 @@
         }
     </div>
 
-    <!-- QUESTIONS TABLE (UC-17.1) -->
+    <!-- QUESTIONS TABLE -->
     <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/20 shadow-sm overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
@@ -303,14 +303,14 @@
 
                                 <td class="py-3.5 px-4 align-top text-right whitespace-nowrap">
                                     <div class="inline-flex items-center gap-1">
-                                        <!-- View Detail (UC-17.3) -->
+                                        <!-- View Detail -->
                                         <a href="/Admin/Questions/Detail?id=@q.Id"
                                            class="p-2 rounded-lg text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-colors"
                                            title="View Question Detail">
                                             <span class="material-symbols-outlined text-[19px]">visibility</span>
                                         </a>
 
-                                        <!-- Quick Edit Modal (UC-17.4) -->
+                                        <!-- Quick Edit Modal -->
                                         <button type="button"
                                                 onclick='openEditQuestionModal(@Html.Raw(qJson))'
                                                 class="p-2 rounded-lg text-primary hover:bg-primary/10 transition-colors"
@@ -318,7 +318,7 @@
                                             <span class="material-symbols-outlined text-[19px]">edit</span>
                                         </button>
 
-                                        <!-- Delete with Active Exam Warning (UC-17.5) -->
+                                        <!-- Delete with Active Exam Warning -->
                                         <button type="button"
                                                 onclick="openDeleteQuestionModal(@q.Id, 'Q@(q.QuestionNumber) (Part @q.Part)', @(q.IsExamActive ? "true" : "false"), '@Html.Raw((q.ExamTitle ?? "").Replace("'", "\\'"))')"
                                                 class="p-2 rounded-lg text-error hover:bg-error-container/25 transition-colors"
@@ -356,7 +356,7 @@
     </div>
 </div>
 
-<!-- CREATE / EDIT QUESTION MODAL (UC-17.2 & UC-17.4) -->
+<!-- CREATE / EDIT QUESTION MODAL -->
 <div id="upsertQuestionModal" class="qc-modal hidden">
     <div class="qc-modal__backdrop" onclick="closeUpsertQuestionModal()"></div>
     <div class="qc-modal__panel qc-modal__panel--lg max-h-[90vh] overflow-y-auto">
@@ -577,7 +577,7 @@
     </div>
 </div>
 
-<!-- DELETE CONFIRMATION MODAL WITH ACTIVE EXAM WARNING (UC-17.5) -->
+<!-- DELETE CONFIRMATION MODAL WITH ACTIVE EXAM WARNING -->
 <div id="deleteQuestionModal" class="qc-modal hidden">
     <div class="qc-modal__backdrop" onclick="closeDeleteQuestionModal()"></div>
     <div class="qc-modal__panel">
@@ -641,7 +641,7 @@
     }
 
     function openCreateQuestionModal() {
-        document.getElementById('upsertModalTitle').textContent = 'Create New Question (UC-17.2)';
+        document.getElementById('upsertModalTitle').textContent = 'Create New Question';
         document.getElementById('upsertSubmitLabel').textContent = 'Create Question';
         document.getElementById('qFormId').value = '';
         document.getElementById('qFormPart').value = '5';
@@ -665,7 +665,7 @@
     }
 
     function openEditQuestionModal(q) {
-        document.getElementById('upsertModalTitle').textContent = `Update Question #${q.QuestionNumber} (UC-17.4)`;
+        document.getElementById('upsertModalTitle').textContent = `Update Question #${q.QuestionNumber}`;
         document.getElementById('upsertSubmitLabel').textContent = 'Update Question';
         document.getElementById('qFormId').value = q.Id;
         document.getElementById('qFormExamId').value = q.ExamId;
