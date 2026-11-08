@@ -10,9 +10,13 @@ public class ReviewModel(ToeicApiClient api) : PageModel
     public PaginatedListDto<SavedVocabularyDto> DueFlashcards { get; set; } = new([], 1, 0, 0, false, false);
     public string? Message { get; set; }
 
+    [BindProperty(SupportsGet = true)]
+    public string Mode { get; set; } = "all";
+
     public async Task<IActionResult> OnGetAsync(int pageNumber = 1)
     {
-        var result = await api.GetReviewFlashcardsAsync(pageNumber, 10);
+        bool all = !string.Equals(Mode, "due", StringComparison.OrdinalIgnoreCase);
+        var result = await api.GetReviewFlashcardsAsync(pageNumber, 200, all);
         if (result != null)
         {
             DueFlashcards = result;
@@ -21,7 +25,7 @@ public class ReviewModel(ToeicApiClient api) : PageModel
         return Page();
     }
 
-    public async Task<IActionResult> OnPostRateAsync(int vocabularyId, bool isRemembered)
+    public async Task<IActionResult> OnPostRateAsync(int vocabularyId, bool isRemembered, string? mode = null)
     {
         var (success, error) = await api.RateVocabularyAsync(vocabularyId, isRemembered);
         if (!success)
@@ -31,10 +35,23 @@ public class ReviewModel(ToeicApiClient api) : PageModel
         else
         {
             TempData["SuccessMessage"] = isRemembered 
-                ? "Great! Your next review interval has doubled."
-                : "Review saved! This word will appear in your review list tomorrow.";
+                ? "Tuyệt vời! Thẻ từ vựng đã được ôn tập thành công."
+                : "Đã ghi nhận! Bạn có thể tiếp tục ôn lại thẻ này bất cứ lúc nào.";
         }
 
-        return RedirectToPage();
+        return RedirectToPage(new { mode = mode ?? Mode });
     }
+
+    public async Task<IActionResult> OnPostRateAjaxAsync([FromBody] RateAjaxRequest request)
+    {
+        if (request is null) return BadRequest(new { error = "Invalid request." });
+        var (success, error) = await api.RateVocabularyAsync(request.VocabularyId, request.IsRemembered);
+        return new JsonResult(new { success, error });
+    }
+}
+
+public class RateAjaxRequest
+{
+    public int VocabularyId { get; set; }
+    public bool IsRemembered { get; set; }
 }

@@ -1,4 +1,4 @@
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using BuildingBlocks.Common.Events;
@@ -199,14 +199,43 @@ public class ExamLifecycleService(ISessionStateRepository states, IExamSessionSe
         var practice = mode == "practice";
         state.ListeningScore = practice ? listening : ToeicScoreConverter.CalculateListeningScore(listening);
         state.ReadingScore = practice ? reading : ToeicScoreConverter.CalculateReadingScore(reading);
-        // Practice uses correct-count scoring; only full tests feed TOEIC score analytics.
-        if (!practice && !userId.StartsWith("guest:"))
+        if (!userId.StartsWith("guest:"))
         {
             var breakdown = paper.GroupBy(q => q.Part).ToDictionary(g => g.Key,
-                g => (int)Math.Round(g.Count(q => answers.GetValueOrDefault(q.QuestionId) == q.CorrectOption) * 100.0 / g.Count()));
-            var evt = new TestSubmittedEvent(Guid.NewGuid(), userId, StableId($"exam:{state.ExamId}"), state.ExamTitle,
-                state.ListeningScore + state.ReadingScore, state.ListeningScore, state.ReadingScore,
-                paper.Count, listening + reading, breakdown);
+                g => (int)Math.Round(g.Count(q => answers.GetValueOrDefault(q.QuestionId) == q.CorrectOption) * 100.0 / Math.Max(1, g.Count())));
+
+            int finalScore, finalListening, finalReading;
+            if (practice)
+            {
+                var totalListeningQuestions = paper.Count(q => q.Part <= 4);
+                var totalReadingQuestions = paper.Count(q => q.Part >= 5);
+
+                finalListening = totalListeningQuestions > 0
+                    ? (int)Math.Round((double)listening / totalListeningQuestions * 495)
+                    : 0;
+                finalReading = totalReadingQuestions > 0
+                    ? (int)Math.Round((double)reading / totalReadingQuestions * 495)
+                    : 0;
+                finalScore = finalListening + finalReading;
+            }
+            else
+            {
+                finalListening = state.ListeningScore;
+                finalReading = state.ReadingScore;
+                finalScore = state.ListeningScore + state.ReadingScore;
+            }
+
+            var evt = new TestSubmittedEvent(
+                StableId($"session:{state.Id}"),
+                userId,
+                StableId($"exam:{state.ExamId}"),
+                state.ExamTitle + (practice ? " (Practice)" : ""),
+                finalScore,
+                finalListening,
+                finalReading,
+                paper.Count,
+                listening + reading,
+                breakdown);
             state.SubmissionEventJson = JsonSerializer.Serialize(evt);
         }
         await states.CompleteAsync(state, listening, reading, paper.Count(q => q.Part <= 4), paper.Count(q => q.Part >= 5), ct);

@@ -36,11 +36,11 @@ public class VocabularyRepository(LearningDbContext db) : IVocabularyRepository
     }
 
     public async Task<(List<SavedVocabulary> Items, int TotalCount)> GetDueFlashcardsAsync(
-        string userId, DateTime now, int pageNumber, int pageSize, CancellationToken ct = default)
+        string userId, DateTime now, int pageNumber, int pageSize, bool all = false, CancellationToken ct = default)
     {
         var query = db.SavedVocabularies.AsNoTracking()
             .Include(sv => sv.Vocabulary)
-            .Where(sv => sv.UserId == userId && sv.NextReviewDate <= now && sv.Vocabulary != null);
+            .Where(sv => sv.UserId == userId && (all || sv.NextReviewDate <= now) && sv.Vocabulary != null);
 
         var totalCount = await query.CountAsync(ct);
 
@@ -120,3 +120,4 @@ public class VocabularyRepository(LearningDbContext db) : IVocabularyRepository
         return await db.SaveChangesAsync(ct);
     }
 }
+

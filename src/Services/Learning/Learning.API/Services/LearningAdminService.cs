@@ -1,4 +1,4 @@
-using BuildingBlocks.Common.Results;
+﻿using BuildingBlocks.Common.Results;
 using Learning.API.Caching;
 using Learning.API.Data;
 using Learning.API.DTOs;
@@ -15,10 +15,10 @@ public class LearningAdminService(ILearningDbContext db, ILearningCache cache, I
     public async Task<Result<ProgressReportDto>> GetProgressReportAsync(
         DateTime? startDate, DateTime? endDate, CancellationToken ct = default)
     {
-        var start = startDate ?? DateTime.UtcNow.AddDays(-30);
-        var end = endDate ?? DateTime.UtcNow;
+        var start = startDate?.Date ?? DateTime.UtcNow.Date.AddDays(-30);
+        var end = (endDate?.Date ?? DateTime.UtcNow.Date).AddDays(1).AddTicks(-1);
 
-        var cacheKey = $"admin_report_{start:yyyyMMdd}_{end:yyyyMMdd}";
+        var cacheKey = $"admin_report_{start:yyyyMMdd}_{(endDate?.Date ?? DateTime.UtcNow.Date):yyyyMMdd}";
         var cached = await cache.GetAsync<ProgressReportDto>(cacheKey, ct);
         if (cached is not null) return Result.Success(cached);
 
