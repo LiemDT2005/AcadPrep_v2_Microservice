@@ -467,16 +467,6 @@
         const btn = document.getElementById('audio-play-btn');
         if (btn) { btn.disabled = false; btn.textContent = mode === 'full' ? '▶' : '▶ / Ⅱ'; }
         document.getElementById('audio-locked-row')?.classList.toggle('hidden', mode !== 'full');
-        const oldButton = document.getElementById('full-audio-start');
-        if (oldButton) oldButton.remove();
-        if (mode === 'full') {
-            const play = document.createElement('button');
-            play.id = 'full-audio-start'; play.type = 'button'; play.className = 'px-4 py-2 rounded-lg bg-primary text-on-primary';
-            play.textContent = audioProgress[audioKey]?.completed ? 'Audio completed' : 'Start / resume audio';
-            play.disabled = !!audioProgress[audioKey]?.completed;
-            play.addEventListener('click', playAudio);
-            section?.appendChild(play);
-        }
     }
     function playAudio() {
         if (expired || submitting || !audio.src || (mode === 'full' && audioProgress[audioKey]?.completed)) return;

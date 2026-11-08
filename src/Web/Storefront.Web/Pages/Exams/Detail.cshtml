@@ -255,7 +255,7 @@ else
                         7 Parts Selected | 7 Questions | ~10 mins
                     </div>
                     <button onclick="startPracticeSession()" class="w-full bg-primary hover:bg-primary-container text-on-primary hover:text-on-primary-container font-headline-sm py-4 rounded-2xl shadow-lg shadow-primary/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
-                        START PRACTICE
+                        @(Model.IsLoggedIn ? "START PRACTICE" : "Log in to Practice")
                         <span class="material-symbols-outlined">play_arrow</span>
                     </button>
                 </div>
@@ -292,7 +292,7 @@ else
                         </li>
                     </ul>
                     <button onclick="startFullTestSession()" class="w-full bg-primary hover:bg-primary-container text-on-primary font-headline-sm py-4 rounded-2xl shadow-xl shadow-primary/20 transition-all flex items-center justify-center gap-2">
-                        Start Full Test
+                        @(Model.IsLoggedIn ? "Start Full Test" : "Log in to Start Full Test")
                         <span class="material-symbols-outlined">rocket_launch</span>
                     </button>
                 </div>

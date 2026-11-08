@@ -140,7 +140,7 @@ dotnet run --project src/Web/Storefront.Web --no-launch-profile
 ### Bước 4 — Demo trên UI
 
 1. Mở http://localhost:5100  
-2. Có thể làm bài bằng **phiên khách**, không cần chạy Identity.API hoặc đăng nhập
+2. **Đăng nhập** trước khi bắt đầu Full Test hoặc Practice (cần chạy Identity.API).
 3. Vào **Luyện đề** → chọn đề → tab **Full Test** → **Start Full Test**.
 4. Hoặc tab **Practice by Part** → chọn Part, topic (tùy chọn), thời gian (hoặc **No limit**) → **START PRACTICE**.
 5. Chọn đáp án, dùng **Previous / Next** hoặc bảng số câu để di chuyển.
@@ -211,17 +211,13 @@ Khi bắt đầu bài thi, Exam lấy bản chụp đề Published từ Content 
 
 ## API bắt đầu phiên và tải câu hỏi
 
-Mặc định bật `ExamSessions:AllowGuests` trong Exam. UI tự tạo mã khách ngẫu nhiên
-và giữ trong Session của trình duyệt; không cần chạy Identity.API để làm bài.
-Khi gọi API trực tiếp, gửi header `X-Exam-Guest-Key` với một UUID dạng 32 ký tự hex
-(ví dụ tạo bằng `python3 -c 'import uuid; print(uuid.uuid4().hex)'`). Giữ nguyên mã
-cho cả POST và GET của cùng phiên; mã này là bí mật truy cập phiên, không dùng chung.
-Thiếu/sai định dạng mã trả 401; dùng mã khác đọc phiên trả 404.
+Mặc định tắt `ExamSessions:AllowGuests` trong Exam. Guest được xem danh sách và
+chi tiết đề; khi bắt đầu Full Test hoặc Practice, Web chuyển sang đăng nhập rồi
+quay lại trang đề. Truy cập trực tiếp trang làm bài cũng yêu cầu đăng nhập.
 
-Nếu đã có JWT hợp lệ, API ưu tiên UserId từ JWT. Muốn bắt buộc đăng nhập sau này,
-đặt `ExamSessions:AllowGuests` thành `false`. API không nhận UserId từ body/query.
-Mã khách được lưu với tiền tố `guest:` để tách khỏi tài khoản Identity.
-Xóa cookie hoặc hết hạn Session sẽ mất quyền truy cập phiên khách từ trình duyệt đó.
+API yêu cầu JWT hợp lệ để bắt đầu, đọc, lưu đáp án hoặc nộp bài. Chỉ gửi header
+`X-Exam-Guest-Key` vẫn trả 401, kể cả với phiên khách đã tạo trước đó. API lấy
+UserId từ JWT, không nhận UserId từ body/query.
 
 | Method | Path trên Gateway | Chức năng |
 |---|---|---|

@@ -162,6 +162,10 @@ async function startSession(handler, payload) {
             },
             body: JSON.stringify(payload)
         });
+        if (response.status === 401) {
+            window.location.assign('/Account/Login?ReturnUrl=' + encodeURIComponent(window.location.pathname + window.location.search));
+            return;
+        }
         const result = await response.json();
         if (!response.ok) throw new Error(result.error || 'Unable to start the session.');
         window.location.assign(result.redirectUrl);

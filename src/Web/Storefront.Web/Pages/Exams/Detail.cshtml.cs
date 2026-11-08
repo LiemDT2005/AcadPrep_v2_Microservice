@@ -36,6 +36,9 @@ public class DetailModel(ToeicApiClient apiClient) : PageModel
 
     private async Task<IActionResult> StartAsync(int id, StartPracticeRequest? practice)
     {
+        if (!IsLoggedIn)
+            return new JsonResult(new { error = "Please sign in to start a test or practice session." }) { StatusCode = 401 };
+
         var result = await apiClient.StartSessionAsync(id, practice);
         if (result.Unauthorized)
             return new JsonResult(new { error = result.Error }) { StatusCode = 401 };

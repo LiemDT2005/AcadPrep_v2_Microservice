@@ -11,9 +11,12 @@ public class TakeModel(ToeicApiClient api) : PageModel
 
     public async Task<IActionResult> OnGetAsync(int id, string mode = "full-test")
     {
+        if (string.IsNullOrEmpty(HttpContext.Session.GetString("jwt")))
+            return RedirectToPage("/Account/Login", new { ReturnUrl = Url.Page("/Exams/Take", new { id, mode }) });
         if (mode is not ("full-test" or "practice")) return BadRequest();
         var (session, unauthorized) = await api.GetSessionAsync(id, mode);
-        if (unauthorized) return StatusCode(StatusCodes.Status401Unauthorized);
+        if (unauthorized)
+            return RedirectToPage("/Account/Login", new { ReturnUrl = Url.Page("/Exams/Take", new { id, mode }) });
         if (session?.IsSubmitted == true)
             return RedirectToPage("/Exams/Results", new { attemptId = mode == "full-test" ? (int?)id : null, sessionId = mode == "practice" ? (int?)id : null });
         TestSession = session;

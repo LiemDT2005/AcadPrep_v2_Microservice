@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Security.Claims;
 using Exam.Data;
 using Exam.DTOs;
 using Exam.Entities;
@@ -48,6 +49,53 @@ public class ExamLifecycleTests
                 Options = [new() { Letter = "A", Text = "Right" }, new() { Letter = "B", Text = "Wrong" }] }
         ]);
         public Task<ExamPaperSnapshot?> GetAsync(int examId, CancellationToken ct) => Task.FromResult(Value);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Sessions_GuestsCannotStartOrAccessExistingSessions_WhenGuestsAreDisabled(bool withGuestKey)
+    {
+        await using var f = new Fixture(); await f.Initialize();
+        var guestKey = Guid.NewGuid().ToString("N");
+        var existingId = (await f.Service.StartAsync(42, $"guest:{guestKey}", null, default)).Value;
+        var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["ExamSessions:AllowGuests"] = "false"
+        }).Build();
+        var controller = new ExamSessionsController(f.Service, config)
+        { ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() } };
+        if (withGuestKey) controller.Request.Headers["X-Exam-Guest-Key"] = guestKey;
+
+        Assert.IsType<UnauthorizedResult>(await controller.StartFullTest(42, default));
+        Assert.IsType<UnauthorizedResult>(await controller.StartPractice(42, new() { SelectedPartNumbers = [5] }, default));
+        Assert.IsType<UnauthorizedResult>(await controller.GetFullTest(existingId, default));
+        Assert.IsType<UnauthorizedResult>(await controller.SaveFull(existingId, new([]), default));
+        Assert.IsType<UnauthorizedResult>(await controller.SubmitFull(existingId, new([]), default));
+        var state = Assert.Single(await f.Db.SessionStates.ToListAsync());
+        Assert.False(state.IsSubmitted);
+    }
+
+    [Fact]
+    public async Task Sessions_AuthenticatedUserCanStartFullTestAndPractice_WhenGuestsAreDisabled()
+    {
+        await using var f = new Fixture(); await f.Initialize();
+        var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["ExamSessions:AllowGuests"] = "false"
+        }).Build();
+        var context = new DefaultHttpContext
+        {
+            User = new ClaimsPrincipal(new ClaimsIdentity([new Claim(ClaimTypes.NameIdentifier, "learner")], "Bearer"))
+        };
+        var controller = new ExamSessionsController(f.Service, config)
+        { ControllerContext = new ControllerContext { HttpContext = context } };
+
+        Assert.IsType<CreatedAtActionResult>(await controller.StartFullTest(42, default));
+        Assert.IsType<CreatedAtActionResult>(await controller.StartPractice(42, new() { SelectedPartNumbers = [5] }, default));
+        var states = await f.Db.SessionStates.ToListAsync();
+        Assert.Equal(2, states.Count);
+        Assert.All(states, state => Assert.Equal("learner", state.UserId));
     }
 
     [Fact]

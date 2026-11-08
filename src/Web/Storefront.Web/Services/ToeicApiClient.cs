@@ -316,7 +316,7 @@ public partial class ToeicApiClient(HttpClient http, IHttpContextAccessor httpCo
             using var response = await http.PostAsJsonAsync(
                 $"/exam/api/exams/{examId}/{(practice is null ? "full-test" : "practice")}", (object?)practice ?? new { });
             if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
-                return (null, "Guest sessions are unavailable. Check the Exam API guest setting or sign in.", true);
+                return (null, "Please sign in to start a test or practice session.", true);
             if (!response.IsSuccessStatusCode)
             {
                 var body = await response.Content.ReadAsStringAsync();
