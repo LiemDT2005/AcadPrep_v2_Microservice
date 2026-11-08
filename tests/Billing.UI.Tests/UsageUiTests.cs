@@ -6,20 +6,20 @@ namespace Billing.UI.Tests;
 public class UsageUiTests
 {
     [Fact]
-    public async Task UsageShowsLimitsResetTimesAndNoFabricatedZero()
+    public async Task PricingHidesUnimplementedFeatureQuotasAndKeepsSubscriptionAndAiState()
     {
         using var factory = new BillingUiFactory();
         using var client = factory.Browser();
         await factory.Login(client);
         var html = WebUtility.HtmlDecode(await client.GetStringAsync("/Billing/Plans"));
-        Assert.Contains("Hạn mức sử dụng", html);
-        Assert.Contains("3 / tháng", html);
-        Assert.Contains("100 / tổng", html);
-        Assert.Contains("Không giới hạn", html);
-        Assert.Contains("Chưa có dữ liệu", html);
-        Assert.Contains("01/12/2026 00:00", html); // monthly reset shown in UTC+7
-        Assert.Contains("06/11/2026 00:00", html); // daily reset shown in UTC+7
-        Assert.DoesNotContain("<td>0</td>", html);
+        Assert.DoesNotContain("id=\"billing-usage\"", html);
+        Assert.DoesNotContain("3 / tháng", html);
+        Assert.DoesNotContain("100 / tổng", html);
+        Assert.DoesNotContain("Chưa có dữ liệu", html);
+        Assert.DoesNotContain("luyện đề không giới hạn", html);
+        Assert.DoesNotContain("Luyện thi không giới hạn", html);
+        Assert.Contains("Đang hoạt động", html);
+        Assert.Contains("Hạn mức token AI theo gói Pro", html);
         Assert.Contains("Chưa tải được dữ liệu AI", html);
         Assert.Contains(factory.Backend.Calls, call => call.Path == "/billing/api/subscriptions/me/usage" && call.Bearer);
     }

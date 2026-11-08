@@ -88,34 +88,9 @@
             }
         </div>
 
-        <section class="@LearnerUi.CardFlat overflow-hidden" aria-labelledby="usage-title">
-            <h3 id="usage-title" class="border-b border-outline-variant px-6 py-4 text-lg font-bold text-on-surface">Hạn mức sử dụng</h3>
-            @if (Model.UsageError is not null)
-            {
-                <div role="alert" class="@LearnerUi.Danger m-6"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">error</span>@Model.UsageError</div>
-            }
-            else if (Model.Usage is { } usage)
-            {
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse" id="billing-usage">
-                        <thead class="@LearnerUi.TableHead"><tr><th class="@LearnerUi.Th">Tính năng</th><th class="@LearnerUi.Th">Hạn mức</th><th class="@LearnerUi.Th">Đã dùng</th><th class="@LearnerUi.Th">Làm mới lúc</th></tr></thead>
-                        <tbody>
-                        @foreach (var item in usage.Features)
-                        {
-                            var feature = item.Feature switch { "FullTest" => "Bài thi đầy đủ", "Practice" => "Luyện tập", "Vocab" => "Từ vựng đang lưu", _ => item.Feature };
-                            var period = item.Period switch { "Daily" => "ngày", "Monthly" => "tháng", "Lifetime" => "tổng", _ => item.Period };
-                            <tr class="@LearnerUi.Row">
-                                <td class="@LearnerUi.Td font-semibold">@feature</td>
-                                <td class="@LearnerUi.Td">@(item.LimitValue.HasValue ? $"{item.LimitValue} / {period}" : "Không giới hạn")</td>
-                                <td class="@LearnerUi.TdMuted">@(item.UsageAvailable && item.Used.HasValue ? item.Used.ToString() : item.LimitValue.HasValue ? "Chưa có dữ liệu" : "—")</td>
-                                <td class="@LearnerUi.TdMuted">@(item.ResetAt.HasValue ? Date(item.ResetAt) : "—")</td>
-                            </tr>
-                        }
-                        </tbody>
-                    </table>
-                </div>
-                <p class="border-t border-outline-variant px-6 py-3 text-xs text-on-surface-variant">Số lượt đã dùng sẽ hiển thị khi hệ thống đếm lượt được kết nối.</p>
-            }
-        </section>
+        @if (Model.UsageError is not null)
+        {
+            <div role="alert" class="@LearnerUi.Danger"><span class="material-symbols-outlined text-[20px]" aria-hidden="true">error</span>@Model.UsageError</div>
+        }
     }
 </section>

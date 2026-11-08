@@ -24,6 +24,8 @@ public class PricingTests
         var html = WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync());
         Assert.Contains("79.000", html);
         Assert.DoesNotContain("Đăng nhập để mua", html);
+        Assert.DoesNotContain("Bài thi đầy đủ", html);
+        Assert.DoesNotContain("Không giới hạn", html);
         var raw = await response.Content.ReadAsStringAsync();
         Assert.Contains("&lt;script&gt;", raw);
         Assert.DoesNotContain("<script>alert(1)</script>", raw);
