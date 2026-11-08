@@ -1,9 +1,11 @@
 using System.Security.Claims;
 using Learning.API.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Learning.API.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class GamificationController(GamificationService gamificationService) : ControllerBase

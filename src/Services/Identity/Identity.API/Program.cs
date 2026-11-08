@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using Identity.API.Data;
@@ -127,10 +128,19 @@ builder.Services.AddAuthentication(opt =>
             {
                 var blacklistService = context.HttpContext.RequestServices.GetRequiredService<ITokenBlacklistService>();
                 var jti = context.Principal?.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Jti)?.Value;
+                var userId = context.Principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                             ?? context.Principal?.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value;
 
                 if (!string.IsNullOrEmpty(jti) && await blacklistService.IsBlacklistedAsync(jti))
                 {
                     context.Fail("This token has been revoked (logged out).");
+                    return;
+                }
+
+                if (!string.IsNullOrEmpty(userId) && await blacklistService.IsUserBlacklistedAsync(userId))
+                {
+                    context.Fail("Your account has been suspended or force logged out.");
+                    return;
                 }
             }
         };

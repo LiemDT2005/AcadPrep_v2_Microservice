@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json.Serialization;
 using Microsoft.OpenApi.Models;
+using Microsoft.EntityFrameworkCore;
+using Notifications.API.Data;
 using Notifications.API.Errors;
 using Notifications.API;
 
@@ -39,6 +41,22 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 var app = builder.Build();
+
+var connStr = builder.Configuration.GetConnectionString("Default");
+if (!string.IsNullOrEmpty(connStr) && !connStr.Contains("127.0.0.1,1") && builder.Configuration.GetValue("DatabaseInitialization:Enabled", true))
+{
+    try
+    {
+        using var scope = app.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<NotificationsDbContext>();
+        await db.Database.MigrateAsync();
+        app.Logger.LogInformation("==> Notifications database migrated successfully.");
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogWarning(ex, "Could not apply Notifications database migrations on startup. Verify database connectivity.");
+    }
+}
 
 app.UseExceptionHandler();
 app.UseStatusCodePages(async statusContext =>

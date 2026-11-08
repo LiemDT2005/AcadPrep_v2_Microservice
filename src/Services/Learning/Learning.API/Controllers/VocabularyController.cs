@@ -3,10 +3,12 @@ using System.Security.Claims;
 using Learning.API.DTOs;
 using Learning.API.Services;
 using Learning.API.Validation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Learning.API.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class VocabularyController(VocabularyService vocabularyService) : ControllerBase

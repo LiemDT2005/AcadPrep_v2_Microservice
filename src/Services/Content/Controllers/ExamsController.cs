@@ -1,9 +1,11 @@
 using Content.DTOs;
 using Content.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Content.Controllers;
 
+[Authorize(Roles = "Admin,Moderator")]
 [ApiController]
 [Route("api/cms/[controller]")]
 public class ExamsController(IContentService contentService) : ControllerBase

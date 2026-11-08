@@ -1,8 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json.Serialization;
 using Microsoft.OpenApi.Models;
+using Microsoft.EntityFrameworkCore;
+using Ai.API.Data;
 using Ai.API.Errors;
-
 using Ai.API;
 
 
@@ -40,6 +41,22 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 var app = builder.Build();
+
+var connStr = builder.Configuration.GetConnectionString("Default");
+if (!string.IsNullOrEmpty(connStr) && !connStr.Contains("127.0.0.1,1") && builder.Configuration.GetValue("DatabaseInitialization:Enabled", true))
+{
+    try
+    {
+        using var scope = app.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AiDbContext>();
+        await db.Database.MigrateAsync();
+        app.Logger.LogInformation("==> AI database migrated successfully.");
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogWarning(ex, "Could not apply AI database migrations on startup. Verify database connectivity.");
+    }
+}
 
 app.UseExceptionHandler();
 app.UseStatusCodePages(async statusContext =>

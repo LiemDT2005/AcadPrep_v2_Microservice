@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json.Serialization;
 using Microsoft.OpenApi.Models;
+using Microsoft.EntityFrameworkCore;
+using Billing.API.Data;
 using Billing.API.Errors;
 using Billing.API.Formatters;
 using Billing.API;
@@ -40,6 +42,22 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 var app = builder.Build();
+
+var connStr = builder.Configuration.GetConnectionString("Default");
+if (!string.IsNullOrEmpty(connStr) && !connStr.Contains("127.0.0.1,1") && builder.Configuration.GetValue("DatabaseInitialization:Enabled", true))
+{
+    try
+    {
+        using var scope = app.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<BillingDbContext>();
+        await db.Database.MigrateAsync();
+        app.Logger.LogInformation("==> Billing database migrated successfully.");
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogWarning(ex, "Could not apply Billing database migrations on startup. Verify database connectivity.");
+    }
+}
 
 app.UseExceptionHandler();
 app.UseStatusCodePages(async statusContext =>

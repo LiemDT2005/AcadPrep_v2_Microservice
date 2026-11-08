@@ -36,6 +36,48 @@ if (!app.Environment.IsDevelopment())
 app.UseStaticFiles();
 app.UseRouting();
 app.UseSession();
+
+// Role-based Access Control Guard for Admin Portal
+app.Use(async (context, next) =>
+{
+    var path = context.Request.Path.Value ?? string.Empty;
+    if (path.StartsWith("/Admin", StringComparison.OrdinalIgnoreCase))
+    {
+        var jwt = context.Session.GetString("jwt");
+        if (string.IsNullOrEmpty(jwt))
+        {
+            context.Response.Redirect($"/Account/Login?returnUrl={Uri.EscapeDataString(path)}");
+            return;
+        }
+
+        var roles = (context.Session.GetString("roles") ?? string.Empty)
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        bool isAdmin = roles.Contains("Admin");
+        bool isModerator = roles.Contains("Moderator");
+
+        if (!isAdmin && !isModerator)
+        {
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            return;
+        }
+
+        if (!isAdmin && isModerator)
+        {
+            var isContentPath = path.StartsWith("/Admin/Exams", StringComparison.OrdinalIgnoreCase)
+                             || path.StartsWith("/Admin/Questions", StringComparison.OrdinalIgnoreCase)
+                             || path.StartsWith("/Admin/Passages", StringComparison.OrdinalIgnoreCase)
+                             || path.StartsWith("/Admin/ExamStats", StringComparison.OrdinalIgnoreCase);
+            if (!isContentPath)
+            {
+                context.Response.Redirect("/Admin/Exams");
+                return;
+            }
+        }
+    }
+
+    await next();
+});
+
 app.UseAuthorization();
 app.MapRazorPages();
 app.Run();
