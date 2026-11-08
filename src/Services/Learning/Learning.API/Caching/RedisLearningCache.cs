@@ -1,10 +1,14 @@
 using System.Text.Json;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
+using StackExchange.Redis;
 
 namespace Learning.API.Caching;
 
-public class RedisLearningCache(IDistributedCache cache, ILogger<RedisLearningCache> logger) : ILearningCache
+public class RedisLearningCache(
+    IDistributedCache cache,
+    ILogger<RedisLearningCache> logger,
+    IConnectionMultiplexer? multiplexer = null) : ILearningCache
 {
     public async Task<T?> GetAsync<T>(string key, CancellationToken ct = default)
     {
@@ -64,5 +68,30 @@ public class RedisLearningCache(IDistributedCache cache, ILogger<RedisLearningCa
         await RemoveAsync("admin_user_stats", ct);
         await RemoveAsync("leaderboard_score", ct);
         await RemoveAsync("leaderboard_streak", ct);
+
+        if (multiplexer is not null && multiplexer.IsConnected)
+        {
+            try
+            {
+                var endpoints = multiplexer.GetEndPoints();
+                if (endpoints.Length > 0)
+                {
+                    var server = multiplexer.GetServer(endpoints[0]);
+                    if (server.IsConnected)
+                    {
+                        var keys = server.Keys(pattern: "admin_*").ToArray();
+                        var db = multiplexer.GetDatabase();
+                        foreach (var key in keys)
+                        {
+                            await db.KeyDeleteAsync(key);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to purge admin_* pattern from Redis");
+            }
+        }
     }
 }

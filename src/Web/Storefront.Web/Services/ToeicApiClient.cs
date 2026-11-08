@@ -387,10 +387,10 @@ public partial class ToeicApiClient(HttpClient http, IHttpContextAccessor httpCo
         return await res.Content.ReadFromJsonAsync<ScoreProgressResultDto>(JsonOpts);
     }
 
-    public async Task<PaginatedListDto<SavedVocabularyDto>?> GetReviewFlashcardsAsync(int pageNumber = 1, int pageSize = 10)
+    public async Task<PaginatedListDto<SavedVocabularyDto>?> GetReviewFlashcardsAsync(int pageNumber = 1, int pageSize = 10, bool all = false)
     {
         AttachToken();
-        var res = await http.GetAsync($"/learning/api/vocabulary/flashcards?pageNumber={pageNumber}&pageSize={pageSize}");
+        var res = await http.GetAsync($"/learning/api/vocabulary/flashcards?pageNumber={pageNumber}&pageSize={pageSize}&all={all}");
         if (!res.IsSuccessStatusCode) return new PaginatedListDto<SavedVocabularyDto>([], 1, 0, 0, false, false);
         return await res.Content.ReadFromJsonAsync<PaginatedListDto<SavedVocabularyDto>>(JsonOpts);
     }
@@ -906,3 +906,4 @@ public partial class ToeicApiClient(HttpClient http, IHttpContextAccessor httpCo
         return (true, null);
     }
 }
+

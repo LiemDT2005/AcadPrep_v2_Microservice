@@ -39,8 +39,8 @@ public record VocabularyDetailDto(
 }
 
 public record SaveVocabularyRequest(
-    [property: Required]
-    [property: Range(1, int.MaxValue, ErrorMessage = "VocabularyId phai la so nguyen duong.")]
+    [Required]
+    [Range(1, int.MaxValue, ErrorMessage = "VocabularyId phai la so nguyen duong.")]
     int VocabularyId
 );
 
@@ -53,10 +53,10 @@ public record SaveVocabularyResponse(
 );
 
 public record RateVocabularyRequest(
-    [property: Required]
-    [property: Range(1, int.MaxValue, ErrorMessage = "VocabularyId phai la so nguyen duong.")]
+    [Required]
+    [Range(1, int.MaxValue, ErrorMessage = "VocabularyId phai la so nguyen duong.")]
     int VocabularyId,
-    [property: Required]
+    [Required]
     bool IsRemembered
 );
 
@@ -88,46 +88,46 @@ public record StudyStreakDto(
 );
 
 public record CreateAchievementRequest(
-    [property: Required(ErrorMessage = "Ten danh hieu khong duoc de trong.")]
-    [property: StringLength(200, MinimumLength = 1, ErrorMessage = "Ten danh hieu phai tu 1 den 200 ky tu.")]
+    [Required(ErrorMessage = "Ten danh hieu khong duoc de trong.")]
+    [StringLength(200, MinimumLength = 1, ErrorMessage = "Ten danh hieu phai tu 1 den 200 ky tu.")]
     string Name,
 
-    [property: Required(ErrorMessage = "Mo ta danh hieu khong duoc de trong.")]
-    [property: StringLength(500, MinimumLength = 1, ErrorMessage = "Mo ta danh hieu phai tu 1 den 500 ky tu.")]
+    [Required(ErrorMessage = "Mo ta danh hieu khong duoc de trong.")]
+    [StringLength(500, MinimumLength = 1, ErrorMessage = "Mo ta danh hieu phai tu 1 den 500 ky tu.")]
     string Description,
 
-    [property: MaxLength(500, ErrorMessage = "Duong dan Icon khong duoc vuot qua 500 ky tu.")]
+    [MaxLength(500, ErrorMessage = "Duong dan Icon khong duoc vuot qua 500 ky tu.")]
     string? IconUrl,
 
-    [property: Required(ErrorMessage = "Loai dieu kien khong duoc de trong.")]
-    [property: StringLength(100, MinimumLength = 1, ErrorMessage = "Loai dieu kien phai tu 1 den 100 ky tu.")]
-    [property: ValidAchievementCondition]
+    [Required(ErrorMessage = "Loai dieu kien khong duoc de trong.")]
+    [StringLength(100, MinimumLength = 1, ErrorMessage = "Loai dieu kien phai tu 1 den 100 ky tu.")]
+    [ValidAchievementCondition]
     string ConditionType,
 
-    [property: Required(ErrorMessage = "Gia tri dieu kien khong duoc de trong.")]
-    [property: Range(1, int.MaxValue, ErrorMessage = "Gia tri dieu kien phai lon hon 0.")]
+    [Required(ErrorMessage = "Gia tri dieu kien khong duoc de trong.")]
+    [Range(1, int.MaxValue, ErrorMessage = "Gia tri dieu kien phai lon hon 0.")]
     int ConditionValue
 );
 
 public record UpdateAchievementRequest(
-    [property: Required(ErrorMessage = "Ten danh hieu khong duoc de trong.")]
-    [property: StringLength(200, MinimumLength = 1, ErrorMessage = "Ten danh hieu phai tu 1 den 200 ky tu.")]
+    [Required(ErrorMessage = "Ten danh hieu khong duoc de trong.")]
+    [StringLength(200, MinimumLength = 1, ErrorMessage = "Ten danh hieu phai tu 1 den 200 ky tu.")]
     string Name,
 
-    [property: Required(ErrorMessage = "Mo ta danh hieu khong duoc de trong.")]
-    [property: StringLength(500, MinimumLength = 1, ErrorMessage = "Mo ta danh hieu phai tu 1 den 500 ky tu.")]
+    [Required(ErrorMessage = "Mo ta danh hieu khong duoc de trong.")]
+    [StringLength(500, MinimumLength = 1, ErrorMessage = "Mo ta danh hieu phai tu 1 den 500 ky tu.")]
     string Description,
 
-    [property: MaxLength(500, ErrorMessage = "Duong dan Icon khong duoc vuot qua 500 ky tu.")]
+    [MaxLength(500, ErrorMessage = "Duong dan Icon khong duoc vuot qua 500 ky tu.")]
     string? IconUrl,
 
-    [property: Required(ErrorMessage = "Loai dieu kien khong duoc de trong.")]
-    [property: StringLength(100, MinimumLength = 1, ErrorMessage = "Loai dieu kien phai tu 1 den 100 ky tu.")]
-    [property: ValidAchievementCondition]
+    [Required(ErrorMessage = "Loai dieu kien khong duoc de trong.")]
+    [StringLength(100, MinimumLength = 1, ErrorMessage = "Loai dieu kien phai tu 1 den 100 ky tu.")]
+    [ValidAchievementCondition]
     string ConditionType,
 
-    [property: Required(ErrorMessage = "Gia tri dieu kien khong duoc de trong.")]
-    [property: Range(1, int.MaxValue, ErrorMessage = "Gia tri dieu kien phai lon hon 0.")]
+    [Required(ErrorMessage = "Gia tri dieu kien khong duoc de trong.")]
+    [Range(1, int.MaxValue, ErrorMessage = "Gia tri dieu kien phai lon hon 0.")]
     int ConditionValue
 );
 
@@ -273,3 +273,4 @@ public class AdminReportQueryRequest : IValidatableObject
         }
     }
 }
+

@@ -1,4 +1,4 @@
-using BuildingBlocks.Common.Results;
+﻿using BuildingBlocks.Common.Results;
 using Learning.API.Caching;
 using Learning.API.Data;
 using Learning.API.DTOs;
@@ -117,40 +117,10 @@ public class GamificationService
         ));
     }
 
-    // Process TestSubmitted: Update Streak + Grant Achievements
-    public async Task OnTestSubmittedAsync(
-        string userId, Guid attemptId, Guid examId, string examTitle,
-        int score, int listeningScore, int readingScore,
-        int totalQuestions, int correctAnswers,
-        Dictionary<int, int>? partBreakdown = null,
-        CancellationToken ct = default, DateTime? submittedAt = null)
+    public async Task<StudyStreak> RecordStudyActivityAsync(string userId, CancellationToken ct = default, DateTime? activityTime = null)
     {
-        // 1. Record Exam Attempt
-        var exists = await _db.ExamAttemptRecords.AnyAsync(x => x.AttemptId == attemptId, ct);
-        if (!exists)
-        {
-            var attemptRecord = new ExamAttemptRecord
-            {
-                AttemptId = attemptId,
-                UserId = userId,
-                ExamId = examId,
-                ExamTitle = examTitle,
-                Score = score,
-                ListeningScore = listeningScore,
-                ReadingScore = readingScore,
-                TotalQuestions = totalQuestions,
-                CorrectAnswers = correctAnswers,
-                ListeningCorrect = (listeningScore > 0 && totalQuestions > 0) ? (int)Math.Round(listeningScore / 4.95) : 0,
-                ReadingCorrect = (readingScore > 0 && totalQuestions > 0) ? (int)Math.Round(readingScore / 4.95) : 0,
-                PartMasteryJson = partBreakdown is not null ? System.Text.Json.JsonSerializer.Serialize(partBreakdown) : null,
-                SubmittedAt = submittedAt ?? DateTime.UtcNow
-            };
-            _db.ExamAttemptRecords.Add(attemptRecord);
-        }
-
-        // 2. Update Study Streak (UTC+7 timezone logic)
         var today = DateOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(
-            DateTime.SpecifyKind(submittedAt ?? DateTime.UtcNow, DateTimeKind.Utc), VietnamTimeZone));
+            DateTime.SpecifyKind(activityTime ?? DateTime.UtcNow, DateTimeKind.Utc), VietnamTimeZone));
         var yesterday = today.AddDays(-1);
 
         var streak = await _db.StudyStreaks.FirstOrDefaultAsync(s => s.UserId == userId, ct);
@@ -182,6 +152,42 @@ public class GamificationService
         }
 
         await _db.SaveChangesAsync(ct);
+        return streak;
+    }
+
+    // Process TestSubmitted: Update Streak + Grant Achievements
+    public async Task OnTestSubmittedAsync(
+        string userId, Guid attemptId, Guid examId, string examTitle,
+        int score, int listeningScore, int readingScore,
+        int totalQuestions, int correctAnswers,
+        Dictionary<int, int>? partBreakdown = null,
+        CancellationToken ct = default, DateTime? submittedAt = null)
+    {
+        // 1. Record Exam Attempt
+        var exists = await _db.ExamAttemptRecords.AnyAsync(x => x.AttemptId == attemptId, ct);
+        if (!exists)
+        {
+            var attemptRecord = new ExamAttemptRecord
+            {
+                AttemptId = attemptId,
+                UserId = userId,
+                ExamId = examId,
+                ExamTitle = examTitle,
+                Score = score,
+                ListeningScore = listeningScore,
+                ReadingScore = readingScore,
+                TotalQuestions = totalQuestions,
+                CorrectAnswers = correctAnswers,
+                ListeningCorrect = (listeningScore > 0 && totalQuestions > 0) ? (int)Math.Round(listeningScore / 4.95) : 0,
+                ReadingCorrect = (readingScore > 0 && totalQuestions > 0) ? (int)Math.Round(readingScore / 4.95) : 0,
+                PartMasteryJson = partBreakdown is not null ? System.Text.Json.JsonSerializer.Serialize(partBreakdown) : null,
+                SubmittedAt = submittedAt ?? DateTime.UtcNow
+            };
+            _db.ExamAttemptRecords.Add(attemptRecord);
+        }
+
+                // 2. Update Study Streak (UTC+7 timezone logic)
+        var streak = await RecordStudyActivityAsync(userId, ct, submittedAt);
 
         // 3. Check & Grant Achievements
         var newlyGranted = await CheckAndGrantAchievementsAsync(userId, ct);
@@ -241,6 +247,7 @@ public class GamificationService
                 "Score" => maxScore >= achievement.ConditionValue,
                 "Streak" => maxStreak >= achievement.ConditionValue,
                 "VocabCount" => vocabCount >= achievement.ConditionValue,
+                "Speed" => await _db.ExamAttemptRecords.AnyAsync(x => x.UserId == userId && (x.TotalQuestions >= 100 || !x.ExamTitle.Contains("(Practice)")), ct),
                 _ => false
             };
 
@@ -337,3 +344,5 @@ public class GamificationService
         return Result.Success(true);
     }
 }
+
+

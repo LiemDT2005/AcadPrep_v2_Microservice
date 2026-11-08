@@ -2,6 +2,7 @@ using BuildingBlocks.Common.Results;
 using Learning.API.Caching;
 using Learning.API.Data;
 using Learning.API.DTOs;
+using Learning.API.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Learning.API.Services;
@@ -9,7 +10,7 @@ namespace Learning.API.Services;
 public class LeaderboardService(ILearningDbContext db, ILearningCache cache)
 {
     public async Task<Result<LeaderboardResultDto>> GetLeaderboardAsync(
-        string currentUserId, string? sortBy = "Score", CancellationToken ct = default)
+        string currentUserId, string? sortBy = "Score", string? currentUserName = null, string? currentUserEmail = null, CancellationToken ct = default)
     {
         var cacheKey = $"leaderboard_{sortBy?.ToLowerInvariant() ?? "score"}";
         var cached = await cache.GetAsync<LeaderboardResultDto>(cacheKey, ct);
@@ -21,7 +22,31 @@ public class LeaderboardService(ILearningDbContext db, ILearningCache cache)
             return Result.Success(new LeaderboardResultDto(entriesWithCurrent, currentUserEntry, cached.SortBy));
         }
 
-        var users = await db.UserProfiles.AsNoTracking().ToListAsync(ct);
+        var users = await db.UserProfiles.ToListAsync(ct);
+
+        // Ensure current authenticated user has a profile in UserProfiles if valid
+        if (!string.IsNullOrEmpty(currentUserId) && currentUserId != "guest" && !users.Any(u => u.UserId == currentUserId))
+        {
+            var newProfile = new UserProfileSnapshot
+            {
+                UserId = currentUserId,
+                FullName = string.IsNullOrWhiteSpace(currentUserName) ? "Default Learner" : currentUserName,
+                Email = string.IsNullOrWhiteSpace(currentUserEmail) ? "learner@acadprep.com" : currentUserEmail,
+                CreatedAt = DateTime.UtcNow,
+                IsActive = true
+            };
+            db.UserProfiles.Add(newProfile);
+            try
+            {
+                await db.SaveChangesAsync(ct);
+                users.Add(newProfile);
+            }
+            catch
+            {
+                // In case of concurrent add or non-blocking failure
+            }
+        }
+
         var streaks = await db.StudyStreaks.AsNoTracking().ToDictionaryAsync(s => s.UserId, ct);
 
         var scores = await db.ExamAttemptRecords.AsNoTracking()
@@ -34,20 +59,35 @@ public class LeaderboardService(ILearningDbContext db, ILearningCache cache)
             })
             .ToDictionaryAsync(x => x.UserId, ct);
 
-        var entries = new List<LeaderboardEntryDto>();
-        foreach (var u in users)
+        var userMap = users.ToDictionary(u => u.UserId, u => u.FullName);
+        var allUserIds = users.Select(u => u.UserId)
+            .Union(scores.Keys)
+            .Union(streaks.Keys)
+            .ToList();
+
+        if (!string.IsNullOrEmpty(currentUserId) && currentUserId != "guest" && !allUserIds.Contains(currentUserId))
         {
-            scores.TryGetValue(u.UserId, out var userScore);
-            streaks.TryGetValue(u.UserId, out var userStreak);
+            allUserIds.Add(currentUserId);
+        }
+
+        var entries = new List<LeaderboardEntryDto>();
+        foreach (var uid in allUserIds)
+        {
+            scores.TryGetValue(uid, out var userScore);
+            streaks.TryGetValue(uid, out var userStreak);
+
+            var name = userMap.TryGetValue(uid, out var n)
+                ? n
+                : (uid == currentUserId ? (currentUserName ?? "Default Learner") : $"Learner {uid[..Math.Min(6, uid.Length)]}");
 
             entries.Add(new LeaderboardEntryDto(
                 0,
-                u.UserId,
-                u.FullName,
+                uid,
+                name,
                 userScore?.TotalScore ?? 0,
                 userScore?.ExamsDone ?? 0,
                 userStreak?.CurrentStreak ?? 0,
-                u.UserId == currentUserId
+                uid == currentUserId
             ));
         }
 
@@ -67,7 +107,8 @@ public class LeaderboardService(ILearningDbContext db, ILearningCache cache)
             byStreak ? "Streak" : "Score"
         );
 
-        await cache.SetAsync(cacheKey, result, TimeSpan.FromMinutes(10), ct);
+        // Short cache of 15s to keep real-time accuracy while reducing DB thrashing
+        await cache.SetAsync(cacheKey, result, TimeSpan.FromSeconds(15), ct);
         return Result.Success(result);
     }
 }

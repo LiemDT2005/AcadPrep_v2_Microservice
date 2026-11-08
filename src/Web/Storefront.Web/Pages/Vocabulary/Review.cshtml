@@ -5,126 +5,200 @@
 }
 
 <div class="max-w-2xl mx-auto py-xl px-margin-mobile md:px-margin-desktop">
-    <div class="mb-xl text-center mb-6">
-        <h2 class="font-headline-md text-headline-md text-on-surface mb-xs font-bold text-2xl">Flashcard Review (Spaced Repetition)</h2>
-        <p class="font-body-md text-body-md text-on-surface-variant text-gray-600">Check your recall using the Spaced Repetition System (SRS).</p>
+    <div class="text-center mb-6">
+        <h2 class="font-headline-md text-headline-md text-on-surface mb-xs font-bold text-2xl text-gray-900">Flashcard Review</h2>
+        <p class="font-body-md text-body-md text-on-surface-variant text-gray-600">Ôn tập và kiểm tra khả năng ghi nhớ từ vựng với thẻ Flashcard tương tác.</p>
     </div>
 
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="p-3 mb-4 text-sm text-green-800 bg-green-100 rounded-xl font-medium text-center">
-            @TempData["SuccessMessage"]
-        </div>
-    }
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div class="p-3 mb-4 text-sm text-red-800 bg-red-100 rounded-xl font-medium text-center">
-            @TempData["ErrorMessage"]
-        </div>
-    }
+    <!-- Mode Selector: All vs Due -->
+    <div class="flex justify-center gap-2 mb-6">
+        <a href="?mode=all" class="px-4 py-2 rounded-xl text-sm font-semibold transition-all @(Model.Mode != "due" ? "bg-primary text-white shadow-sm" : "bg-gray-100 text-gray-700 hover:bg-gray-200")">
+            🔄 Tất cả từ trong sổ tay (@(Model.Mode != "due" ? Model.DueFlashcards.Items.Count : "Tất cả"))
+        </a>
+        <a href="?mode=due" class="px-4 py-2 rounded-xl text-sm font-semibold transition-all @(Model.Mode == "due" ? "bg-primary text-white shadow-sm" : "bg-gray-100 text-gray-700 hover:bg-gray-200")">
+            ⏰ Cần ôn theo lịch (SRS)
+        </a>
+    </div>
+
+    @Html.AntiForgeryToken()
 
     @if (!Model.DueFlashcards.Items.Any())
     {
-        <div class="bg-tertiary-container/30 border border-tertiary-container rounded-2xl p-xl text-center py-12 bg-emerald-50 border-emerald-200">
-            <span class="material-symbols-outlined text-[48px] text-emerald-600 mb-md">celebration</span>
-            <h3 class="font-headline-sm text-headline-sm text-on-surface mb-sm font-bold text-lg text-emerald-900">You have completed all flashcards due today!</h3>
-            <p class="font-body-md text-body-md text-on-surface-variant mb-lg text-emerald-700 mb-6">
-                All scheduled vocabulary reviews are complete. Come back tomorrow or look up new words to add to your notebook.
-            </p>
-            <div class="flex justify-center gap-3">
-                <a href="/Vocabulary/Notebook" class="inline-flex items-center gap-sm bg-primary text-white px-lg py-sm rounded-lg font-label-md hover:bg-primary/90 transition shadow-sm p-2 text-sm">
-                    <span class="material-symbols-outlined text-[18px]">book</span> Open vocabulary notebook
-                </a>
-                <a href="/Vocabulary/DictionarySearch" class="inline-flex items-center gap-sm border border-gray-300 bg-white text-gray-700 px-lg py-sm rounded-lg font-label-md hover:bg-gray-50 transition p-2 text-sm">
-                    <span class="material-symbols-outlined text-[18px]">search</span> Look up new words
-                </a>
-            </div>
-        </div>
-    }
-    else
-    {
-        var firstCard = Model.DueFlashcards.Items.First();
-        <div class="mb-md flex justify-between items-center mb-4">
-            <span class="font-label-sm text-label-sm text-on-surface-variant inline-flex items-center gap-xs text-sm font-semibold text-gray-600">
-                <span class="material-symbols-outlined text-[18px] text-primary">style</span>
-                @Model.DueFlashcards.Items.Count cards left to review today
-            </span>
-            <span class="text-xs text-gray-500">
-                Previous review interval: @(firstCard.Interval) days
-            </span>
-        </div>
-
-        <!-- Flashcard Component -->
-        <div id="flashcard" class="bg-surface-container-lowest border border-surface-variant rounded-3xl shadow-lg min-h-[360px] flex flex-col items-center justify-center p-xl cursor-pointer select-none transition-all duration-300 hover:shadow-xl p-8 bg-white border-2 border-indigo-100" onclick="flipCard()">
-            <!-- Front -->
-            <div id="card-front" class="flex flex-col items-center gap-md text-center">
-                <span class="material-symbols-outlined text-[44px] text-primary/40 mb-2">translate</span>
-                <h1 class="font-display-md text-display-md text-primary font-black text-4xl text-indigo-900 tracking-wide">@firstCard.Word</h1>
-                <p class="font-body-sm text-body-sm text-on-surface-variant mt-sm text-gray-400 text-sm mt-4">
-                    <span class="material-symbols-outlined text-[16px] align-middle">touch_app</span> Tap the card to see the definition
+        @if (Model.Mode == "due")
+        {
+            <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-xl text-center py-12">
+                <span class="material-symbols-outlined text-[48px] text-emerald-600 mb-md">celebration</span>
+                <h3 class="font-headline-sm text-headline-sm text-on-surface mb-sm font-bold text-lg text-emerald-900">Bạn đã hoàn thành các thẻ cần ôn theo lịch hôm nay!</h3>
+                <p class="font-body-md text-body-md text-on-surface-variant mb-lg text-emerald-700 mb-6">
+                    Bạn có thể tự do ôn lại toàn bộ từ vựng đã lưu trong sổ tay bao nhiêu lần tùy thích.
                 </p>
-            </div>
-
-            <!-- Back (Hidden initially) -->
-            <div id="card-back" class="hidden flex flex-col items-center gap-md w-full text-center">
-                <h1 class="font-headline-lg text-headline-lg text-primary font-extrabold text-3xl text-indigo-900">@firstCard.Word</h1>
-                @if (!string.IsNullOrEmpty(firstCard.Phonetic))
-                {
-                    <p class="font-body-md text-body-md text-on-surface-variant italic text-gray-500 font-mono text-lg">@firstCard.Phonetic</p>
-                }
-                <div class="w-16 h-[2px] bg-indigo-200 rounded-full my-sm my-3"></div>
-                <h3 class="font-headline-sm text-headline-sm text-on-surface font-semibold text-xl text-gray-900">@firstCard.Meaning</h3>
-                @if (!string.IsNullOrEmpty(firstCard.Example))
-                {
-                    <div class="bg-surface-container rounded-xl p-md mt-sm w-full bg-indigo-50/50 p-4 mt-3 border border-indigo-100">
-                        <p class="font-body-sm text-body-sm text-on-surface-variant italic text-center text-gray-700">"@firstCard.Example"</p>
-                    </div>
-                }
-                <div class="mt-4">
-                    <a href="/Vocabulary/VocabularyDetail/@firstCard.VocabularyId" class="text-xs text-primary underline" onclick="event.stopPropagation()">
-                        View test passage context &rarr;
+                <div class="flex justify-center gap-3">
+                    <a href="?mode=all" class="inline-flex items-center gap-sm bg-primary text-white px-lg py-sm rounded-lg font-label-md hover:bg-primary/90 transition shadow-sm p-3 text-sm font-bold">
+                        <span class="material-symbols-outlined text-[18px]">replay</span> Ôn tập tất cả từ trong sổ tay
+                    </a>
+                    <a href="/Vocabulary/Notebook" class="inline-flex items-center gap-sm border border-gray-300 bg-white text-gray-700 px-lg py-sm rounded-lg font-label-md hover:bg-gray-50 transition p-3 text-sm">
+                        <span class="material-symbols-outlined text-[18px]">book</span> Mở sổ tay từ vựng
                     </a>
                 </div>
             </div>
-        </div>
-
-        <!-- Action Buttons (Hidden until card is flipped) -->
-        <div id="action-buttons" class="hidden mt-lg flex justify-center gap-lg gap-6 mt-6">
-            <form method="post" asp-page-handler="Rate">
-                <input type="hidden" name="vocabularyId" value="@firstCard.VocabularyId" />
-                <input type="hidden" name="isRemembered" value="false" />
-                <button type="submit" class="flex flex-col items-center gap-xs px-xl py-md rounded-2xl border-2 border-red-200 bg-red-50 hover:bg-red-100 transition-all p-4 px-8 group shadow-sm">
-                    <span class="material-symbols-outlined text-[32px] text-red-600 group-hover:scale-110 transition-transform">close</span>
-                    <span class="font-bold text-red-700">Forgot</span>
-                    <span class="text-[11px] text-red-500">Review tomorrow (1-day interval)</span>
-                </button>
-            </form>
-            <form method="post" asp-page-handler="Rate">
-                <input type="hidden" name="vocabularyId" value="@firstCard.VocabularyId" />
-                <input type="hidden" name="isRemembered" value="true" />
-                <button type="submit" class="flex flex-col items-center gap-xs px-xl py-md rounded-2xl border-2 border-green-200 bg-green-50 hover:bg-green-100 transition-all p-4 px-8 group shadow-sm">
-                    <span class="material-symbols-outlined text-[32px] text-green-600 group-hover:scale-110 transition-transform">check_circle</span>
-                    <span class="font-bold text-green-700">Remembered</span>
-                    <span class="text-[11px] text-green-600">Double the review interval</span>
-                </button>
-            </form>
-        </div>
-
-        <!-- Spaced Repetition Info -->
-        <div class="mt-xl bg-surface-container rounded-2xl p-md mt-8 p-4 bg-gray-50 border border-gray-200">
-            <div class="flex items-center gap-sm mb-sm text-sm font-semibold text-gray-700 mb-2">
-                <span class="material-symbols-outlined text-[18px] text-primary mr-1">info</span>
-                <span>How Spaced Repetition (SRS) Works</span>
+        }
+        else
+        {
+            <div class="bg-blue-50 border border-blue-200 rounded-2xl p-xl text-center py-12">
+                <span class="material-symbols-outlined text-[48px] text-blue-600 mb-md">menu_book</span>
+                <h3 class="font-headline-sm text-headline-sm text-on-surface mb-sm font-bold text-lg text-blue-900">Sổ tay từ vựng của bạn đang trống!</h3>
+                <p class="font-body-md text-body-md text-on-surface-variant mb-lg text-blue-700 mb-6">
+                    Hãy lưu các từ vựng mới trong bài thi TOEIC hoặc tra từ điển để bắt đầu học nhé.
+                </p>
+                <div class="flex justify-center gap-3">
+                    <a href="/Vocabulary/DictionarySearch" class="inline-flex items-center gap-sm bg-primary text-white px-lg py-sm rounded-lg font-label-md hover:bg-primary/90 transition shadow-sm p-3 text-sm">
+                        <span class="material-symbols-outlined text-[18px]">search</span> Tra cứu từ vựng mới
+                    </a>
+                </div>
             </div>
-            <div class="grid grid-cols-2 gap-md text-xs gap-4">
-                <div class="bg-red-50/70 border border-red-100 rounded-xl p-3">
-                    <span class="font-bold text-red-800">If you forget a word:</span>
-                    <p class="text-gray-600 mt-1">The interval resets to one day. The card will appear in your review list tomorrow.</p>
+        }
+    }
+    else
+    {
+        <!-- ACTIVE FLASHCARD SESSION -->
+        <div id="session-container">
+            <!-- Progress Bar & Top Stats -->
+            <div class="mb-4">
+                <div class="flex justify-between items-center text-sm font-medium text-gray-600 mb-1">
+                    <span>
+                        Thẻ <strong id="progress-text" class="text-primary font-bold">1 / @Model.DueFlashcards.Items.Count</strong>
+                    </span>
+                    <div class="flex gap-3 text-xs">
+                        <span class="inline-flex items-center gap-1 text-emerald-600 font-semibold">
+                            <span class="material-symbols-outlined text-[16px]">check_circle</span>
+                            <span id="count-remembered">0</span> đã nhớ
+                        </span>
+                        <span class="inline-flex items-center gap-1 text-red-500 font-semibold">
+                            <span class="material-symbols-outlined text-[16px]">cancel</span>
+                            <span id="count-forgotten">0</span> chưa nhớ
+                        </span>
+                    </div>
                 </div>
-                <div class="bg-green-50/70 border border-green-100 rounded-xl p-3">
-                    <span class="font-bold text-green-800">If you remember a word:</span>
-                    <p class="text-gray-600 mt-1">The interval doubles (1 &rarr; 2 &rarr; 4 &rarr; 8... days) to strengthen long-term memory.</p>
+                <div class="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                    <div id="progress-bar" class="bg-primary h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
                 </div>
+            </div>
+
+            <!-- Flashcard Box -->
+            <div id="flashcard" class="bg-white border-2 border-indigo-100 rounded-3xl shadow-lg min-h-[360px] flex flex-col items-center justify-center p-8 cursor-pointer select-none transition-all duration-300 hover:shadow-xl hover:border-indigo-200 relative" onclick="toggleFlip()">
+                
+                <!-- Flip indicator badge -->
+                <div class="absolute top-4 right-4 bg-indigo-50 text-indigo-700 text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[14px]">flip</span>
+                    <span id="flip-label">Mặt trước</span>
+                </div>
+
+                <!-- Speaker audio button -->
+                <button type="button" id="speak-btn" onclick="speakWord(event)" class="absolute top-4 left-4 p-2 rounded-full hover:bg-gray-100 text-indigo-600 transition" title="Nghe phát âm">
+                    <span class="material-symbols-outlined text-[20px]">volume_up</span>
+                </button>
+
+                <!-- Front Side -->
+                <div id="card-front" class="flex flex-col items-center gap-3 text-center">
+                    <span class="material-symbols-outlined text-[48px] text-primary/40 mb-1">translate</span>
+                    <h1 id="front-word" class="font-display-md text-primary font-black text-4xl text-indigo-900 tracking-wide"></h1>
+                    <p class="text-gray-400 text-sm mt-4 inline-flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[16px]">touch_app</span> Chạm vào thẻ hoặc ấn Space để xem nghĩa
+                    </p>
+                </div>
+
+                <!-- Back Side -->
+                <div id="card-back" class="hidden flex flex-col items-center gap-3 w-full text-center">
+                    <h1 id="back-word" class="font-headline-lg text-primary font-extrabold text-3xl text-indigo-900"></h1>
+                    <p id="back-phonetic" class="italic text-gray-500 font-mono text-lg"></p>
+                    <div class="w-16 h-[2px] bg-indigo-200 rounded-full my-2"></div>
+                    <h3 id="back-meaning" class="font-semibold text-2xl text-gray-900"></h3>
+                    <div id="example-container" class="bg-indigo-50/60 rounded-xl p-4 mt-2 w-full border border-indigo-100">
+                        <p id="back-example" class="italic text-center text-gray-700 text-sm"></p>
+                    </div>
+                    <div class="mt-3">
+                        <a id="detail-link" href="#" class="text-xs text-primary underline hover:text-indigo-800" onclick="event.stopPropagation()">
+                            Xem ngữ cảnh câu hỏi TOEIC &rarr;
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Rating Buttons (Always accessible, smoothly advances to next card) -->
+            <div class="mt-6 flex justify-center gap-6">
+                <button type="button" onclick="rateCurrentCard(false)" class="flex-1 max-w-[200px] flex flex-col items-center gap-1 p-4 rounded-2xl border-2 border-red-200 bg-red-50 hover:bg-red-100 transition-all active:scale-95 shadow-sm group">
+                    <span class="material-symbols-outlined text-[32px] text-red-600 group-hover:scale-110 transition-transform">close</span>
+                    <span class="font-bold text-red-700">Chưa nhớ</span>
+                    <span class="text-[11px] text-red-500">Phím [1] hoặc [←]</span>
+                </button>
+                <button type="button" onclick="rateCurrentCard(true)" class="flex-1 max-w-[200px] flex flex-col items-center gap-1 p-4 rounded-2xl border-2 border-green-200 bg-green-50 hover:bg-green-100 transition-all active:scale-95 shadow-sm group">
+                    <span class="material-symbols-outlined text-[32px] text-green-600 group-hover:scale-110 transition-transform">check_circle</span>
+                    <span class="font-bold text-green-700">Đã nhớ</span>
+                    <span class="text-[11px] text-green-600">Phím [2] hoặc [→]</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- SUMMARY SCREEN (Hidden until all cards are reviewed) -->
+        <div id="summary-container" class="hidden">
+            <div class="bg-white border-2 border-indigo-100 rounded-3xl shadow-lg p-8 text-center mb-6">
+                <div class="w-16 h-16 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span class="material-symbols-outlined text-[36px]">military_tech</span>
+                </div>
+                <h3 class="font-bold text-2xl text-gray-900 mb-1">Hoàn thành phiên ôn tập!</h3>
+                <p class="text-gray-600 text-sm mb-6">Bạn đã xem và đánh giá toàn bộ từ vựng trong danh sách này.</p>
+
+                <!-- Score Overview Cards -->
+                <div class="grid grid-cols-3 gap-4 mb-6">
+                    <div class="p-4 bg-gray-50 rounded-2xl border border-gray-200">
+                        <span class="text-xs text-gray-500 font-medium">Tổng số từ</span>
+                        <p id="sum-total" class="text-2xl font-black text-gray-800 mt-1">0</p>
+                    </div>
+                    <div class="p-4 bg-emerald-50 rounded-2xl border border-emerald-200">
+                        <span class="text-xs text-emerald-600 font-semibold">Đã nhớ tốt</span>
+                        <p id="sum-remembered" class="text-2xl font-black text-emerald-700 mt-1">0</p>
+                    </div>
+                    <div class="p-4 bg-red-50 rounded-2xl border border-red-200">
+                        <span class="text-xs text-red-600 font-semibold">Chưa nhớ</span>
+                        <p id="sum-forgotten" class="text-2xl font-black text-red-700 mt-1">0</p>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex flex-wrap justify-center gap-3">
+                    <button type="button" id="btn-retry-forgotten" onclick="restartReviewWithForgotten()" class="hidden inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold px-6 py-3 rounded-xl shadow-md transition">
+                        <span class="material-symbols-outlined text-[20px]">restart_alt</span> Ôn lại các từ chưa nhớ
+                    </button>
+                    <button type="button" onclick="restartReviewAll()" class="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-bold px-6 py-3 rounded-xl shadow-md transition">
+                        <span class="material-symbols-outlined text-[20px]">replay</span> Ôn lại từ đầu
+                    </button>
+                    <a href="/Vocabulary/Notebook" class="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold px-5 py-3 rounded-xl transition">
+                        <span class="material-symbols-outlined text-[20px]">book</span> Sổ tay từ vựng
+                    </a>
+                </div>
+            </div>
+
+            <!-- List of Forgotten Words (if any) -->
+            <div id="forgotten-section" class="hidden mb-6 bg-red-50/70 border border-red-200 rounded-2xl p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h4 class="font-bold text-red-900 text-lg flex items-center gap-2">
+                        <span class="material-symbols-outlined text-red-600">error</span>
+                        Các từ chưa nhớ (<span id="forgotten-badge">0</span>)
+                    </h4>
+                    <span class="text-xs text-red-600">Nên xem lại để ghi nhớ sâu hơn</span>
+                </div>
+                <div id="forgotten-list" class="space-y-3"></div>
+            </div>
+
+            <!-- List of Remembered Words -->
+            <div id="remembered-section" class="hidden mb-6 bg-emerald-50/70 border border-emerald-200 rounded-2xl p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h4 class="font-bold text-emerald-900 text-lg flex items-center gap-2">
+                        <span class="material-symbols-outlined text-emerald-600">check_circle</span>
+                        Các từ đã nhớ tốt (<span id="remembered-badge">0</span>)
+                    </h4>
+                </div>
+                <div id="remembered-list" class="space-y-3"></div>
             </div>
         </div>
     }
@@ -132,21 +206,260 @@
 
 @section Scripts {
     <script>
-        function flipCard() {
+        // Data injected from model
+        const INITIAL_CARDS = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.DueFlashcards.Items));
+        let activeDeck = [...INITIAL_CARDS];
+        let currentIndex = 0;
+        let isFlipped = false;
+
+        let rememberedCards = [];
+        let forgottenCards = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (activeDeck.length > 0) {
+                renderCard();
+            }
+        });
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (activeDeck.length === 0 || currentIndex >= activeDeck.length) return;
+            if (e.code === 'Space' || e.code === 'Enter') {
+                e.preventDefault();
+                toggleFlip();
+            } else if (e.key === '1' || e.key === 'ArrowLeft') {
+                e.preventDefault();
+                rateCurrentCard(false);
+            } else if (e.key === '2' || e.key === 'ArrowRight') {
+                e.preventDefault();
+                rateCurrentCard(true);
+            }
+        });
+
+        function toggleFlip() {
             const front = document.getElementById('card-front');
             const back = document.getElementById('card-back');
-            const buttons = document.getElementById('action-buttons');
+            const flipLabel = document.getElementById('flip-label');
+            if (!front || !back) return;
+
+            isFlipped = !isFlipped;
+            if (isFlipped) {
+                front.classList.add('hidden');
+                back.classList.remove('hidden');
+                if (flipLabel) flipLabel.textContent = 'Mặt sau (Đang xem nghĩa)';
+            } else {
+                front.classList.remove('hidden');
+                back.classList.add('hidden');
+                if (flipLabel) flipLabel.textContent = 'Mặt trước';
+            }
+        }
+
+        function renderCard() {
+            if (currentIndex >= activeDeck.length) {
+                showSummary();
+                return;
+            }
+
+            const card = activeDeck[currentIndex];
+            isFlipped = false;
+
+            // Reset view to Front
+            const front = document.getElementById('card-front');
+            const back = document.getElementById('card-back');
+            const flipLabel = document.getElementById('flip-label');
+            if (front) front.classList.remove('hidden');
+            if (back) back.classList.add('hidden');
+            if (flipLabel) flipLabel.textContent = 'Mặt trước';
+
+            // Populate content
+            const frontWord = document.getElementById('front-word');
+            const backWord = document.getElementById('back-word');
+            const backPhonetic = document.getElementById('back-phonetic');
+            const backMeaning = document.getElementById('back-meaning');
+            const backExample = document.getElementById('back-example');
+            const detailLink = document.getElementById('detail-link');
+            const exampleContainer = document.getElementById('example-container');
+
+            if (frontWord) frontWord.textContent = card.Word || '';
+            if (backWord) backWord.textContent = card.Word || '';
+            if (backPhonetic) backPhonetic.textContent = card.Phonetic || '';
+            if (backMeaning) backMeaning.textContent = card.Meaning || '';
             
-            if (front && back) {
-                if (front.classList.contains('hidden')) {
-                    front.classList.remove('hidden');
-                    back.classList.add('hidden');
+            if (backExample) {
+                if (card.Example && card.Example.trim().length > 0) {
+                    backExample.textContent = `"${card.Example}"`;
+                    if (exampleContainer) exampleContainer.classList.remove('hidden');
                 } else {
-                    front.classList.add('hidden');
-                    back.classList.remove('hidden');
-                    if (buttons) buttons.classList.remove('hidden');
+                    if (exampleContainer) exampleContainer.classList.add('hidden');
                 }
             }
+
+            if (detailLink) {
+                detailLink.href = `/Vocabulary/VocabularyDetail/${card.VocabularyId}`;
+            }
+
+            // Update Progress UI
+            const progressText = document.getElementById('progress-text');
+            const progressBar = document.getElementById('progress-bar');
+            const countRem = document.getElementById('count-remembered');
+            const countForg = document.getElementById('count-forgotten');
+
+            if (progressText) progressText.textContent = `${currentIndex + 1} / ${activeDeck.length}`;
+            if (progressBar) {
+                const percent = Math.round((currentIndex / activeDeck.length) * 100);
+                progressBar.style.width = `${percent}%`;
+            }
+            if (countRem) countRem.textContent = rememberedCards.length;
+            if (countForg) countForg.textContent = forgottenCards.length;
+        }
+
+        function rateCurrentCard(isRemembered) {
+            if (currentIndex >= activeDeck.length) return;
+
+            const card = activeDeck[currentIndex];
+            if (isRemembered) {
+                rememberedCards.push(card);
+            } else {
+                forgottenCards.push(card);
+            }
+
+            // Send rating asynchronously in background
+            sendRating(card.VocabularyId, isRemembered);
+
+            // Move to next card immediately
+            currentIndex++;
+            renderCard();
+        }
+
+        async function sendRating(vocabularyId, isRemembered) {
+            try {
+                const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+                await fetch('?handler=RateAjax', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': tokenInput ? tokenInput.value : ''
+                    },
+                    body: JSON.stringify({ vocabularyId, isRemembered })
+                });
+            } catch (err) {
+                console.warn('Background rating failed:', err);
+            }
+        }
+
+        function speakWord(event) {
+            if (event) event.stopPropagation();
+            if (currentIndex >= activeDeck.length) return;
+            const word = activeDeck[currentIndex]?.Word;
+            if (!word) return;
+
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(word);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.9;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function showSummary() {
+            const sessionContainer = document.getElementById('session-container');
+            const summaryContainer = document.getElementById('summary-container');
+            if (sessionContainer) sessionContainer.classList.add('hidden');
+            if (summaryContainer) summaryContainer.classList.remove('hidden');
+
+            const total = activeDeck.length;
+            const sumTotal = document.getElementById('sum-total');
+            const sumRem = document.getElementById('sum-remembered');
+            const sumForg = document.getElementById('sum-forgotten');
+
+            if (sumTotal) sumTotal.textContent = total;
+            if (sumRem) sumRem.textContent = rememberedCards.length;
+            if (sumForg) sumForg.textContent = forgottenCards.length;
+
+            // Render Forgotten List
+            const forgSection = document.getElementById('forgotten-section');
+            const forgList = document.getElementById('forgotten-list');
+            const forgBadge = document.getElementById('forgotten-badge');
+            const btnRetryForg = document.getElementById('btn-retry-forgotten');
+
+            if (forgottenCards.length > 0) {
+                if (forgSection) forgSection.classList.remove('hidden');
+                if (btnRetryForg) btnRetryForg.classList.remove('hidden');
+                if (forgBadge) forgBadge.textContent = forgottenCards.length;
+                if (forgList) {
+                    forgList.innerHTML = forgottenCards.map(c => `
+                        <div class="bg-white p-3 rounded-xl border border-red-200 flex justify-between items-center shadow-xs">
+                            <div>
+                                <span class="font-bold text-red-900 text-base">${c.Word || ''}</span>
+                                ${c.Phonetic ? `<span class="text-xs text-gray-500 font-mono ml-2">${c.Phonetic}</span>` : ''}
+                                <p class="text-sm text-gray-700 mt-0.5">${c.Meaning || ''}</p>
+                            </div>
+                            <a href="/Vocabulary/VocabularyDetail/${c.VocabularyId}" class="text-xs text-primary underline shrink-0 ml-3">
+                                Chi tiết
+                            </a>
+                        </div>
+                    `).join('');
+                }
+            } else {
+                if (forgSection) forgSection.classList.add('hidden');
+                if (btnRetryForg) btnRetryForg.classList.add('hidden');
+            }
+
+            // Render Remembered List
+            const remSection = document.getElementById('remembered-section');
+            const remList = document.getElementById('remembered-list');
+            const remBadge = document.getElementById('remembered-badge');
+
+            if (rememberedCards.length > 0) {
+                if (remSection) remSection.classList.remove('hidden');
+                if (remBadge) remBadge.textContent = rememberedCards.length;
+                if (remList) {
+                    remList.innerHTML = rememberedCards.map(c => `
+                        <div class="bg-white p-3 rounded-xl border border-emerald-200 flex justify-between items-center shadow-xs">
+                            <div>
+                                <span class="font-bold text-emerald-900 text-base">${c.Word || ''}</span>
+                                ${c.Phonetic ? `<span class="text-xs text-gray-500 font-mono ml-2">${c.Phonetic}</span>` : ''}
+                                <p class="text-sm text-gray-700 mt-0.5">${c.Meaning || ''}</p>
+                            </div>
+                            <a href="/Vocabulary/VocabularyDetail/${c.VocabularyId}" class="text-xs text-primary underline shrink-0 ml-3">
+                                Chi tiết
+                            </a>
+                        </div>
+                    `).join('');
+                }
+            } else {
+                if (remSection) remSection.classList.add('hidden');
+            }
+        }
+
+        function restartReviewAll() {
+            activeDeck = [...INITIAL_CARDS];
+            currentIndex = 0;
+            rememberedCards = [];
+            forgottenCards = [];
+
+            const sessionContainer = document.getElementById('session-container');
+            const summaryContainer = document.getElementById('summary-container');
+            if (summaryContainer) summaryContainer.classList.add('hidden');
+            if (sessionContainer) sessionContainer.classList.remove('hidden');
+
+            renderCard();
+        }
+
+        function restartReviewWithForgotten() {
+            if (forgottenCards.length === 0) return;
+            activeDeck = [...forgottenCards];
+            currentIndex = 0;
+            rememberedCards = [];
+            forgottenCards = [];
+
+            const sessionContainer = document.getElementById('session-container');
+            const summaryContainer = document.getElementById('summary-container');
+            if (summaryContainer) summaryContainer.classList.add('hidden');
+            if (sessionContainer) sessionContainer.classList.remove('hidden');
+
+            renderCard();
         }
     </script>
 }

@@ -20,7 +20,15 @@ public class LeaderboardController(LeaderboardService leaderboardService) : Cont
             ?? User.FindFirstValue("UserId") 
             ?? "guest";
 
-        var result = await leaderboardService.GetLeaderboardAsync(currentUserId, sortBy, ct);
+        var currentUserName = User.FindFirstValue("name") 
+            ?? User.FindFirstValue(ClaimTypes.Name) 
+            ?? "Default Learner";
+
+        var currentUserEmail = User.FindFirstValue(ClaimTypes.Email) 
+            ?? User.FindFirstValue("email") 
+            ?? "learner@acadprep.com";
+
+        var result = await leaderboardService.GetLeaderboardAsync(currentUserId, sortBy, currentUserName, currentUserEmail, ct);
         if (!result.IsSuccess) return BadRequest(new { error = result.Error });
 
         return Ok(result.Value);

@@ -24,10 +24,11 @@ public class VocabularyController(VocabularyService vocabularyService) : Control
     /// </summary>
     [HttpGet("flashcards")]
     public async Task<IActionResult> GetReviewFlashcards(
-        [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, CancellationToken ct = default)
+        [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, [FromQuery] bool all = false, [FromQuery] string? mode = null, CancellationToken ct = default)
     {
         var userId = GetCurrentUserId();
-        var result = await vocabularyService.GetReviewFlashcardsAsync(userId, pageNumber, pageSize, ct);
+        var shouldIncludeAll = all || string.Equals(mode, "all", StringComparison.OrdinalIgnoreCase);
+        var result = await vocabularyService.GetReviewFlashcardsAsync(userId, pageNumber, pageSize, shouldIncludeAll, ct);
         if (!result.IsSuccess) return BadRequest(new { error = result.Error });
 
         return Ok(result.Value);
@@ -116,3 +117,5 @@ public class VocabularyController(VocabularyService vocabularyService) : Control
         return Ok(result.Value);
     }
 }
+
+

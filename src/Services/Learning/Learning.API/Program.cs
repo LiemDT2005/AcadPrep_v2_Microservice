@@ -1,3 +1,4 @@
+using StackExchange.Redis;
 using BuildingBlocks.Common.Authentication;
 using BuildingBlocks.Common.Events;
 using BuildingBlocks.EventBus;
@@ -44,6 +45,11 @@ builder.Services.AddScoped<ILearningDbContext>(sp => sp.GetRequiredService<Learn
 // 2. Redis Distributed Cache
 var redisConn = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
 builder.Services.AddStackExchangeRedisCache(opt => opt.Configuration = redisConn);
+builder.Services.AddSingleton<IConnectionMultiplexer>(_ => {
+    var opts = ConfigurationOptions.Parse(redisConn);
+    opts.AbortOnConnectFail = false;
+    return ConnectionMultiplexer.Connect(opts);
+});
 builder.Services.AddSingleton<ILearningCache, RedisLearningCache>();
 
 // 3. SignalR Real-time Hub & Notifier
