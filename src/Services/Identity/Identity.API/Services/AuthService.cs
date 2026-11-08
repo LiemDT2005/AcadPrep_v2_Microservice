@@ -367,6 +367,9 @@ public class AuthService : IAuthService
         if (user is null)
             return (false, "Account not found.", null);
 
+        if (user.Status == UserStatus.Banned)
+            return (false, "Your account has been suspended by an administrator.", null);
+
         var roles = await _userRepository.GetRolesAsync(user);
         return (true, null, UserMapper.ToUserProfileDto(user, roles));
     }
@@ -376,6 +379,9 @@ public class AuthService : IAuthService
         var user = await _userRepository.GetByIdAsync(userId);
         if (user is null)
             return (false, "Account not found.", null);
+
+        if (user.Status == UserStatus.Banned)
+            return (false, "Your account has been suspended by an administrator.", null);
 
         user.FullName = request.FullName.Trim();
         user.Avatar = string.IsNullOrWhiteSpace(request.Avatar) ? null : request.Avatar.Trim();
@@ -394,6 +400,9 @@ public class AuthService : IAuthService
         var user = await _userRepository.GetByIdAsync(userId);
         if (user is null)
             return (false, "User account not found.");
+
+        if (user.Status == UserStatus.Banned)
+            return (false, "Your account has been suspended by an administrator.");
 
         if (user.AuthProvider == "Google" && string.IsNullOrEmpty(user.PasswordHash))
             return (false, "Google-authenticated accounts cannot change password here.");

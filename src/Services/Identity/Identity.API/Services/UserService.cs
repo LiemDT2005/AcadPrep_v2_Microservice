@@ -14,17 +14,20 @@ public class UserService : IUserService
     private readonly IUserRepository _userRepository;
     private readonly IRefreshTokenRepository _refreshTokenRepository;
     private readonly IHubContext<UserHub> _hubContext;
+    private readonly ITokenBlacklistService _blacklistService;
     private readonly ILogger<UserService> _logger;
 
     public UserService(
         IUserRepository userRepository,
         IRefreshTokenRepository refreshTokenRepository,
         IHubContext<UserHub> hubContext,
+        ITokenBlacklistService blacklistService,
         ILogger<UserService> logger)
     {
         _userRepository = userRepository;
         _refreshTokenRepository = refreshTokenRepository;
         _hubContext = hubContext;
+        _blacklistService = blacklistService;
         _logger = logger;
     }
 
@@ -180,6 +183,9 @@ public class UserService : IUserService
             }
             await _refreshTokenRepository.SaveChangesAsync();
 
+            // Blacklist the user's active session/tokens so any incoming JWT calls are rejected immediately
+            await _blacklistService.BlacklistUserAsync(id, TimeSpan.FromHours(24));
+
             try
             {
                 await _hubContext.Clients.User(id).SendAsync("ForceLogout", request.Reason ?? "Your account has been suspended by an administrator.");
@@ -189,6 +195,11 @@ public class UserService : IUserService
             {
                 _logger.LogWarning(ex, "Failed to send SignalR ForceLogout to User {UserId}", id);
             }
+        }
+        else if (request.Status == UserStatus.Active)
+        {
+            // Remove user from blacklist upon unbanning
+            await _blacklistService.UnblacklistUserAsync(id);
         }
 
         _logger.LogInformation("Status updated to {Status} for User {UserId} by Admin {AdminId}", request.Status, user.Id, currentAdminId);

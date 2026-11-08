@@ -28,8 +28,17 @@ public class TokenService : ITokenService
     public (string Token, DateTime ExpiresAt) CreateToken(AppUser user, IEnumerable<string> roles)
     {
         var jwt = _configuration.GetSection("Jwt");
-        var expireHours = double.Parse(jwt["ExpireHours"] ?? "8");
-        var expiresUtc = DateTime.UtcNow.AddHours(expireHours);
+        double expireMinutes = 30; // Short-lived Access Token: 30 minutes default
+        if (!string.IsNullOrEmpty(jwt["ExpireMinutes"]))
+        {
+            expireMinutes = double.Parse(jwt["ExpireMinutes"]!);
+        }
+        else if (!string.IsNullOrEmpty(jwt["ExpireHours"]))
+        {
+            expireMinutes = double.Parse(jwt["ExpireHours"]!) * 60;
+        }
+
+        var expiresUtc = DateTime.UtcNow.AddMinutes(expireMinutes);
 
         var keyPath = jwt["PrivateKeyPath"];
         string pemContent;
@@ -75,7 +84,7 @@ public class TokenService : ITokenService
             expires: expiresUtc,
             signingCredentials: creds);
 
-        return (new JwtSecurityTokenHandler().WriteToken(token), Common.TimeHelper.Now.AddHours(expireHours));
+        return (new JwtSecurityTokenHandler().WriteToken(token), Common.TimeHelper.Now.AddMinutes(expireMinutes));
     }
 
     public async Task<RefreshToken> GenerateRefreshTokenAsync(string userId, string? ipAddress = null)
