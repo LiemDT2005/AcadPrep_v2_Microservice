@@ -31,3 +31,5 @@ tests/Identity.TestSetup/
 # Local review evidence and generated test output
 /artifacts/ui-review-*/
 TestResults/
+
+publish/

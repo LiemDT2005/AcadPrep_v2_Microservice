@@ -1,4 +1,4 @@
-@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+﻿@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 @inject Storefront.Web.Services.BillingApiClient BillingApi
 @{
     var name = Context.Session.GetString("name");
@@ -137,15 +137,88 @@
             </a>
 
             <!-- Navigation Links -->
-            <nav class="storefront-header-nav" aria-label="Main navigation">
-                <a class="h-full flex items-center px-sm text-[14px] @NavClass("/Index") transition-colors" asp-page="/Index" style="text-decoration:none;">Home</a>
-                <a class="h-full flex items-center px-sm text-[14px] @NavClass("/Exams/Index") transition-colors" asp-page="/Exams/Index" style="text-decoration:none;">Practice tests</a>
-                <a class="h-full flex items-center px-sm text-[14px] @NavClass("/Progress/Index") transition-colors" asp-page="/Progress/Index" style="text-decoration:none;">Progress</a>
-                <a class="h-full flex items-center px-sm text-[14px] @NavClass("/Vocabulary/Notebook") transition-colors" asp-page="/Vocabulary/Notebook" style="text-decoration:none;">Vocabulary</a>
-                <a class="h-full flex items-center px-sm text-[14px] @NavClass("/Vocabulary/Review") transition-colors" asp-page="/Vocabulary/Review" style="text-decoration:none;">Flashcards</a>
-                <a class="h-full flex items-center px-sm text-[14px]" asp-page="/Performance/StudyHistory">Study history</a>
-                <a class="h-full flex items-center px-sm text-[14px]" asp-page="/Performance/PerformanceAnalysis">Analysis</a>
-                <a class="h-full flex items-center px-sm text-[14px] @NavClass("/Performance/Leaderboard") transition-colors" asp-page="/Performance/Leaderboard" style="text-decoration:none;">Leaderboard</a>
+            <nav class="storefront-header-nav flex items-center gap-1 xl:gap-2" aria-label="Main navigation">
+                <a class="flex items-center px-3 py-1.5 text-[14px] @NavClass("/Index") transition-colors font-medium rounded-lg hover:text-primary hover:bg-gray-50" asp-page="/Index" style="text-decoration:none;">Home</a>
+                <a class="flex items-center px-3 py-1.5 text-[14px] @NavClass("/Exams/Index") transition-colors font-medium rounded-lg hover:text-primary hover:bg-gray-50" asp-page="/Exams/Index" style="text-decoration:none;">Practice tests</a>
+
+                <!-- Vocabulary Dropdown -->
+                <div class="relative group flex items-center">
+                    <button type="button" class="flex items-center gap-1 px-3 py-1.5 text-[14px] text-on-surface-variant font-medium rounded-lg hover:text-primary hover:bg-gray-50 transition-colors focus:outline-none">
+                        <span>Vocabulary</span>
+                        <span class="material-symbols-outlined text-[18px] group-hover:rotate-180 transition-transform duration-200">expand_more</span>
+                    </button>
+                    <div class="absolute left-0 top-full pt-1 hidden group-hover:block hover:block z-50 min-w-[210px]">
+                        <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-2 space-y-1">
+                            <a asp-page="/Vocabulary/Review" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium text-gray-700 hover:bg-indigo-50 hover:text-primary transition" style="text-decoration:none;">
+                                <span class="material-symbols-outlined text-[20px] text-primary">style</span>
+                                <div>
+                                    <div class="font-semibold text-gray-800">Flashcards</div>
+                                    <div class="text-[11px] text-gray-400">Ôn tập thẻ ghi nhớ</div>
+                                </div>
+                            </a>
+                            <a asp-page="/Vocabulary/Notebook" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium text-gray-700 hover:bg-indigo-50 hover:text-primary transition" style="text-decoration:none;">
+                                <span class="material-symbols-outlined text-[20px] text-primary">book</span>
+                                <div>
+                                    <div class="font-semibold text-gray-800">Notebook</div>
+                                    <div class="text-[11px] text-gray-400">Sổ tay từ đã lưu</div>
+                                </div>
+                            </a>
+                            <a asp-page="/Vocabulary/DictionarySearch" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium text-gray-700 hover:bg-indigo-50 hover:text-primary transition" style="text-decoration:none;">
+                                <span class="material-symbols-outlined text-[20px] text-primary">search</span>
+                                <div>
+                                    <div class="font-semibold text-gray-800">Dictionary</div>
+                                    <div class="text-[11px] text-gray-400">Tra cứu từ vựng mới</div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Performance Dropdown -->
+                <div class="relative group flex items-center">
+                    <button type="button" class="flex items-center gap-1 px-3 py-1.5 text-[14px] text-on-surface-variant font-medium rounded-lg hover:text-primary hover:bg-gray-50 transition-colors focus:outline-none">
+                        <span>Performance</span>
+                        <span class="material-symbols-outlined text-[18px] group-hover:rotate-180 transition-transform duration-200">expand_more</span>
+                    </button>
+                    <div class="absolute left-0 top-full pt-1 hidden group-hover:block hover:block z-50 min-w-[230px]">
+                        <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-2 space-y-1">
+                            <a asp-page="/Performance/PerformanceAnalysis" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium text-gray-700 hover:bg-indigo-50 hover:text-primary transition" style="text-decoration:none;">
+                                <span class="material-symbols-outlined text-[20px] text-primary">analytics</span>
+                                <div>
+                                    <div class="font-semibold text-gray-800">Skill Analysis</div>
+                                    <div class="text-[11px] text-gray-400">Phân tích mạnh/yếu 7 Parts</div>
+                                </div>
+                            </a>
+                            <a asp-page="/Performance/ScoreProgress" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium text-gray-700 hover:bg-indigo-50 hover:text-primary transition" style="text-decoration:none;">
+                                <span class="material-symbols-outlined text-[20px] text-primary">trending_up</span>
+                                <div>
+                                    <div class="font-semibold text-gray-800">Score Progress</div>
+                                    <div class="text-[11px] text-gray-400">Biểu đồ tiến độ điểm số</div>
+                                </div>
+                            </a>
+                            <a asp-page="/Performance/Leaderboard" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium text-gray-700 hover:bg-indigo-50 hover:text-primary transition" style="text-decoration:none;">
+                                <span class="material-symbols-outlined text-[20px] text-amber-500">leaderboard</span>
+                                <div>
+                                    <div class="font-semibold text-gray-800">Leaderboard</div>
+                                    <div class="text-[11px] text-gray-400">Bảng xếp hạng điểm & streak</div>
+                                </div>
+                            </a>
+                            <a asp-page="/Performance/Achievements" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium text-gray-700 hover:bg-indigo-50 hover:text-primary transition" style="text-decoration:none;">
+                                <span class="material-symbols-outlined text-[20px] text-purple-600">emoji_events</span>
+                                <div>
+                                    <div class="font-semibold text-gray-800">Achievements</div>
+                                    <div class="text-[11px] text-gray-400">Danh hiệu & Huy hiệu</div>
+                                </div>
+                            </a>
+                            <div class="border-t border-gray-100 my-1"></div>
+                            <a asp-page="/Performance/StudyHistory" class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-medium text-gray-600 hover:bg-indigo-50 hover:text-primary transition" style="text-decoration:none;">
+                                <span class="material-symbols-outlined text-[16px] text-gray-400">history</span>
+                                <span>Lịch sử học tập (History)</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
                 @if (isAdmin || isModerator)
                 {
                 <a href="/Admin/Exams" class="inline-flex items-center px-2.5 py-1 text-xs font-bold uppercase rounded bg-purple-100 text-purple-700 hover:bg-purple-200 transition" style="text-decoration:none;">
@@ -235,6 +308,7 @@
                 <a asp-page="/Exams/Index" class="hover:text-primary transition-colors">Practice tests</a>
                 <a asp-page="/Progress/Index" class="hover:text-primary transition-colors">Progress</a>
                 <a asp-page="/Performance/Leaderboard" class="hover:text-primary transition-colors">Leaderboard</a>
+                <a asp-page="/Performance/Achievements" class="hover:text-primary transition-colors">Achievements</a>
                 <a href="/Admin/Exams" class="hover:text-primary transition-colors">Exam CMS</a>
                 @if (isAdmin)
                 {

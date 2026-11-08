@@ -28,14 +28,13 @@ public class VocabularyService
     }
 
     // UC-11.1 Review Flashcards (Due for spaced repetition review)
-    public async Task<Result<PaginatedListDto<SavedVocabularyDto>>> GetReviewFlashcardsAsync(
-        string userId, int pageNumber = 1, int pageSize = 10, CancellationToken ct = default)
+    public async Task<Result<PaginatedListDto<SavedVocabularyDto>>> GetReviewFlashcardsAsync(string userId, int pageNumber = 1, int pageSize = 10, bool all = false, CancellationToken ct = default)
     {
         var now = DateTime.UtcNow;
 
         if (_vocabRepository != null && _mapper != null)
         {
-            var (entities, total) = await _vocabRepository.GetDueFlashcardsAsync(userId, now, pageNumber, pageSize, ct);
+            var (entities, total) = await _vocabRepository.GetDueFlashcardsAsync(userId, now, pageNumber, pageSize, all, ct);
             var dtos = _mapper.Map<List<SavedVocabularyDto>>(entities);
             var pages = (int)Math.Ceiling(total / (double)pageSize);
             return Result.Success(new PaginatedListDto<SavedVocabularyDto>(
@@ -44,7 +43,7 @@ public class VocabularyService
 
         var query = _db.SavedVocabularies.AsNoTracking()
             .Include(sv => sv.Vocabulary)
-            .Where(sv => sv.UserId == userId && sv.NextReviewDate <= now && sv.Vocabulary != null);
+            .Where(sv => sv.UserId == userId && (all || sv.NextReviewDate <= now) && sv.Vocabulary != null);
 
         var totalCount = await query.CountAsync(ct);
         var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
@@ -108,10 +107,12 @@ public class VocabularyService
 
         saved.NextReviewDate = DateTime.UtcNow.AddDays(saved.Interval);
 
-        if (_vocabRepository != null)
+                if (_vocabRepository != null)
             await _vocabRepository.SaveChangesAsync(ct);
         else
             await _db.SaveChangesAsync(ct);
+
+        await _gamificationService.RecordStudyActivityAsync(userId, ct);
 
         var msg = request.IsRemembered
             ? $"Tuyet voi! Tu se duoc on lai sau {saved.Interval} ngay."
@@ -325,3 +326,4 @@ public class VocabularyService
         ));
     }
 }
+

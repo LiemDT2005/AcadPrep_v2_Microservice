@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   --bg: #f3f6f4;
   --ink: #14231a;
   --muted: #5b6b60;
@@ -30,21 +30,28 @@ nav a { color: var(--ink); text-decoration: none; font-weight: 600; }
 nav a:hover { color: var(--brand); }
 .storefront-header-row {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: space-between;
   align-items: center;
   min-height: 64px;
   padding: .4rem clamp(.75rem, 2vw, 2.5rem);
-  gap: .25rem .5rem;
+  gap: .5rem 1rem;
 }
 .storefront-header-nav {
-  order: 1;
-  flex-basis: 100%;
-  gap: .25rem;
+  order: 0;
+  flex: 1;
+  display: flex;
+  align-items: center;
   justify-content: center;
+  gap: .25rem;
   white-space: nowrap;
 }
-.storefront-header-actions { margin-inline-start: auto; }
+.storefront-header-actions { 
+  margin-inline-start: auto;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+}
 .storefront-pro-badge {
   padding: 0 .3rem;
   border-radius: .25rem;
