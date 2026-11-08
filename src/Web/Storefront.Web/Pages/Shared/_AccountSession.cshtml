@@ -9,8 +9,13 @@
         <script>
             (function() {
                 const token = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(jwtToken));
-                const gatewayUrl = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(gatewayUrl));
-                const hubUrl = `${gatewayUrl}/identity/hubs/user`;
+                const configuredGateway = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(gatewayUrl));
+                // Resolve Docker internal alias to client-accessible host
+                let effectiveGateway = configuredGateway;
+                if (!effectiveGateway || effectiveGateway.includes("apigateway")) {
+                    effectiveGateway = `${window.location.protocol}//${window.location.hostname}:5080`;
+                }
+                const hubUrl = `${effectiveGateway}/identity/hubs/user`;
 
                 try {
                     const connection = new signalR.HubConnectionBuilder()

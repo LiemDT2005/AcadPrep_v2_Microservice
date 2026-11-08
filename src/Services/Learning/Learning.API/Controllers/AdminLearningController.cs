@@ -1,9 +1,11 @@
 using Learning.API.DTOs;
 using Learning.API.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Learning.API.Controllers;
 
+[Authorize(Roles = "Admin")]
 [ApiController]
 [Route("api/admin/learning")]
 public class AdminLearningController(

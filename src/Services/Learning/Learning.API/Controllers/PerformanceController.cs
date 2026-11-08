@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Learning.API.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class PerformanceController(PerformanceService performanceService) : ControllerBase
