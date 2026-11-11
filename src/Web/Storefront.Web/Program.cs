@@ -11,19 +11,27 @@ builder.Services.AddSession(opt =>
     opt.Cookie.HttpOnly = true;
 });
 
+builder.Services.AddTransient<TokenRefreshHandler>();
+builder.Services.AddHttpClient("IdentityRefreshClient", client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["GatewayUrl"] ?? "http://localhost:5080");
+});
+
 builder.Services.AddHttpClient<ToeicApiClient>(client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["GatewayUrl"] ?? "http://localhost:5080");
-});
+}).AddHttpMessageHandler<TokenRefreshHandler>();
+
 builder.Services.AddHttpClient<BillingApiClient>(client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["GatewayUrl"] ?? "http://localhost:5080");
-});
+}).AddHttpMessageHandler<TokenRefreshHandler>();
+
 builder.Services.AddHttpClient<AiApiClient>(client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["GatewayUrl"] ?? "http://localhost:5080");
     client.Timeout = AiApiClient.ChatTimeout;
-});
+}).AddHttpMessageHandler<TokenRefreshHandler>();
 
 var app = builder.Build();
 
