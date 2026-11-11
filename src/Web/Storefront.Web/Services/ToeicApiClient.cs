@@ -154,6 +154,38 @@ public partial class ToeicApiClient(HttpClient http, IHttpContextAccessor httpCo
     }
 
     // ==========================================
+    // UC-5.3: Refresh Token
+    // ==========================================
+    public async Task<(bool Success, string? Error)> RefreshTokenAsync()
+    {
+        var session = httpContextAccessor.HttpContext?.Session;
+        var refreshToken = session?.GetString("refreshToken");
+        if (string.IsNullOrWhiteSpace(refreshToken))
+            return (false, "No refresh token available in session.");
+
+        try
+        {
+            var res = await http.PostAsJsonAsync("/identity/api/auth/refresh-token", new { refreshToken });
+            var raw = await res.Content.ReadAsStringAsync();
+            if (!res.IsSuccessStatusCode)
+                return (false, ExtractError(raw));
+
+            var data = JsonSerializer.Deserialize<AuthResponse>(raw, JsonOpts);
+            if (data is not null && session is not null)
+            {
+                session.SaveAuthentication(data);
+                AttachToken();
+                return (true, null);
+            }
+            return (false, "Failed to parse refresh response.");
+        }
+        catch (Exception ex)
+        {
+            return (false, ex.Message);
+        }
+    }
+
+    // ==========================================
     // UC-6: Logout
     // ==========================================
     public async Task LogoutAsync()
